@@ -80,6 +80,18 @@
             --overlay: rgba(15, 23, 42, 0.45);
         }
 
+        /* Pictures style: natural, softer colours instead of the bright ones.
+           Still seven clearly different hues; the seventh is brown, not grey. */
+        :root[data-style="animals"] {
+            --color-red: #d9534f;
+            --color-blue: #3a7bc8;
+            --color-green: #4a9a3d;
+            --color-yellow: #d9a514;
+            --color-purple: #8a5cb8;
+            --color-orange: #e07b2e;
+            --color-white: #8b5a3c;
+        }
+
         /* ============================
            Global Reset & Layout
            ============================ */
@@ -1053,24 +1065,24 @@
 
 <div class="toasts" id="toasts"></div>
 
-<!-- Animal heads for the animals style. Each is filled with currentColor (the
-     tile's colour) and drawn as a distinct silhouette, so they stay apart even
-     on a 7×7 board: round ears, pointed ears, long ears, wool, antlers, a
-     snout, ear tufts. White and dark details give the face. -->
+<!-- Pictures for the pictures style (stored as 'animals', its first name).
+     Each is filled with currentColor (the tile's colour) and comes from a
+     different family - a house, a cat, a fish, a tree, an umbrella, a child,
+     a car - so their outlines differ, not just their details. Seven animal
+     heads were tried first and were too alike at small sizes: every one was
+     a round face with ears. White and dark details give the faces. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
-        <symbol id="a-bear" viewBox="0 0 100 100">
-            <circle cx="21" cy="24" r="14" fill="currentColor"/>
-            <circle cx="79" cy="24" r="14" fill="currentColor"/>
-            <circle cx="21" cy="24" r="7" fill="#fff" opacity=".5"/>
-            <circle cx="79" cy="24" r="7" fill="#fff" opacity=".5"/>
-            <circle cx="50" cy="57" r="38" fill="currentColor"/>
-            <ellipse cx="50" cy="71" rx="16" ry="12" fill="#fff"/>
-            <ellipse cx="50" cy="65" rx="6" ry="4.5" fill="#1e293b"/>
-            <circle cx="35" cy="50" r="5" fill="#1e293b"/><circle cx="65" cy="50" r="5" fill="#1e293b"/>
-            <circle cx="36.6" cy="48.4" r="1.6" fill="#fff"/><circle cx="66.6" cy="48.4" r="1.6" fill="#fff"/>
+        <symbol id="p-house" viewBox="0 0 100 100">
+            <rect x="66" y="16" width="11" height="22" rx="2" fill="currentColor"/>
+            <path d="M6 52 L50 12 L94 52 Z" fill="currentColor" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+            <rect x="17" y="46" width="66" height="46" rx="4" fill="currentColor"/>
+            <path d="M6 52 L50 12 L94 52" stroke="#1e293b" stroke-opacity=".22" stroke-width="5" fill="none" stroke-linejoin="round"/>
+            <rect x="26" y="57" width="15" height="14" rx="2" fill="#fff"/>
+            <rect x="52" y="62" width="17" height="30" rx="3" fill="#fff"/>
+            <circle cx="64" cy="78" r="2" fill="currentColor"/>
         </symbol>
-        <symbol id="a-cat" viewBox="0 0 100 100">
+        <symbol id="p-cat" viewBox="0 0 100 100">
             <path d="M10 56 L16 6 L46 30 Z" fill="currentColor" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
             <path d="M90 56 L84 6 L54 30 Z" fill="currentColor" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
             <path d="M21 34 L22 17 L34 27 Z" fill="#fff" opacity=".5"/>
@@ -1081,57 +1093,44 @@
             <path d="M44.5 68 L55.5 68 L50 74 Z" fill="#fff"/>
             <path d="M18 69 L36 72 M18 78 L36 76 M82 69 L64 72 M82 78 L64 76" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
         </symbol>
-        <symbol id="a-rabbit" viewBox="0 0 100 100">
-            <ellipse cx="35" cy="27" rx="10" ry="25" fill="currentColor" transform="rotate(-10 35 27)"/>
-            <ellipse cx="65" cy="27" rx="10" ry="25" fill="currentColor" transform="rotate(10 65 27)"/>
-            <ellipse cx="35" cy="28" rx="4.5" ry="17" fill="#fff" opacity=".5" transform="rotate(-10 35 28)"/>
-            <ellipse cx="65" cy="28" rx="4.5" ry="17" fill="#fff" opacity=".5" transform="rotate(10 65 28)"/>
-            <circle cx="50" cy="67" r="31" fill="currentColor"/>
-            <circle cx="39" cy="63" r="4.6" fill="#1e293b"/><circle cx="61" cy="63" r="4.6" fill="#1e293b"/>
-            <circle cx="40.4" cy="61.5" r="1.5" fill="#fff"/><circle cx="62.4" cy="61.5" r="1.5" fill="#fff"/>
-            <ellipse cx="50" cy="73" rx="4.5" ry="3.2" fill="#fff"/>
-            <rect x="45.5" y="78" width="9" height="8" rx="2" fill="#fff"/>
+        <symbol id="p-fish" viewBox="0 0 100 100">
+            <path d="M68 50 L96 26 L92 50 L96 74 Z" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+            <path d="M34 30 Q46 14 58 30 Z" fill="currentColor"/>
+            <ellipse cx="42" cy="50" rx="36" ry="24" fill="currentColor"/>
+            <path d="M52 34 Q60 50 52 66" stroke="#fff" stroke-opacity=".55" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <circle cx="24" cy="45" r="7.5" fill="#fff"/><circle cx="23" cy="45" r="3.8" fill="#1e293b"/>
+            <path d="M8 56 Q13 60 18 57" stroke="#1e293b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
         </symbol>
-        <symbol id="a-sheep" viewBox="0 0 100 100">
-            <ellipse cx="12" cy="58" rx="12" ry="6" fill="currentColor" transform="rotate(20 12 58)"/>
-            <ellipse cx="88" cy="58" rx="12" ry="6" fill="currentColor" transform="rotate(-20 88 58)"/>
+        <symbol id="p-tree" viewBox="0 0 100 100">
+            <rect x="42" y="56" width="16" height="40" rx="4" fill="currentColor"/>
+            <rect x="42" y="56" width="16" height="40" rx="4" fill="#1e293b" opacity=".35"/>
             <g fill="currentColor">
-                <circle cx="30" cy="28" r="15"/><circle cx="50" cy="20" r="16"/><circle cx="70" cy="28" r="15"/>
-                <circle cx="21" cy="46" r="14"/><circle cx="79" cy="46" r="14"/>
-                <circle cx="26" cy="66" r="12"/><circle cx="74" cy="66" r="12"/><circle cx="50" cy="42" r="22"/>
+                <circle cx="50" cy="32" r="26"/><circle cx="27" cy="48" r="20"/><circle cx="73" cy="48" r="20"/><circle cx="50" cy="54" r="20"/>
             </g>
-            <ellipse cx="50" cy="63" rx="20" ry="26" fill="#fff"/>
-            <circle cx="42" cy="58" r="4.2" fill="#1e293b"/><circle cx="58" cy="58" r="4.2" fill="#1e293b"/>
-            <path d="M45 73 Q50 78 55 73" stroke="#1e293b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+            <circle cx="36" cy="34" r="4.5" fill="#fff" opacity=".6"/><circle cx="64" cy="42" r="4.5" fill="#fff" opacity=".6"/><circle cx="48" cy="58" r="4.5" fill="#fff" opacity=".6"/>
         </symbol>
-        <symbol id="a-deer" viewBox="0 0 100 100">
-            <path d="M36 34 L25 9 M29 20 L14 15 M26 12 L32 3 M64 34 L75 9 M71 20 L86 15 M74 12 L68 3"
-                  stroke="currentColor" stroke-width="6.5" stroke-linecap="round" fill="none"/>
-            <ellipse cx="20" cy="47" rx="14" ry="7" fill="currentColor" transform="rotate(-25 20 47)"/>
-            <ellipse cx="80" cy="47" rx="14" ry="7" fill="currentColor" transform="rotate(25 80 47)"/>
-            <ellipse cx="50" cy="60" rx="26" ry="31" fill="currentColor"/>
-            <ellipse cx="50" cy="79" rx="16" ry="12" fill="#fff"/>
-            <ellipse cx="50" cy="75" rx="6.5" ry="4.5" fill="#1e293b"/>
-            <circle cx="40" cy="54" r="4.6" fill="#1e293b"/><circle cx="60" cy="54" r="4.6" fill="#1e293b"/>
-            <circle cx="41.4" cy="52.5" r="1.5" fill="#fff"/><circle cx="61.4" cy="52.5" r="1.5" fill="#fff"/>
+        <symbol id="p-umbrella" viewBox="0 0 100 100">
+            <path d="M50 48 L50 82 Q50 93 40 93 Q31 93 31 84" stroke="currentColor" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <path d="M5 52 Q50 -6 95 52 Q84 43 72.5 52 Q61 43 50 52 Q39 43 27.5 52 Q16 43 5 52 Z" fill="currentColor"/>
+            <path d="M50 10 Q38 30 27.5 50 M50 10 Q62 30 72.5 50" stroke="#fff" stroke-opacity=".55" stroke-width="3.5" fill="none"/>
+            <circle cx="50" cy="9" r="4" fill="currentColor"/>
         </symbol>
-        <symbol id="a-pig" viewBox="0 0 100 100">
-            <path d="M14 42 L10 6 L42 22 Z" fill="currentColor" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
-            <path d="M86 42 L90 6 L58 22 Z" fill="currentColor" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
-            <path d="M18 30 L17 15 L30 22 Z" fill="#1e293b" opacity=".25"/>
-            <path d="M82 30 L83 15 L70 22 Z" fill="#1e293b" opacity=".25"/>
-            <circle cx="50" cy="57" r="38" fill="currentColor"/>
-            <ellipse cx="50" cy="68" rx="20" ry="14" fill="currentColor" stroke="#fff" stroke-width="5"/>
-            <ellipse cx="43" cy="68" rx="3.6" ry="5.5" fill="#1e293b"/><ellipse cx="57" cy="68" rx="3.6" ry="5.5" fill="#1e293b"/>
-            <circle cx="35" cy="44" r="4.8" fill="#1e293b"/><circle cx="65" cy="44" r="4.8" fill="#1e293b"/>
-            <circle cx="36.5" cy="42.5" r="1.6" fill="#fff"/><circle cx="66.5" cy="42.5" r="1.6" fill="#fff"/>
+        <symbol id="p-kid" viewBox="0 0 100 100">
+            <path d="M12 100 Q12 66 50 66 Q88 66 88 100 Z" fill="currentColor"/>
+            <circle cx="50" cy="40" r="25" fill="currentColor"/>
+            <circle cx="50" cy="45" r="19" fill="#fff"/>
+            <path d="M26 38 Q34 18 50 22 Q66 18 74 38 Q62 30 50 32 Q38 30 26 38 Z" fill="currentColor"/>
+            <circle cx="43" cy="45" r="3.2" fill="#1e293b"/><circle cx="57" cy="45" r="3.2" fill="#1e293b"/>
+            <path d="M43 53 Q50 59 57 53" stroke="#1e293b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
         </symbol>
-        <symbol id="a-owl" viewBox="0 0 100 100">
-            <path d="M12 16 L32 32 Q50 25 68 32 L88 16 L86 58 Q82 95 50 95 Q18 95 14 58 Z" fill="currentColor" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
-            <circle cx="34" cy="52" r="15" fill="#fff"/><circle cx="66" cy="52" r="15" fill="#fff"/>
-            <circle cx="35" cy="53" r="7.5" fill="#1e293b"/><circle cx="65" cy="53" r="7.5" fill="#1e293b"/>
-            <circle cx="37" cy="50.5" r="2.4" fill="#fff"/><circle cx="67" cy="50.5" r="2.4" fill="#fff"/>
-            <path d="M44 67 L56 67 L50 78 Z" fill="#f59e0b"/>
+        <symbol id="p-car" viewBox="0 0 100 100">
+            <path d="M24 50 L34 27 Q36 23 41 23 L62 23 Q67 23 69 27 L80 50 Z" fill="currentColor"/>
+            <rect x="4" y="46" width="92" height="28" rx="10" fill="currentColor"/>
+            <path d="M31 48 L38 30 L48 30 L48 48 Z" fill="#fff"/>
+            <path d="M53 30 L63 30 L71 48 L53 48 Z" fill="#fff"/>
+            <rect x="85" y="53" width="8" height="6" rx="2" fill="#fff"/>
+            <circle cx="27" cy="76" r="11" fill="#1e293b"/><circle cx="73" cy="76" r="11" fill="#1e293b"/>
+            <circle cx="27" cy="76" r="4.5" fill="#fff"/><circle cx="73" cy="76" r="4.5" fill="#fff"/>
         </symbol>
     </defs>
 </svg>
@@ -1266,11 +1265,11 @@
                 <span>סגנון אריחים</span>
                 <div class="seg" id="segStyle">
                     <button data-v="shapes">🔷 צורות</button>
-                    <button data-v="animals">🐻 חיות</button>
+                    <button data-v="animals">🐱 ציורים</button>
                 </div>
             </div>
             <div class="set-row">
-                <span>ערכת צבעים<small id="themeNote">במצב חיות תמיד בהיר</small></span>
+                <span>ערכת צבעים<small id="themeNote">במצב ציורים תמיד בהיר</small></span>
                 <div class="seg" id="segTheme">
                     <button data-v="light">☀️ בהיר</button>
                     <button data-v="dark">🌙 כהה</button>
@@ -1415,15 +1414,16 @@
     });
 
     /* ============================
-       Style: shapes or animals
+       Style: shapes or pictures
 
-       The animals style swaps each shape for an animal head of the same
-       colour; the rules don't change. It is light-only: switching to it shows
+       The pictures style (stored as 'animals', the name it shipped with)
+       swaps each shape for a picture of the same colour and uses a softer,
+       natural palette; the rules don't change. It is light-only: switching to it shows
        the light theme and hides the moon, and switching back restores whatever
        theme the player had (klox_theme is never written while in animals).
        ============================ */
-    const ANIMAL_FOR = { square: 'bear', circle: 'cat', triangle: 'rabbit', diamond: 'sheep', hexagon: 'deer', star: 'pig', cross: 'owl' };
-    const ANIMAL_NAME = { bear: 'דוב', cat: 'חתול', rabbit: 'ארנב', sheep: 'כבשה', deer: 'אייל', pig: 'חזיר', owl: 'ינשוף' };
+    const ANIMAL_FOR = { square: 'house', circle: 'cat', triangle: 'fish', diamond: 'tree', hexagon: 'umbrella', star: 'kid', cross: 'car' };
+    const ANIMAL_NAME = { house: 'בית', cat: 'חתול', fish: 'דג', tree: 'עץ', umbrella: 'מטרייה', kid: 'ילד', car: 'מכונית' };
     const SHAPE_NAME = { square: 'ריבוע', circle: 'עיגול', triangle: 'משולש', diamond: 'מעוין', hexagon: 'משושה', star: 'כוכב', cross: 'פלוס' };
     let style = store.get('klox_style') === 'animals' ? 'animals' : 'shapes';
 
@@ -1489,8 +1489,9 @@
     const NEW_COLOR_NAME = { 4: 'צהוב', 5: 'סגול', 6: 'כתום', 7: 'אפור' };
     function newInSize(n) {
         const sh = ALL_SHAPES[n - 1];
-        let text = `צבע חדש: ${NEW_COLOR_NAME[n]} · `
-            + (style === 'animals' ? `חיה חדשה: ${ANIMAL_NAME[ANIMAL_FOR[sh]]}` : `צורה חדשה: ${SHAPE_NAME[sh]}`);
+        const colorName = style === 'animals' && n === 7 ? 'חום' : NEW_COLOR_NAME[n];
+        let text = `צבע חדש: ${colorName} · `
+            + (style === 'animals' ? `ציור חדש: ${ANIMAL_NAME[ANIMAL_FOR[sh]]}` : `צורה חדשה: ${SHAPE_NAME[sh]}`);
         if (n === 6) text += '\nבלוח 6×6 זוגות יכולים לחזור — רק שורות ועמודות צריכות להיות שונות.';
         if (n === 7) text += '\nהלוח הגדול ביותר — וכל זוג שוב חייב להיות ייחודי.';
         return text;
@@ -2155,7 +2156,7 @@
             shape.setAttribute('class', 'shape animal');
             shape.style.color = data.color; // the sprite paints with currentColor
             const use = document.createElementNS(NS, 'use');
-            use.setAttribute('href', '#a-' + ANIMAL_FOR[data.shape]);
+            use.setAttribute('href', '#p-' + ANIMAL_FOR[data.shape]);
             shape.appendChild(use);
         } else {
             shape = document.createElement('div');

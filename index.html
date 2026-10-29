@@ -373,6 +373,15 @@
             align-self: center;
             transition: 0.3s ease;
         }
+        .dot.clash {
+            background: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+            transform: scale(1.25);
+        }
+        .slot.clash {
+            border: 2px solid var(--danger);
+            background: color-mix(in srgb, var(--danger) 10%, var(--bg-slot));
+        }
         .dot.valid {
             background: var(--success);
             box-shadow: 0 0 10px var(--success);
@@ -921,6 +930,7 @@
         back()  { this.tone(740, { dur: 0.1, slideTo: 420, vol: 0.12 }); },
         select(){ this.tone(1040, { dur: 0.05, vol: 0.08 }); },
         nope()  { this.tone(220, { type: 'square', dur: 0.09, vol: 0.05 }); this.tone(185, { type: 'square', dur: 0.12, vol: 0.05, delay: 0.09 }); },
+        clash() { this.tone(330, { type: 'triangle', dur: 0.14, slideTo: 247, vol: 0.09 }); },
         tick()  { this.tone(1500, { dur: 0.03, vol: 0.04 }); },
         // Each line completed in quick succession chimes a step higher
         line(combo = 0) {
@@ -1245,6 +1255,7 @@
     let steps = 0;
     let gameOver = false;
     let validLines = new Set();
+    let clashLines = new Set();
     let popIndex = null;       // board index to animate on next render
     let lineCombo = 0;
     let lastLineAt = 0;
@@ -1545,6 +1556,7 @@
 
         shuffle(trayState);
         validLines = new Set();
+        clashLines = new Set();
         document.getElementById('traySlots').scrollLeft = 0;
         render(true);
         setPaused(false);
@@ -1919,25 +1931,56 @@
         return new Set(items.map(x => x.color)).size === N && new Set(items.map(x => x.shape)).size === N;
     }
 
+    // Board indices in a line that repeat a colour or a shape already in it.
+    function lineClashes(indices) {
+        const out = [];
+        for (const key of ['color', 'shape']) {
+            const seen = {};
+            indices.forEach(i => { const x = boardState[i]; if (x) (seen[x[key]] ||= []).push(i); });
+            Object.values(seen).forEach(list => { if (list.length > 1) out.push(...list); });
+        }
+        return out;
+    }
+
     function validateState(silent = false) {
         let rowsV = true, colsV = true;
         const nowValid = new Set();
+        const nowClash = new Set();
+        const clashTiles = new Set();
         const pairs = new Set();
         let filled = 0;
 
         for (let i = 0; i < N; i++) {
-            const row = [], col = [];
+            const rowIdx = [], colIdx = [];
             for (let k = 0; k < N; k++) {
-                row.push(boardState[i * N + k]);
-                col.push(boardState[k * N + i]);
+                rowIdx.push(i * N + k);
+                colIdx.push(k * N + i);
             }
-            const rv = lineOk(row);
-            const cv = lineOk(col);
-            document.getElementById(`dot-row-${i}`).className = 'dot' + (rv ? ' valid' : '');
-            document.getElementById(`dot-col-${i}`).className = 'dot' + (cv ? ' valid' : '');
+            const rv = lineOk(rowIdx.map(j => boardState[j]));
+            const cv = lineOk(colIdx.map(j => boardState[j]));
+            // A repeat shows red at once, before the line is full
+            const rc = lineClashes(rowIdx);
+            const cc = lineClashes(colIdx);
+            rc.forEach(j => clashTiles.add(j));
+            cc.forEach(j => clashTiles.add(j));
+            document.getElementById(`dot-row-${i}`).className = 'dot' + (rv ? ' valid' : rc.length ? ' clash' : '');
+            document.getElementById(`dot-col-${i}`).className = 'dot' + (cv ? ' valid' : cc.length ? ' clash' : '');
             if (rv) nowValid.add('r' + i); else rowsV = false;
             if (cv) nowValid.add('c' + i); else colsV = false;
+            if (rc.length) nowClash.add('r' + i);
+            if (cc.length) nowClash.add('c' + i);
         }
+
+        // Outline the clashing tiles — only where the guides are shown, like the dots
+        document.querySelectorAll('.slot.clash').forEach(s => s.classList.remove('clash'));
+        if (params.guides) {
+            clashTiles.forEach(j => document.querySelector(`.slot[data-index="${j}"]`)?.classList.add('clash'));
+        }
+        // A soft bonk when a move creates a new clash
+        if (!silent && params.guides && [...nowClash].some(k => !clashLines.has(k))) {
+            setTimeout(() => Sound.clash(), 60);
+        }
+        clashLines = nowClash;
         boardState.forEach(x => { if (x) { filled++; pairs.add(x.color + x.shape); } });
 
         const uniqV = !params.unique || (filled === N * N && pairs.size === N * N);

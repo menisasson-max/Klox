@@ -814,22 +814,118 @@
             100% { transform: scale(1) rotate(0); opacity: 1; }
         }
 
-        .ach-list {
+        /* Settings sheet */
+        .settings { text-align: start; padding: 18px 18px 14px; }
+        .set-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .set-head h2 { font-size: 1.3rem; font-weight: 800; }
+        .set-close { width: 34px; height: 34px; }
+        .set-stats {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 6px;
-            margin-bottom: 16px;
-            text-align: start;
+            margin-bottom: 14px;
         }
-        .ach {
-            font-size: 0.75rem;
-            padding: 6px 8px;
-            border-radius: 10px;
+        .set-stats div {
             background: var(--bg-slot);
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 8px 4px;
+            text-align: center;
         }
-        .ach.on { color: var(--text-main); border-color: var(--gold); }
+        .set-stats b { display: block; font-size: 1.15rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+        .set-stats span { font-size: 0.72rem; color: var(--text-muted); }
+        .set-section {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin: 12px 4px 6px;
+        }
+        .set-group {
+            background: var(--bg-slot);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .set-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            min-height: 52px;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+        }
+        .set-row + .set-row { border-top: 1px solid var(--border-color); }
+        .set-row small { display: block; font-size: 0.72rem; color: var(--text-muted); }
+        .seg {
+            display: flex;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 3px;
+            flex-shrink: 0;
+        }
+        .seg button {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font: inherit;
+            font-size: 0.85rem;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .seg button.on { background: var(--accent); color: #fff; font-weight: 700; }
+        .seg.disabled { opacity: 0.45; pointer-events: none; }
+        .switch {
+            position: relative;
+            width: 48px;
+            height: 28px;
+            flex-shrink: 0;
+            border: none;
+            border-radius: 14px;
+            background: var(--border-highlight);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            inset-inline-start: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            transition: inset-inline-start 0.2s ease;
+        }
+        .switch[aria-checked="true"] { background: var(--success); }
+        .switch[aria-checked="true"]::after { inset-inline-start: 23px; }
+        .set-action {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            min-height: 52px;
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-main);
+            font: inherit;
+            font-size: 0.95rem;
+            text-align: start;
+            cursor: pointer;
+        }
+        .set-action + .set-action { border-top: 1px solid var(--border-color); }
+        .set-action:active { background: var(--border-color); }
+        .set-action.danger { color: var(--danger); }
+        .set-action small { font-size: 0.72rem; color: var(--text-muted); }
+        .settings .btn { margin: 16px 0 0; }
 
         .btn {
             width: 100%;
@@ -1148,6 +1244,62 @@
     </div>
 </div>
 
+<!-- Settings -->
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal-content settings" role="dialog" aria-labelledby="setTitle">
+        <div class="set-head">
+            <h2 id="setTitle">הגדרות</h2>
+            <button class="icon-btn set-close" id="setClose" aria-label="סגור">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="set-stats">
+            <div><b id="setLevel">1</b><span>רמה</span></div>
+            <div><b id="setPoints">0</b><span>נקודות</span></div>
+            <div><b id="setNext">1,000</b><span>לרמה הבאה</span></div>
+        </div>
+
+        <div class="set-section">תצוגה</div>
+        <div class="set-group">
+            <div class="set-row">
+                <span>סגנון אריחים</span>
+                <div class="seg" id="segStyle">
+                    <button data-v="shapes">🔷 צורות</button>
+                    <button data-v="animals">🐻 חיות</button>
+                </div>
+            </div>
+            <div class="set-row">
+                <span>ערכת צבעים<small id="themeNote">במצב חיות תמיד בהיר</small></span>
+                <div class="seg" id="segTheme">
+                    <button data-v="light">☀️ בהיר</button>
+                    <button data-v="dark">🌙 כהה</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="set-section">צליל ומגע</div>
+        <div class="set-group">
+            <div class="set-row">
+                <span>צלילים</span>
+                <button class="switch" id="swSound" role="switch" aria-label="צלילים"></button>
+            </div>
+            <div class="set-row" id="rowVibe">
+                <span>רטט</span>
+                <button class="switch" id="swVibe" role="switch" aria-label="רטט"></button>
+            </div>
+        </div>
+
+        <div class="set-section">משחק</div>
+        <div class="set-group">
+            <button class="set-action" id="setSkip"><span>⏭ דלג על הלוח הזה</span><small>נחשב הפסד</small></button>
+            <button class="set-action danger" id="setReset"><span>🗑 איפוס כל ההתקדמות</span></button>
+        </div>
+
+        <button class="btn btn-primary" id="setDone">המשך לשחק</button>
+    </div>
+</div>
+
 <!-- Modal Dialog -->
 <div class="modal-overlay" id="dialogModal">
     <div class="modal-content" id="dialogContent">
@@ -1235,8 +1387,10 @@
         levelDown() { this.tone(520, { type: 'triangle', dur: 0.4, slideTo: 260, vol: 0.1 }); },
     };
 
+    const Vibe = { enabled: store.get('klox_vibrate') !== 'off' };
+
     function buzz(pattern) {
-        if (Sound.enabled && navigator.vibrate) navigator.vibrate(pattern);
+        if (Vibe.enabled && navigator.vibrate) navigator.vibrate(pattern);
     }
 
     /* ============================
@@ -1249,11 +1403,14 @@
         document.querySelector('meta[name="theme-color"]').content = light ? '#eef2f7' : '#0b1120';
     }
 
-    document.getElementById('themeBtn').addEventListener('click', () => {
-        const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    function setTheme(next) {
         document.documentElement.dataset.theme = next;
         store.set('klox_theme', next);
         applyThemeUI();
+    }
+
+    document.getElementById('themeBtn').addEventListener('click', () => {
+        setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
         Sound.select();
     });
 
@@ -1292,10 +1449,14 @@
         document.getElementById('icon-sound-off').style.display = Sound.enabled ? 'none' : 'block';
     }
 
-    document.getElementById('soundBtn').addEventListener('click', () => {
-        Sound.enabled = !Sound.enabled;
-        store.set('klox_sound', Sound.enabled ? 'on' : 'off');
+    function setSound(on) {
+        Sound.enabled = on;
+        store.set('klox_sound', on ? 'on' : 'off');
         applySoundUI();
+    }
+
+    document.getElementById('soundBtn').addEventListener('click', () => {
+        setSound(!Sound.enabled);
         Sound.select();
     });
 
@@ -1728,40 +1889,90 @@
         modal.style.display = 'flex';
     }
 
-    function achievementsHtml() {
-        return '<div class="ach-list">' + ACHIEVEMENTS.map(a => {
-            const on = progress.achievements.includes(a.id);
-            return `<div class="ach ${on ? 'on' : ''}">${on ? '🏅' : '🔒'} ${a.name}<br><small>${a.desc}</small></div>`;
-        }).join('') + '</div>';
+    /* ============================
+       Settings screen
+       ============================ */
+    let settingsWasPaused = false;
+    const $id = k => document.getElementById(k);
+
+    function refreshSettings() {
+        const li = levelInfo(progress.points);
+        $id('setLevel').innerText = li.L;
+        $id('setPoints').innerText = progress.points.toLocaleString();
+        $id('setNext').innerText = (li.need - li.into).toLocaleString();
+
+        $id('segStyle').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === style));
+        const theme = document.documentElement.dataset.theme;
+        $id('segTheme').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === theme));
+        $id('segTheme').classList.toggle('disabled', style === 'animals');
+        $id('themeNote').style.display = style === 'animals' ? '' : 'none';
+
+        $id('swSound').setAttribute('aria-checked', String(Sound.enabled));
+        $id('swVibe').setAttribute('aria-checked', String(Vibe.enabled));
+        $id('rowVibe').style.display = 'vibrate' in navigator ? '' : 'none';
     }
 
-    document.getElementById('settingsBtn').addEventListener('click', () => {
+    // reopen: back from a confirm, so the pause state from the first open still holds
+    function openSettings(reopen = false) {
         if (gameOver) return;
         cancelDrag();
-        const wasPaused = isPaused;
+        if (!reopen) settingsWasPaused = isPaused;
         if (!isPaused) setPaused(true);
-        const li = levelInfo(progress.points);
-        const msg = `רמה ${li.L} · ${progress.points.toLocaleString()} ⭐ · עוד ${(li.need - li.into).toLocaleString()} לרמה ${li.L + 1}\n`
-            + `רצף ניצחונות שיא: ${progress.bestWinStreak} · הישגים ${progress.achievements.length}/${ACHIEVEMENTS.length}`;
-        showDialog('הגדרות', msg, [
-            { label: 'המשך לשחק', cls: 'btn-primary', action: () => { if (!wasPaused) setPaused(false); } },
-            { label: style === 'animals' ? '🔷 עבור לצורות' : '🐻 עבור לחיות', cls: 'btn-secondary', action: () => {
-                setStyle(style === 'animals' ? 'shapes' : 'animals');
-                if (!wasPaused) setPaused(false);
+        refreshSettings();
+        $id('settingsModal').style.display = 'flex';
+    }
+
+    function closeSettings(resume = true) {
+        $id('settingsModal').style.display = 'none';
+        if (resume && !settingsWasPaused) setPaused(false);
+    }
+
+    $id('settingsBtn').addEventListener('click', () => { openSettings(); Sound.select(); });
+    $id('setClose').addEventListener('click', () => closeSettings());
+    $id('setDone').addEventListener('click', () => { closeSettings(); Sound.select(); });
+    // a tap on the dimmed background closes it too
+    $id('settingsModal').addEventListener('click', (e) => { if (e.target.id === 'settingsModal') closeSettings(); });
+
+    $id('segStyle').addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        setStyle(b.dataset.v);
+        Sound.select();
+        refreshSettings();
+    });
+    $id('segTheme').addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b || style === 'animals') return;
+        setTheme(b.dataset.v);
+        Sound.select();
+        refreshSettings();
+    });
+    $id('swSound').addEventListener('click', () => {
+        setSound(!Sound.enabled);
+        Sound.select();
+        refreshSettings();
+    });
+    $id('swVibe').addEventListener('click', () => {
+        Vibe.enabled = !Vibe.enabled;
+        store.set('klox_vibrate', Vibe.enabled ? 'on' : 'off');
+        buzz(20);
+        refreshSettings();
+    });
+    $id('setSkip').addEventListener('click', () => {
+        closeSettings(false);
+        endGame(false, true);
+    });
+    $id('setReset').addEventListener('click', () => {
+        closeSettings(false);
+        showDialog('לאפס הכול?', 'הרמה והנקודות יחזרו להתחלה.\nאי אפשר לבטל את זה.', [
+            { label: 'כן, לאפס', cls: 'btn-danger', action: () => {
+                progress = freshProgress();
+                level = 1;
+                saveProgress();
+                initLevel();
             } },
-            { label: 'קשה מדי — דלג (נחשב הפסד)', cls: 'btn-secondary', action: () => endGame(false, true) },
-            { label: 'איפוס התקדמות', cls: 'btn-danger', action: () => {
-                showDialog('לאפס הכול?', 'הרמה, הנקודות וההישגים יימחקו.', [
-                    { label: 'כן, לאפס', cls: 'btn-danger', action: () => {
-                        progress = freshProgress();
-                        level = 1;
-                        saveProgress();
-                        initLevel();
-                    } },
-                    { label: 'ביטול', cls: 'btn-secondary', action: () => { if (!wasPaused) setPaused(false); } },
-                ]);
-            } },
-        ], { extraHtml: achievementsHtml() });
+            { label: 'ביטול', cls: 'btn-secondary', action: () => openSettings(true) },
+        ]);
     });
 
     /* ============================

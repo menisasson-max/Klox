@@ -319,7 +319,7 @@
             flex: 1;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-end; /* on tall screens the board sits down by the thumb, over its tools */
             width: 100%;
             min-height: 0; /* Important for flex child to shrink properly */
             position: relative;
@@ -528,79 +528,127 @@
         }
 
         /* ============================
-           Tray Area — one row, scrolls sideways
+           Board tools: undo and reset, small, under the board
            ============================ */
-        .tray-container {
+        .board-tools {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-shrink: 0;
+            margin-top: -2px;
+        }
+        .tool-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
-            border-radius: 18px;
-            padding: 10px 0;
-            flex-shrink: 0;
+            color: var(--text-muted);
             display: flex;
-            flex-direction: column;
-            gap: 8px;
-            transition: border-color 0.15s ease;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.15s ease, opacity 0.2s ease;
+        }
+        .tool-btn:active:not(:disabled) { transform: scale(0.88); }
+        .tool-btn:disabled { opacity: 0.35; cursor: default; }
+        /* "back" points the way you read: rightward in Hebrew */
+        [dir="rtl"] .tool-btn .flip-rtl { transform: scaleX(-1); }
+
+        /* ============================
+           Tray — a wheel at the bottom of the screen. Only its top arc shows;
+           tiles further round sink out of sight. Spin it sideways, pull a
+           tile up to place it.
+           ============================ */
+        .tray-container {
+            position: relative;
+            flex-shrink: 0;
+            height: 132px;
+            margin: 0 -12px -10px; /* run to the screen edges and the bottom */
+            overflow: hidden;
+            touch-action: none; /* every gesture here is ours: spin or pick up */
         }
 
-        .tray-container.drop-ok { border: 2px dashed var(--accent); }
+        .wheel-disc {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 -6px 22px var(--shadow);
+            transition: border-color 0.15s ease;
+        }
+        /* faint spokes so the disc reads as something that turns */
+        .wheel-disc::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: repeating-conic-gradient(from var(--spin, 0rad), transparent 0 9deg, color-mix(in srgb, var(--border-color) 35%, transparent) 9deg 10deg);
+            -webkit-mask-image: radial-gradient(circle, transparent 0 calc(100% - 46px), #000 calc(100% - 45px));
+            mask-image: radial-gradient(circle, transparent 0 calc(100% - 46px), #000 calc(100% - 45px));
+        }
+        .tray-container.drop-ok .wheel-disc { border: 2px dashed var(--accent); }
 
         .tray-header {
+            position: absolute;
+            top: 4px;
+            left: 16px;
+            right: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.85rem;
-            font-weight: 700;
-            padding: 0 14px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            z-index: 2;
         }
-
-        .tray-header .hint { font-size: 0.72rem; font-weight: 500; color: var(--text-muted); }
 
         .tray-count {
             background: var(--bg-slot);
-            padding: 3px 10px;
+            padding: 2px 10px;
             border-radius: 12px;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             color: var(--text-muted);
+            border: 1px solid var(--border-color);
         }
 
-        .tray-slots {
-            display: flex;
-            flex-wrap: nowrap;
-            gap: 10px;
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding: 2px 14px;
-            min-height: 56px;
-            scroll-snap-type: x proximity;
-            scrollbar-width: none;
-            overscroll-behavior-x: contain;
-            /* fade the edges so a cut-off tile reads as "there is more" */
-            -webkit-mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
-            mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
-        }
-
-        .tray-slots::-webkit-scrollbar { display: none; }
+        .tray-slots { position: absolute; inset: 0; }
 
         .tray-slot {
-            flex-shrink: 0;
+            position: absolute;
+            left: 0;
+            top: 0;
             width: 52px;
             height: 52px;
+            margin: -26px 0 0 -26px; /* positioned by its centre */
             background: var(--bg-slot);
             border: 1px solid var(--border-color);
             border-radius: 14px;
-            position: relative;
             overflow: hidden;
-            scroll-snap-align: start;
+            will-change: transform;
         }
 
-        /* In the tray a sideways swipe scrolls; an upward drag picks the tile up */
-        .tray-slot .tile { touch-action: pan-x; --radius: 14px; --s: 50%; }
+        .tray-slot .tile { --radius: 14px; --s: 50%; }
+
+        /* Short screens: every pixel goes to the board */
+        @media (max-height: 760px) {
+            .app-container { gap: 7px; padding-top: 8px; }
+            header { padding: 6px 10px; }
+            .icon-btn { width: 34px; height: 34px; }
+            .tray-container { height: 112px; }
+            .board-tools { margin: -3px 0 -4px; gap: 22px; }
+            .tool-btn { width: 30px; height: 30px; }
+            .tool-btn svg { width: 15px; height: 15px; }
+        }
 
         .tray-empty {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 64px;
+            text-align: center;
             color: var(--text-muted);
             font-size: 0.8rem;
-            align-self: center;
-            margin: 0 auto;
         }
 
         /* ============================
@@ -858,11 +906,28 @@
         </div>
     </div>
 
-    <!-- Tray Area -->
+    <!-- Undo / reset -->
+    <div class="board-tools">
+        <button class="tool-btn" id="undoBtn" aria-label="בטל מהלך" title="בטל מהלך">
+            <svg class="flip-rtl" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 14 4 9l5-5"></path>
+                <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path>
+            </svg>
+        </button>
+        <button class="tool-btn" id="resetBtn" aria-label="אפס לוח" title="אפס לוח">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Tray wheel -->
     <div class="tray-container" id="trayContainer" data-drop="tray">
+        <div class="wheel-disc" id="wheelDisc"></div>
         <div class="tray-header">
-            <span>מגש אריחים <span class="hint" id="trayHint">· החלק לצדדים</span></span>
             <span class="tray-count" id="trayCountDisplay">0 נותרו</span>
+            <span id="trayHint">↔ סובב את הגלגל</span>
         </div>
         <div class="tray-slots" id="traySlots"></div>
     </div>
@@ -931,6 +996,7 @@
         select(){ this.tone(1040, { dur: 0.05, vol: 0.08 }); },
         nope()  { this.tone(220, { type: 'square', dur: 0.09, vol: 0.05 }); this.tone(185, { type: 'square', dur: 0.12, vol: 0.05, delay: 0.09 }); },
         clash() { this.tone(330, { type: 'triangle', dur: 0.14, slideTo: 247, vol: 0.09 }); },
+        click() { this.tone(2400, { type: 'triangle', dur: 0.025, vol: 0.035 }); },
         tick()  { this.tone(1500, { dur: 0.03, vol: 0.04 }); },
         // Each line completed in quick succession chimes a step higher
         line(combo = 0) {
@@ -1260,6 +1326,8 @@
     let lineCombo = 0;
     let lastLineAt = 0;
     let autoTimer = null;
+    let undoStack = [];        // snapshots before each move
+    let initialSnap = null;    // the board as dealt, for "reset board"
 
     /* ============================
        Timer
@@ -1555,9 +1623,11 @@
         minSteps = params.missing;
 
         shuffle(trayState);
+        initialSnap = snapshot();
+        undoStack = [];
+        wheelAngle = null; // centre the wheel on the middle tile
         validLines = new Set();
         clashLines = new Set();
-        document.getElementById('traySlots').scrollLeft = 0;
         render(true);
         setPaused(false);
         if (golden) { toast('✨ לוח זהב!', 'הנקודות על הלוח הזה כפולות'); Sound.coin(); }
@@ -1584,9 +1654,8 @@
     }
 
     function render(silent = false) {
-        // 1. Tray — keep its scroll position across re-renders
+        // 1. Tray wheel — the angle survives re-renders
         const trayEl = document.getElementById('traySlots');
-        const keepScroll = trayEl.scrollLeft;
         trayEl.innerHTML = '';
         trayState.forEach((item) => {
             const slot = document.createElement('div');
@@ -1605,9 +1674,9 @@
             empty.innerText = 'המגש ריק — גרור לכאן אריח כדי להחזיר אותו';
             trayEl.appendChild(empty);
         }
-        trayEl.scrollLeft = keepScroll;
         document.getElementById('trayCountDisplay').innerText = `${trayState.length} נותרו`;
-        document.getElementById('trayHint').style.visibility = trayEl.scrollWidth > trayEl.clientWidth + 2 ? 'visible' : 'hidden';
+        layoutWheel();
+        updateToolButtons();
 
         // 2. Board
         const grid = document.getElementById('boardGrid');
@@ -1662,15 +1731,160 @@
         validateState(silent);
     }
 
-    // A mouse wheel scrolls the tray sideways
-    document.getElementById('traySlots').addEventListener('wheel', (e) => {
-        const el = e.currentTarget;
-        if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) {
-            // in RTL a positive scrollLeft runs toward the start, so flip the wheel
-            el.scrollBy({ left: getComputedStyle(el).direction === 'rtl' ? -e.deltaY : e.deltaY });
-            e.preventDefault();
+    /* ============================
+       Tray wheel geometry
+
+       Tiles sit on a circle whose centre is far below the screen, so only a
+       shallow arc shows. Tile i is at angle wheelAngle + i·step from the top;
+       angle 0 is the top centre. The first tile is on the right (RTL), the
+       rest run leftward and down out of sight.
+       ============================ */
+    let wheelAngle = null;
+    let wheel = { R: 300, step: 0.2, cx: 0, cy: 0 };
+    let wheelAnim = null;
+    let wheelNearest = -1;
+    const WHEEL_PITCH = 64;    // px along the arc between tiles
+
+    function wheelMinAngle() {
+        return -Math.max(0, trayState.length - 1) * wheel.step;
+    }
+
+    function setWheelAngle(a) {
+        wheelAngle = Math.max(wheelMinAngle(), Math.min(0, a));
+        positionWheelTiles();
+        // a soft click each time a new tile reaches the top
+        const nearest = Math.round(-wheelAngle / wheel.step);
+        if (nearest !== wheelNearest) {
+            if (wheelNearest !== -1 && (drag?.mode === 'spin' || wheelAnim)) { Sound.click(); buzz(2); }
+            wheelNearest = nearest;
         }
+    }
+
+    function layoutWheel() {
+        const box = document.getElementById('trayContainer');
+        const W = box.clientWidth || 360;
+        const apexY = box.clientHeight - 60; // centre of the top tile, from the top of the tray
+        wheel.R = Math.max(240, Math.min(440, W * 0.85));
+        wheel.step = WHEEL_PITCH / wheel.R;
+        wheel.cx = W / 2;
+        wheel.cy = apexY + wheel.R;
+
+        const disc = document.getElementById('wheelDisc');
+        const dr = wheel.R + 44;
+        disc.style.width = disc.style.height = dr * 2 + 'px';
+        disc.style.left = (wheel.cx - dr) + 'px';
+        disc.style.top = (wheel.cy - dr) + 'px';
+
+        if (wheelAngle === null) wheelAngle = -Math.floor((trayState.length - 1) / 2) * wheel.step;
+        wheelNearest = -1;
+        setWheelAngle(wheelAngle);
+    }
+
+    function positionWheelTiles() {
+        const slots = document.querySelectorAll('#traySlots .tray-slot');
+        slots.forEach((slot, i) => {
+            const th = wheelAngle + i * wheel.step;
+            if (Math.abs(th) > 1.1) { slot.style.visibility = 'hidden'; return; }
+            slot.style.visibility = '';
+            const x = wheel.cx - wheel.R * Math.sin(th);
+            const y = wheel.cy - wheel.R * Math.cos(th);
+            // tiles near the top are a touch bigger, so the "current" one stands out
+            const sc = 1.08 - 0.22 * Math.min(1, Math.abs(th) / (wheel.step * 3));
+            slot.style.transform = `translate(${x}px, ${y}px) scale(${sc.toFixed(3)})`;
+        });
+        document.getElementById('wheelDisc').style.setProperty('--spin', (-wheelAngle) + 'rad');
+    }
+
+    function stopWheelMotion() {
+        if (wheelAnim) cancelAnimationFrame(wheelAnim);
+        wheelAnim = null;
+    }
+
+    // Coast with the release velocity (rad/ms), then settle with a tile on top.
+    function spinWheel(v) {
+        stopWheelMotion();
+        let last = performance.now();
+        const frame = (now) => {
+            const dt = Math.min(32, now - last);
+            last = now;
+            if (Math.abs(v) > 0.00004) {
+                const before = wheelAngle;
+                setWheelAngle(wheelAngle + v * dt);
+                if (wheelAngle === before) v = 0; // hit an end
+                v *= Math.pow(0.93, dt / 16);
+            } else {
+                const target = Math.round(wheelAngle / wheel.step) * wheel.step;
+                const d = target - wheelAngle;
+                if (Math.abs(d) < 0.0006) { setWheelAngle(target); wheelAnim = null; return; }
+                setWheelAngle(wheelAngle + d * 0.25);
+            }
+            wheelAnim = requestAnimationFrame(frame);
+        };
+        wheelAnim = requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', () => layoutWheel());
+
+    // A mouse wheel turns the tray wheel
+    document.getElementById('trayContainer').addEventListener('wheel', (e) => {
+        e.preventDefault();
+        stopWheelMotion();
+        setWheelAngle(wheelAngle - (e.deltaY || e.deltaX) / wheel.R * 0.6);
+        clearTimeout(e.currentTarget._settle);
+        e.currentTarget._settle = setTimeout(() => spinWheel(0), 120);
     }, { passive: false });
+
+    /* ============================
+       Undo & reset
+       ============================ */
+    function snapshot() {
+        return {
+            board: boardState.map(x => x && { ...x }),
+            tray: trayState.map(x => ({ ...x })),
+        };
+    }
+
+    function pushUndo() {
+        undoStack.push(snapshot());
+        if (undoStack.length > 300) undoStack.shift();
+    }
+
+    function restore(snap) {
+        boardState = snap.board.map(x => x && { ...x });
+        trayState = snap.tray.map(x => ({ ...x }));
+        clearSelection();
+    }
+
+    function updateToolButtons() {
+        document.getElementById('undoBtn').disabled = gameOver || undoStack.length === 0;
+        document.getElementById('resetBtn').disabled = gameOver || undoStack.length === 0;
+    }
+
+    document.getElementById('undoBtn').addEventListener('click', () => {
+        if (isPaused || gameOver || !undoStack.length) return;
+        cancelDrag();
+        restore(undoStack.pop());
+        steps++; // an undo is still a move, so it costs a little on stars
+        Sound.back();
+        render();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        if (isPaused || gameOver || !undoStack.length) return;
+        cancelDrag();
+        setPaused(true);
+        showDialog('לאפס את הלוח?', 'כל האריחים שהנחת יחזרו לגלגל.\nהשעון ממשיך מאותו מקום.', [
+            { label: 'כן, לאפס', cls: 'btn-danger', action: () => {
+                pushUndo(); // so an accidental reset can be undone
+                restore(initialSnap);
+                wheelAngle = null;
+                Sound.back();
+                setPaused(false);
+                render();
+            } },
+            { label: 'ביטול', cls: 'btn-secondary', action: () => setPaused(false) },
+        ]);
+    });
 
     /* ============================
        Moves (shared by tap and drag)
@@ -1678,6 +1892,7 @@
     function placeFromTray(id, index) {
         const tIdx = trayState.findIndex(t => t.id === id);
         if (tIdx < 0 || boardState[index]?.locked) return false;
+        pushUndo();
         const item = trayState.splice(tIdx, 1)[0];
         if (boardState[index]) trayState.push(boardState[index]); // occupant goes back
         boardState[index] = item;
@@ -1691,6 +1906,7 @@
     function moveOnBoard(from, to) {
         if (from === to) return false;
         if (boardState[to]?.locked || boardState[from]?.locked) return false;
+        pushUndo();
         const hadOccupant = !!boardState[to];
         [boardState[from], boardState[to]] = [boardState[to], boardState[from]];
         steps++;
@@ -1703,6 +1919,7 @@
     function returnToTray(index) {
         const item = boardState[index];
         if (!item || item.locked) return false;
+        pushUndo();
         boardState[index] = null;
         trayState.push(item);
         steps++;
@@ -1797,16 +2014,23 @@
     document.addEventListener('pointerdown', (e) => {
         if (isPaused || gameOver || e.button > 0 || drag) return;
         const tile = e.target.closest('.tile[data-src]');
-        if (!tile) return;
+        const inWheel = !!e.target.closest('#trayContainer');
+        if (!tile && !inWheel) return;
+        if (inWheel) stopWheelMotion();
         drag = {
-            src: tile.dataset.src,
-            id: tile.dataset.id,
-            index: tile.dataset.index !== undefined ? +tile.dataset.index : null,
+            src: tile ? tile.dataset.src : null,
+            id: tile ? tile.dataset.id : null,
+            index: tile && tile.dataset.index !== undefined ? +tile.dataset.index : null,
             el: tile,
+            inWheel,
+            mode: null, // decided on the first real movement: 'spin' or 'tile'
             pointerId: e.pointerId,
-            pointerType: e.pointerType,
             startX: e.clientX,
             startY: e.clientY,
+            startAngle: wheelAngle,
+            lastX: e.clientX,
+            lastT: performance.now(),
+            vel: 0,
             ghost: null,
             target: null,
         };
@@ -1814,25 +2038,33 @@
 
     document.addEventListener('pointermove', (e) => {
         if (!drag || e.pointerId !== drag.pointerId) return;
-        if (!drag.ghost) {
-            const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+        const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+        if (!drag.mode) {
             if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
-            // A mouse dragging sideways in the tray means "scroll", like a finger would
-            if (drag.src === 'tray' && drag.pointerType === 'mouse' && Math.abs(dx) > Math.abs(dy) * 1.5) {
-                const tray = document.getElementById('traySlots');
-                if (tray.scrollWidth > tray.clientWidth) {
-                    drag.scrolling = true;
-                    tray.scrollLeft -= e.movementX;
-                    return;
-                }
-            }
-            if (drag.scrolling) {
-                document.getElementById('traySlots').scrollLeft -= e.movementX;
+            if (drag.inWheel && (!drag.el || Math.abs(dx) > Math.abs(dy) || dy > 0)) {
+                // sideways (or downward) on the wheel turns it
+                drag.mode = 'spin';
+            } else if (drag.el) {
+                // upward from the wheel, or anything on the board, picks the tile up
+                drag.mode = 'tile';
+                startDragVisual();
+            } else {
+                drag = null;
                 return;
             }
-            startDragVisual();
         }
         e.preventDefault();
+
+        if (drag.mode === 'spin') {
+            const now = performance.now();
+            setWheelAngle(drag.startAngle - dx / wheel.R);
+            const inst = -(e.clientX - drag.lastX) / wheel.R / Math.max(1, now - drag.lastT);
+            drag.vel = 0.6 * inst + 0.4 * drag.vel;
+            drag.lastX = e.clientX;
+            drag.lastT = now;
+            return;
+        }
+
         drag.ghost.style.left = e.clientX + 'px';
         drag.ghost.style.top = e.clientY + 'px';
         updateDropTarget(e.clientX, e.clientY);
@@ -1840,16 +2072,27 @@
 
     document.addEventListener('pointerup', (e) => {
         if (!drag || e.pointerId !== drag.pointerId) return;
-        if (drag.scrolling) { drag = null; suppressClickUntil = performance.now() + 300; return; }
-        if (!drag.ghost) { drag = null; return; } // a tap — the click handler takes it
+        if (!drag.mode) { // a tap — the click handler takes it
+            const wasWheel = drag.inWheel;
+            drag = null;
+            if (wasWheel) spinWheel(0); // settle if a tap interrupted a coast
+            return;
+        }
+        suppressClickUntil = performance.now() + 300;
+        if (drag.mode === 'spin') {
+            // a finger that stopped before lifting does not fling
+            const v = performance.now() - drag.lastT > 80 ? 0 : drag.vel;
+            drag = null;
+            spinWheel(v);
+            return;
+        }
         const target = drag.target;
         const d = drag;
         cancelDrag();
-        suppressClickUntil = performance.now() + 300;
         performDrop(d, target);
     });
 
-    // The browser took the gesture (a sideways swipe scrolling the tray)
+    // The browser or the system took the gesture
     document.addEventListener('pointercancel', (e) => {
         if (drag && e.pointerId === drag.pointerId) cancelDrag();
     });
@@ -1918,7 +2161,8 @@
     function cancelDrag() {
         if (!drag) return;
         if (drag.ghost) drag.ghost.remove();
-        drag.el.classList.remove('drag-origin');
+        if (drag.el) drag.el.classList.remove('drag-origin');
+        if (drag.mode === 'spin') spinWheel(0);
         clearDropHighlights();
         drag = null;
     }
@@ -2069,6 +2313,7 @@
         gameOver = true;
         cancelDrag();
         clearInterval(timerInterval);
+        updateToolButtons();
 
         const stats = {
             timeFrac: (totalTime - timeLeft) / totalTime,

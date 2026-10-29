@@ -30,14 +30,20 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
 
+            /* Tile colours, introduced in this order as the board grows */
             --color-red: #f43f5e;
             --color-blue: #38bdf8;
             --color-green: #10b981;
+            --color-yellow: #facc15;
+            --color-purple: #a78bfa;
+            --color-orange: #fb923c;
+            --color-white: #e2e8f0;
 
             --accent: #3b82f6;
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
+            --gold: #fbbf24;
 
             --shadow: rgba(0, 0, 0, 0.35);
             --overlay: rgba(0, 0, 0, 0.7);
@@ -57,11 +63,16 @@
             --color-red: #e11d48;
             --color-blue: #0284c7;
             --color-green: #059669;
+            --color-yellow: #ca8a04;
+            --color-purple: #7c3aed;
+            --color-orange: #ea580c;
+            --color-white: #475569;
 
             --accent: #2563eb;
             --success: #059669;
             --danger: #dc2626;
             --warning: #d97706;
+            --gold: #d97706;
 
             --shadow: rgba(15, 23, 42, 0.15);
             --overlay: rgba(15, 23, 42, 0.45);
@@ -77,6 +88,8 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+
         body {
             background-color: var(--bg-base);
             color: var(--text-main);
@@ -85,20 +98,21 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
+        /* The page never scrolls: the board takes whatever height is left. */
         .app-container {
             display: flex;
             flex-direction: column;
             width: 100%;
             max-width: 500px;
             height: 100%;
-            padding: 12px;
-            gap: 14px;
+            padding: 10px 12px;
+            gap: 10px;
+            min-height: 0;
         }
 
         /* ============================
@@ -112,7 +126,7 @@
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 10px 12px;
+            padding: 8px 10px;
             flex-shrink: 0;
             box-shadow: 0 4px 6px -1px var(--shadow);
         }
@@ -127,8 +141,8 @@
             background: var(--bg-slot);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -148,15 +162,14 @@
             align-items: center;
             background: var(--bg-slot);
             border: 1px solid var(--border-color);
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 12px;
             position: relative;
-            min-width: 76px;
+            min-width: 70px;
         }
 
-        .level-badge span { font-size: 0.7rem; color: var(--text-muted); }
-        .level-badge strong { font-size: 1.25rem; color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums; }
-        .level-badge .peak { font-size: 0.65rem; }
+        .level-badge span { font-size: 0.65rem; color: var(--text-muted); }
+        .level-badge strong { font-size: 1.15rem; color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
         .level-badge.up { animation: badgeUp 0.9s ease; }
         .level-badge.down { animation: badgeDown 0.9s ease; }
 
@@ -197,24 +210,30 @@
             align-items: flex-start;
         }
 
-        .app-title strong { font-size: 1.2rem; display: flex; align-items: center; gap: 6px; }
-        .app-title span { font-size: 0.75rem; color: var(--text-muted); }
+        .app-title strong { font-size: 1.15rem; }
+        .app-title span { font-size: 0.72rem; color: var(--text-muted); }
 
         .status-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 8px;
+            padding: 0 6px;
             flex-shrink: 0;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             color: var(--text-muted);
+            gap: 8px;
         }
+
+        .status-bar .stat { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .status-bar .stat b { color: var(--text-main); font-variant-numeric: tabular-nums; }
+        .status-bar .stat.streak b { color: var(--warning); }
+        .status-bar .stat.bump { animation: pop 0.4s ease; }
 
         .timer {
             font-variant-numeric: tabular-nums;
             font-weight: 700;
             color: var(--text-main);
-            font-size: 1.1rem;
+            font-size: 1.05rem;
         }
         .timer.danger { color: var(--danger); animation: pulse 1s infinite; }
 
@@ -224,33 +243,67 @@
         }
 
         /* ============================
+           Goal strip: the next milestone, always one board away
+           ============================ */
+        .goal-strip {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 0 6px;
+        }
+        .goal-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .goal-text b { color: var(--text-main); }
+        .goal-text .done { color: var(--success); font-weight: 700; }
+        .bar {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-slot);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            transition: width 0.8s cubic-bezier(.2,.8,.3,1);
+        }
+
+        /* ============================
            Chips (Rules)
            ============================ */
         .chips {
             display: flex;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             flex-shrink: 0;
         }
 
         .chip {
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
-            padding: 6px 14px;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             display: flex;
             align-items: center;
             gap: 6px;
             color: var(--text-muted);
             transition: 0.3s ease;
+            white-space: nowrap;
         }
 
         .chip::before {
             content: '';
             display: block;
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             background: var(--border-color);
             transition: 0.3s ease;
@@ -274,14 +327,26 @@
         }
 
         .board-container {
+            --gap: 10px; --pad: 16px; --radius: 14px; --s: 45%; --dot-track: 22px; --lock: 14px; --tile-border: 3px;
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 16px;
-            width: min(100cqw, 100cqh, 400px);
+            border-radius: 22px;
+            padding: var(--pad);
+            width: min(100cqw, 100cqh, 460px);
             aspect-ratio: 1 / 1;
             box-shadow: 0 10px 30px var(--shadow);
-            transition: filter 0.3s ease;
+            transition: filter 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Bigger boards: tighter gaps, bigger shapes in smaller tiles */
+        .board-container.size-4 { --gap: 8px; --pad: 13px; --radius: 12px; --s: 50%; --dot-track: 18px; --lock: 12px; }
+        .board-container.size-5 { --gap: 6px; --pad: 11px; --radius: 10px; --s: 56%; --dot-track: 16px; --lock: 10px; --tile-border: 2px; }
+        .board-container.size-6 { --gap: 5px; --pad: 9px; --radius: 9px; --s: 60%; --dot-track: 14px; --lock: 9px; --tile-border: 2px; }
+        .board-container.size-7 { --gap: 4px; --pad: 8px; --radius: 8px; --s: 62%; --dot-track: 12px; --lock: 8px; --tile-border: 2px; }
+
+        .board-container.golden {
+            border: 2px solid var(--gold);
+            box-shadow: 0 0 24px color-mix(in srgb, var(--gold) 45%, transparent), 0 10px 30px var(--shadow);
         }
 
         .board-container.paused {
@@ -289,13 +354,10 @@
             pointer-events: none;
         }
 
-        /* CSS Grid strictly dividing the space for dots and slots */
-        /* RTL: 24px track for dots on the LEFT (column 4) */
+        /* N columns of slots plus a narrow track for the row dots (on the left in RTL) */
         .board-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 24px;
-            grid-template-rows: 24px 1fr 1fr 1fr;
-            gap: 10px;
+            gap: var(--gap);
             width: 100%;
             height: 100%;
         }
@@ -303,8 +365,8 @@
         .board-grid.no-guides .dot { visibility: hidden; }
 
         .dot {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             background: var(--border-color);
             justify-self: center;
@@ -314,7 +376,7 @@
         .dot.valid {
             background: var(--success);
             box-shadow: 0 0 10px var(--success);
-            transform: scale(1.2);
+            transform: scale(1.25);
         }
 
         /* ============================
@@ -324,11 +386,13 @@
             width: 100%;
             height: 100%;
             background: var(--bg-slot);
-            border-radius: 14px;
+            border-radius: var(--radius);
             border: 1px solid var(--border-color);
             position: relative; /* Anchor for absolute children */
             overflow: hidden; /* Prevent ANY visual escape */
             transition: border-color 0.15s ease, background-color 0.15s ease;
+            min-width: 0;
+            min-height: 0;
         }
 
         .slot.locked {
@@ -353,11 +417,11 @@
             justify-content: center;
             align-items: center;
             cursor: grab;
-            border-radius: 14px;
-            border: 3px solid transparent;
+            border-radius: var(--radius, 14px);
+            border: var(--tile-border, 3px) solid transparent;
             transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
             box-sizing: border-box;
-            touch-action: none; /* lets a finger drag the tile instead of scrolling */
+            touch-action: none; /* on the board a finger drags the tile, never scrolls */
         }
 
         .tile.locked-tile { cursor: default; }
@@ -373,6 +437,7 @@
         .tile.drag-origin { opacity: 0.25; }
         .tile.pop { animation: pop 0.28s ease; }
         .tile.shake { animation: shake 0.35s ease; }
+        .slot.shake { animation: shake 0.35s ease; }
 
         @keyframes pop {
             0% { transform: scale(0.6); }
@@ -387,6 +452,7 @@
         }
 
         .drag-ghost {
+            --s: 50%;
             position: fixed;
             z-index: 200;
             pointer-events: none;
@@ -398,15 +464,14 @@
             border: 2px solid var(--accent);
             box-shadow: 0 12px 28px var(--shadow);
             transform: translate(-50%, -50%) scale(1.12) rotate(-4deg);
-            transition: transform 0.12s ease;
         }
 
         .lock-svg {
             position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 14px;
-            height: 14px;
+            top: 12%;
+            right: 12%;
+            width: var(--lock);
+            height: var(--lock);
             stroke: var(--text-muted);
             fill: none;
             stroke-width: 2;
@@ -419,34 +484,52 @@
            Shapes (Pure CSS)
            ============================ */
         .shape {
-            width: 45%;
-            height: 45%;
+            width: var(--s, 45%);
+            height: var(--s, 45%);
         }
 
-        .shape.square { border-radius: 8px; }
-
+        .shape.square { border-radius: 18%; }
         .shape.circle { border-radius: 50%; }
 
+        /* Pointed shapes read smaller than their box, so they get a little more of it */
         .shape.triangle {
-            width: 52%;
-            height: 52%;
+            width: calc(var(--s, 45%) + 8%);
+            height: calc(var(--s, 45%) + 8%);
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-            /* Background color injected via inline style */
+        }
+        .shape.diamond {
+            width: calc(var(--s, 45%) + 10%);
+            height: calc(var(--s, 45%) + 10%);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        }
+        .shape.hexagon {
+            width: calc(var(--s, 45%) + 6%);
+            height: calc(var(--s, 45%) + 6%);
+            clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+        }
+        .shape.cross {
+            width: calc(var(--s, 45%) + 6%);
+            height: calc(var(--s, 45%) + 6%);
+            clip-path: polygon(33% 0%, 67% 0%, 67% 33%, 100% 33%, 100% 67%, 67% 67%, 67% 100%, 33% 100%, 33% 67%, 0% 67%, 0% 33%, 33% 33%);
+        }
+        .shape.star {
+            width: calc(var(--s, 45%) + 14%);
+            height: calc(var(--s, 45%) + 14%);
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
         }
 
         /* ============================
-           Tray Area
+           Tray Area — one row, scrolls sideways
            ============================ */
         .tray-container {
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 14px;
+            border-radius: 18px;
+            padding: 10px 0;
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-bottom: 8px;
+            gap: 8px;
             transition: border-color 0.15s ease;
         }
 
@@ -456,42 +539,59 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 700;
+            padding: 0 14px;
         }
+
+        .tray-header .hint { font-size: 0.72rem; font-weight: 500; color: var(--text-muted); }
 
         .tray-count {
             background: var(--bg-slot);
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 12px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
         }
 
-        /* Wraps instead of scrolling: a sideways-scrolling tray fights with dragging. */
         .tray-slots {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            flex-wrap: nowrap;
             gap: 10px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 2px 14px;
             min-height: 56px;
+            scroll-snap-type: x proximity;
+            scrollbar-width: none;
+            overscroll-behavior-x: contain;
+            /* fade the edges so a cut-off tile reads as "there is more" */
+            -webkit-mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+            mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
         }
+
+        .tray-slots::-webkit-scrollbar { display: none; }
 
         .tray-slot {
             flex-shrink: 0;
-            width: 56px;
-            aspect-ratio: 1 / 1;
+            width: 52px;
+            height: 52px;
             background: var(--bg-slot);
             border: 1px solid var(--border-color);
             border-radius: 14px;
             position: relative;
             overflow: hidden;
+            scroll-snap-align: start;
         }
+
+        /* In the tray a sideways swipe scrolls; an upward drag picks the tile up */
+        .tray-slot .tile { touch-action: pan-x; --radius: 14px; --s: 50%; }
 
         .tray-empty {
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             align-self: center;
+            margin: 0 auto;
         }
 
         /* ============================
@@ -511,30 +611,43 @@
         .modal-content {
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
-            padding: 24px;
+            padding: 22px;
             border-radius: 24px;
-            width: 85%;
-            max-width: 340px;
+            width: 88%;
+            max-width: 350px;
+            max-height: 90dvh;
+            overflow-y: auto;
             text-align: center;
             box-shadow: 0 20px 40px var(--shadow);
             animation: pop 0.25s ease;
         }
 
-        .modal-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 12px; }
-        .modal-msg { font-size: 1rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; white-space: pre-line; }
+        .modal-title { font-size: 1.35rem; font-weight: 800; margin-bottom: 10px; }
+        .modal-msg { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; white-space: pre-line; }
+
+        .stars { font-size: 2rem; letter-spacing: 6px; margin-bottom: 8px; }
+        .stars span { display: inline-block; opacity: 0.2; filter: grayscale(1); }
+        .stars span.on { opacity: 1; filter: none; animation: starIn 0.45s cubic-bezier(.3,1.6,.5,1) backwards; }
+        @keyframes starIn { from { transform: scale(0) rotate(-90deg); } to { transform: scale(1) rotate(0); } }
+
+        .reward {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .reward b { color: var(--gold); font-size: 1.1rem; }
 
         .level-change {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
+            gap: 6px;
+            margin-bottom: 18px;
             font-weight: 800;
-            font-size: 1.15rem;
             font-variant-numeric: tabular-nums;
         }
-        .level-change .nums { white-space: nowrap; font-size: 1.3rem; }
+        .level-change .nums { white-space: nowrap; font-size: 1.25rem; }
         .level-change .tag {
             font-size: 0.8rem;
             font-weight: 700;
@@ -547,9 +660,26 @@
         .level-change .tag.ceiling { color: var(--accent); }
         .level-change .tag.drop { color: var(--danger); }
 
+        .ach-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 16px;
+            text-align: start;
+        }
+        .ach {
+            font-size: 0.75rem;
+            padding: 6px 8px;
+            border-radius: 10px;
+            background: var(--bg-slot);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+        .ach.on { color: var(--text-main); border-color: var(--gold); }
+
         .btn {
             width: 100%;
-            padding: 14px;
+            padding: 13px;
             border: none;
             border-radius: 14px;
             font-size: 1rem;
@@ -558,6 +688,8 @@
             color: white;
             transition: 0.2s ease;
             margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
         }
 
         .btn:active { transform: scale(0.96); }
@@ -565,9 +697,52 @@
         .btn-secondary { background: var(--bg-slot); color: var(--text-main); border: 1px solid var(--border-color); }
         .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
 
+        /* The "next board" button fills up and presses itself */
+        .btn.auto::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.22);
+            transform-origin: right;
+            animation: autoFill var(--auto-ms, 3000ms) linear forwards;
+        }
+        @keyframes autoFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
         /* ============================
-           Confetti
+           Toasts & Confetti
            ============================ */
+        .toasts {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            pointer-events: none;
+            width: max-content;
+            max-width: 92vw;
+        }
+        .toast {
+            background: var(--bg-surface);
+            border: 1px solid var(--gold);
+            color: var(--text-main);
+            border-radius: 14px;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            box-shadow: 0 8px 24px var(--shadow);
+            animation: toastIn 2.8s ease forwards;
+        }
+        .toast small { display: block; font-weight: 500; color: var(--text-muted); font-size: 0.75rem; }
+        @keyframes toastIn {
+            0% { opacity: 0; transform: translateY(-16px) scale(0.9); }
+            10%, 85% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+
         .confetti {
             position: fixed;
             top: 40%;
@@ -585,48 +760,48 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after { animation: none !important; transition: none !important; }
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition: none !important; }
         }
     </style>
 </head>
 <body>
+
+<div class="toasts" id="toasts"></div>
 
 <div class="app-container">
     <!-- Header -->
     <header>
         <div class="header-actions">
             <button class="icon-btn" id="settingsBtn" aria-label="הגדרות">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                 </svg>
             </button>
             <button class="icon-btn" id="pauseBtn" aria-label="השהה/המשך">
-                <svg id="icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="icon-pause" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="6" y="4" width="4" height="16"></rect>
                     <rect x="14" y="4" width="4" height="16"></rect>
                 </svg>
-                <svg id="icon-play" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="icon-play" style="display: none;" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
             </button>
             <button class="icon-btn" id="themeBtn" aria-label="מצב כהה/בהיר">
-                <!-- Sun: shown in dark mode (tap for light) -->
-                <svg id="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="icon-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="4"></circle>
                     <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
                 </svg>
-                <!-- Moon: shown in light mode (tap for dark) -->
-                <svg id="icon-moon" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="icon-moon" style="display: none;" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </button>
             <button class="icon-btn" id="soundBtn" aria-label="צלילים">
-                <svg id="icon-sound-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="icon-sound-on" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
                 </svg>
-                <svg id="icon-sound-off" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="icon-sound-off" style="display: none;" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                     <line x1="23" y1="9" x2="17" y2="15"></line>
                     <line x1="17" y1="9" x2="23" y2="15"></line>
@@ -634,9 +809,8 @@
             </button>
         </div>
         <div class="level-badge" id="levelBadge">
-            <span>מדד רמה</span>
+            <span>רמה · שיא <span id="peakDisplay">1.0</span></span>
             <strong id="levelDisplay">1.0</strong>
-            <span class="peak">שיא <span id="peakDisplay">1.0</span></span>
         </div>
         <div class="app-title">
             <strong>קלוקס</strong>
@@ -646,9 +820,19 @@
 
     <!-- Status Bar -->
     <div class="status-bar">
-        <span>לוח 3x3</span>
-        <span>זמן שנותר: <span class="timer" id="timerDisplay">02:00</span></span>
-        <span>צעדים: <span id="stepsDisplay">0</span></span>
+        <span class="stat">לוח <b id="sizeDisplay">3×3</b></span>
+        <span class="stat">⏱ <span class="timer" id="timerDisplay">02:00</span></span>
+        <span class="stat streak" id="streakStat" title="ימים ברצף">🔥 <b id="streakDisplay">0</b></span>
+        <span class="stat" id="xpStat" title="נקודות">⭐ <b id="xpDisplay">0</b></span>
+    </div>
+
+    <!-- Goal strip -->
+    <div class="goal-strip">
+        <div class="goal-text">
+            <span id="goalLabel">בדרך ללוח 4×4</span>
+            <span id="dailyLabel">יעד יומי 0/5</span>
+        </div>
+        <div class="bar"><div class="bar-fill" id="goalFill"></div></div>
     </div>
 
     <!-- Rule Chips -->
@@ -661,21 +845,17 @@
     <!-- Board Area -->
     <div class="board-wrapper">
         <div class="board-container" id="boardContainer">
-            <div class="board-grid" id="boardGrid">
-                <!-- Generated by JS -->
-            </div>
+            <div class="board-grid" id="boardGrid"></div>
         </div>
     </div>
 
     <!-- Tray Area -->
     <div class="tray-container" id="trayContainer" data-drop="tray">
         <div class="tray-header">
-            <span>מגש אריחים</span>
+            <span>מגש אריחים <span class="hint" id="trayHint">· החלק לצדדים</span></span>
             <span class="tray-count" id="trayCountDisplay">0 נותרו</span>
         </div>
-        <div class="tray-slots" id="traySlots">
-            <!-- Generated by JS -->
-        </div>
+        <div class="tray-slots" id="traySlots"></div>
     </div>
 </div>
 
@@ -683,8 +863,9 @@
 <div class="modal-overlay" id="dialogModal">
     <div class="modal-content" id="dialogContent">
         <h2 class="modal-title" id="dialogTitle">הודעה</h2>
+        <div class="stars" id="dialogStars" style="display: none;"></div>
         <p class="modal-msg" id="dialogMessage"></p>
-        <div class="level-change" id="dialogLevel" style="display: none;"></div>
+        <div id="dialogExtra"></div>
         <div id="dialogButtons"></div>
     </div>
 </div>
@@ -741,11 +922,18 @@
         select(){ this.tone(1040, { dur: 0.05, vol: 0.08 }); },
         nope()  { this.tone(220, { type: 'square', dur: 0.09, vol: 0.05 }); this.tone(185, { type: 'square', dur: 0.12, vol: 0.05, delay: 0.09 }); },
         tick()  { this.tone(1500, { dur: 0.03, vol: 0.04 }); },
-        line()  { [784, 988, 1175].forEach((f, i) => this.tone(f, { dur: 0.16, vol: 0.1, delay: i * 0.06 })); },
+        // Each line completed in quick succession chimes a step higher
+        line(combo = 0) {
+            const k = Math.pow(2, Math.min(combo, 8) * 2 / 12);
+            [784, 988, 1175].forEach((f, i) => this.tone(f * k, { dur: 0.16, vol: 0.1, delay: i * 0.06 }));
+        },
         win()   {
             [523, 659, 784, 1047].forEach((f, i) => this.tone(f, { type: 'triangle', dur: 0.22, vol: 0.14, delay: i * 0.09 }));
             [1568, 2093, 2637].forEach((f, i) => this.tone(f, { dur: 0.12, vol: 0.05, delay: 0.42 + i * 0.07 }));
         },
+        star(i) { this.tone(1046 * Math.pow(2, i * 4 / 12), { dur: 0.18, vol: 0.09 }); },
+        coin()  { this.tone(988, { type: 'square', dur: 0.06, vol: 0.04 }); this.tone(1319, { type: 'square', dur: 0.16, vol: 0.04, delay: 0.06 }); },
+        unlock(){ [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => this.tone(f, { type: 'triangle', dur: 0.2, vol: 0.12, delay: i * 0.07 })); },
         lose()  { [523, 440, 349].forEach((f, i) => this.tone(f, { type: 'triangle', dur: 0.25, vol: 0.12, delay: i * 0.14 })); },
         levelUp()   { this.tone(440, { dur: 0.35, slideTo: 1320, vol: 0.1 }); this.tone(1760, { dur: 0.15, vol: 0.05, delay: 0.3 }); },
         levelDown() { this.tone(520, { type: 'triangle', dur: 0.4, slideTo: 260, vol: 0.1 }); },
@@ -786,9 +974,90 @@
     });
 
     /* ============================
-       Adaptive difficulty
+       Toasts
+       ============================ */
+    function toast(title, sub = '') {
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.innerText = title;
+        if (sub) {
+            const s = document.createElement('small');
+            s.innerText = sub;
+            el.appendChild(s);
+        }
+        document.getElementById('toasts').appendChild(el);
+        setTimeout(() => el.remove(), 2900);
+    }
 
-       The level is a continuous rating from 1.0 to 10.0. After every board:
+    /* ============================
+       Board sizes
+
+       The board grows with the level: 3×3 up to 7×7. Each size adds one
+       colour and one shape. 3, 4, 5 and 7 keep all three rules. 6×6 drops
+       "every pair unique": no two orthogonal 6×6 Latin squares exist (Euler's
+       36 officers), so no 6×6 board can satisfy it.
+       ============================ */
+    const ALL_COLORS = ['var(--color-red)', 'var(--color-blue)', 'var(--color-green)', 'var(--color-yellow)', 'var(--color-purple)', 'var(--color-orange)', 'var(--color-white)'];
+    const ALL_SHAPES = ['square', 'circle', 'triangle', 'diamond', 'hexagon', 'star', 'cross'];
+    const NEW_IN_SIZE = {
+        4: 'צבע חדש: צהוב · צורה חדשה: מעוין',
+        5: 'צבע חדש: סגול · צורה חדשה: משושה',
+        6: 'צבע חדש: כתום · צורה חדשה: כוכב\nבלוח 6×6 זוגות יכולים לחזור — רק שורות ועמודות צריכות להיות שונות.',
+        7: 'צבע חדש: אפור · צורה חדשה: פלוס\nהלוח הגדול ביותר — וכל זוג שוב חייב להיות ייחודי.',
+    };
+
+    // Each size owns a stretch of the level scale; within it, t runs 0 → 1.
+    const SIZE_BANDS = [
+        { N: 3, from: 1.0 },
+        { N: 4, from: 3.0 },
+        { N: 5, from: 5.5 },
+        { N: 6, from: 8.0 },
+        { N: 7, from: 10.5 },
+    ];
+    const MIN_LEVEL = 1.0;
+    const MAX_LEVEL = 13.0;
+
+    // What fraction of the board you place yourself, from the start of a size to its end
+    const MISSING_FRAC = { 3: [0.34, 0.95], 4: [0.35, 0.8], 5: [0.3, 0.64], 6: [0.25, 0.56], 7: [0.22, 0.46] };
+
+    function levelParams(L) {
+        let bi = 0;
+        SIZE_BANDS.forEach((b, i) => { if (L >= b.from) bi = i; });
+        const band = SIZE_BANDS[bi];
+        const end = SIZE_BANDS[bi + 1] ? SIZE_BANDS[bi + 1].from : MAX_LEVEL;
+        const t = Math.max(0, Math.min(1, (L - band.from) / (end - band.from)));
+        const N = band.N;
+        const cells = N * N;
+        const [f0, f1] = MISSING_FRAC[N];
+        const missing = Math.max(3, Math.min(cells, Math.round(cells * (f0 + (f1 - f0) * t))));
+        return {
+            N, t,
+            nextAt: SIZE_BANDS[bi + 1] ? SIZE_BANDS[bi + 1].from : null,
+            missing,
+            // Past the middle of a size, some tiles start on the board in the wrong place
+            scrambled: t >= 0.4 ? Math.min(missing - 1, Math.floor((t - 0.3) * N)) : 0,
+            // Seconds per tile shrink as you climb within a size
+            time: Math.round(25 + missing * (22 - 10 * t)),
+            // Late in each size (from 4×4 on) the per-line dots go away
+            guides: N === 3 || t < 0.75,
+            unique: N !== 6,
+        };
+    }
+
+    function rankFor(L) {
+        if (L >= 12) return 'אגדה';
+        if (L >= 10.5) return 'מאסטר';
+        if (L >= 8) return 'מחונן';
+        if (L >= 6) return 'מומחה';
+        if (L >= 4.5) return 'חד';
+        if (L >= 3) return 'מתקדם';
+        return 'חושב מתחיל';
+    }
+
+    /* ============================
+       Progress & adaptive difficulty
+
+       The level is a continuous rating from 1.0 to 12.0. After every board:
        - A win that was clearly easy (fast and with few wasted moves) jumps the
          level up, and consecutive easy wins jump further each time — so a
          player who is far below their ability gets there in a few boards.
@@ -799,16 +1068,25 @@
        - A loss drops the level, and consecutive losses drop it further, so a
          player who is over their head comes down fast.
        ============================ */
-    const MIN_LEVEL = 1.0;
-    const MAX_LEVEL = 10.0;
+    const DAILY_GOAL = 5;
+
+    function freshProgress(lvl = 1.0) {
+        return {
+            peak: lvl, easyStreak: 0, failStreak: 0, played: 0,
+            xp: 0, winStreak: 0, bestWinStreak: 0, maxN: 3,
+            dayStreak: 0, lastWinDay: null, today: { date: null, wins: 0 },
+            achievements: [],
+        };
+    }
 
     let level = parseFloat(store.get('klox_level')) || 1.0;
     let progress = (() => {
+        const base = freshProgress(level);
         try {
             const p = JSON.parse(store.get('klox_progress'));
-            if (p && typeof p.peak === 'number') return p;
+            if (p && typeof p.peak === 'number') return Object.assign(base, p);
         } catch (e) {}
-        return { peak: level, easyStreak: 0, failStreak: 0, played: 0 };
+        return base;
     })();
 
     function saveProgress() {
@@ -816,30 +1094,29 @@
         store.set('klox_progress', JSON.stringify(progress));
     }
 
-    // What a level means on the board.
-    function levelParams(L) {
-        return {
-            // Tiles you must place: 3 at level 1, all 9 from about level 9.6
-            missing: Math.min(9, Math.round(3 + (L - 1) * 0.7)),
-            // From level 5.5, some of those start on the board in the wrong place (unlocked)
-            scrambled: L >= 5.5 ? Math.min(3, Math.floor((L - 4) / 1.5)) : 0,
-            // Less time as the level rises: 150s at 1, 42s at 10
-            time: Math.max(40, Math.round(150 - (L - 1) * 12)),
-            // The per-row/column dots go away from level 7 — you must check lines yourself
-            guides: L < 7,
-        };
+    function dayKey(d = new Date()) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function yesterdayKey() {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        return dayKey(d);
+    }
+    function todayWins() {
+        return progress.today.date === dayKey() ? progress.today.wins : 0;
+    }
+    // A streak that skipped yesterday is already broken, even before today's first win
+    function liveDayStreak() {
+        return (progress.lastWinDay === dayKey() || progress.lastWinDay === yesterdayKey()) ? progress.dayStreak : 0;
     }
 
-    function rankFor(L) {
-        if (L >= 9) return 'מחונן';
-        if (L >= 7) return 'מומחה';
-        if (L >= 5) return 'חד';
-        if (L >= 3) return 'מתקדם';
-        return 'חושב מתחיל';
+    function performance01(stats) {
+        // mostly speed, some move efficiency
+        return 0.6 * (1 - stats.timeFrac) + 0.4 * stats.efficiency;
     }
 
     // Returns { before, after, delta, tag } and updates level/progress.
-    function applyResult(won, stats) {
+    function applyResult(won, perf) {
         const before = level;
         const atCeiling = before >= progress.peak - 0.05;
         let delta;
@@ -847,9 +1124,6 @@
 
         if (won) {
             progress.failStreak = 0;
-            // 0..1: mostly speed, some move efficiency
-            const perf = 0.6 * (1 - stats.timeFrac) + 0.4 * stats.efficiency;
-
             if (perf >= 0.72) {
                 progress.easyStreak++;
                 delta = 0.4 + 0.2 * Math.min(3, progress.easyStreak - 1); // 0.4, 0.6, 0.8, 1.0
@@ -878,20 +1152,92 @@
         level = Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, Math.round((before + delta) * 100) / 100));
         progress.peak = Math.max(progress.peak, level);
         progress.played++;
-        saveProgress();
         return { before, after: level, delta: level - before, tag };
+    }
+
+    /* ============================
+       Rewards: stars, XP, streaks, daily goal, achievements
+       ============================ */
+    const ACHIEVEMENTS = [
+        { id: 'first',   name: 'ניצחון ראשון',       desc: 'פתרת לוח' },
+        { id: 'perfect', name: 'מושלם',              desc: 'שלושה כוכבים' },
+        { id: 'size4',   name: 'לוח 4×4',            desc: 'הגעת ל־4×4' },
+        { id: 'size5',   name: 'לוח 5×5',            desc: 'הגעת ל־5×5' },
+        { id: 'size6',   name: 'לוח 6×6',            desc: 'הגעת ל־6×6' },
+        { id: 'size7',   name: 'לוח 7×7',            desc: 'הגעת ל־7×7' },
+        { id: 'streak5', name: 'רצף 5',              desc: '5 ניצחונות ברצף' },
+        { id: 'streak10',name: 'בלתי ניתן לעצירה',   desc: '10 ניצחונות ברצף' },
+        { id: 'speed',   name: 'ברק',                desc: 'סיימת ברבע מהזמן' },
+        { id: 'golden',  name: 'נגיעת זהב',          desc: 'פתרת לוח זהב' },
+        { id: 'daily',   name: 'יעד יומי',           desc: `${DAILY_GOAL} לוחות ביום` },
+        { id: 'days3',   name: '3 ימים ברצף',        desc: 'שיחקת 3 ימים רצופים' },
+        { id: 'days7',   name: 'שבוע שלם',           desc: '7 ימים רצופים' },
+        { id: 'xp1000',  name: '1,000 נקודות',       desc: 'צברת 1,000 ⭐' },
+        { id: 'peak8',   name: 'פסגה',               desc: 'שיא 8.0' },
+    ];
+
+    function unlockAchievement(id, out) {
+        if (progress.achievements.includes(id)) return;
+        progress.achievements.push(id);
+        out.push(ACHIEVEMENTS.find(a => a.id === id));
+    }
+
+    function starsFor(perf) {
+        return perf >= 0.72 ? 3 : perf >= 0.45 ? 2 : 1;
+    }
+
+    // Called once per won board, after applyResult.
+    function grantRewards(stars, stats) {
+        const newAch = [];
+        progress.winStreak++;
+        progress.bestWinStreak = Math.max(progress.bestWinStreak, progress.winStreak);
+
+        // Day streak and today's count
+        const today = dayKey();
+        if (progress.lastWinDay !== today) {
+            progress.dayStreak = progress.lastWinDay === yesterdayKey() ? progress.dayStreak + 1 : 1;
+            progress.lastWinDay = today;
+        }
+        if (progress.today.date !== today) progress.today = { date: today, wins: 0 };
+        progress.today.wins++;
+        const dailyJustDone = progress.today.wins === DAILY_GOAL;
+
+        // XP: tiles placed × stars × win-streak combo × golden
+        const base = params.missing * 10;
+        const starMult = [1, 1, 1.5, 2][stars];
+        const combo = 1 + 0.25 * Math.min(4, progress.winStreak - 1); // up to ×2
+        const goldMult = golden ? 2 : 1;
+        let xp = Math.round(base * starMult * combo * goldMult);
+        const dailyBonus = dailyJustDone ? 100 : 0;
+        progress.xp += xp + dailyBonus;
+
+        unlockAchievement('first', newAch);
+        if (stars === 3) unlockAchievement('perfect', newAch);
+        if (progress.winStreak >= 5) unlockAchievement('streak5', newAch);
+        if (progress.winStreak >= 10) unlockAchievement('streak10', newAch);
+        if (stats.timeFrac <= 0.25) unlockAchievement('speed', newAch);
+        if (golden) unlockAchievement('golden', newAch);
+        if (dailyJustDone) unlockAchievement('daily', newAch);
+        if (progress.dayStreak >= 3) unlockAchievement('days3', newAch);
+        if (progress.dayStreak >= 7) unlockAchievement('days7', newAch);
+        if (progress.xp >= 1000) unlockAchievement('xp1000', newAch);
+        if (progress.peak >= 8) unlockAchievement('peak8', newAch);
+
+        return { xp, base, starMult, combo, goldMult, dailyBonus, dailyJustDone, newAch };
     }
 
     /* ============================
        State
        ============================ */
-    const colors = ['var(--color-red)', 'var(--color-blue)', 'var(--color-green)'];
-    const shapes = ['square', 'circle', 'triangle'];
-
-    let boardState = Array(9).fill(null); // null or {color, shape, locked, id}
-    let trayState = [];                   // [{color, shape, id}]
     let params = levelParams(level);
+    let N = params.N;
+    let colors = ALL_COLORS.slice(0, N);
+    let shapes = ALL_SHAPES.slice(0, N);
+
+    let boardState = [];   // null or {color, shape, locked, id}
+    let trayState = [];    // [{color, shape, id}]
     let minSteps = 0;
+    let golden = false;
 
     let selectedSource = null; // 'board' | 'tray' | null
     let selectedId = null;     // tray tile id
@@ -900,6 +1246,9 @@
     let gameOver = false;
     let validLines = new Set();
     let popIndex = null;       // board index to animate on next render
+    let lineCombo = 0;
+    let lastLineAt = 0;
+    let autoTimer = null;
 
     /* ============================
        Timer
@@ -953,31 +1302,64 @@
     });
 
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden && !isPaused && !gameOver) { cancelDrag(); setPaused(true); }
+        if (!document.hidden) return;
+        if (!isPaused && !gameOver) { cancelDrag(); setPaused(true); }
+        // Never start the next board behind the player's back
+        if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; document.querySelectorAll('.btn.auto').forEach(b => b.classList.remove('auto')); }
     });
 
     /* ============================
        Modal
        ============================ */
-    // buttons: [{ label, cls, action }]
-    function showDialog(title, msg, buttons, levelHtml = null) {
+    // buttons: [{ label, cls, action, autoMs }]
+    function showDialog(title, msg, buttons, { stars = 0, extraHtml = '' } = {}) {
         document.getElementById('dialogTitle').innerText = title;
         document.getElementById('dialogMessage').innerText = msg;
-        const lv = document.getElementById('dialogLevel');
-        lv.style.display = levelHtml ? 'flex' : 'none';
-        lv.innerHTML = levelHtml || '';
+        document.getElementById('dialogExtra').innerHTML = extraHtml;
+
+        const st = document.getElementById('dialogStars');
+        st.style.display = stars ? 'block' : 'none';
+        st.innerHTML = '';
+        for (let i = 0; i < 3 && stars; i++) {
+            const s = document.createElement('span');
+            s.innerText = '⭐';
+            if (i < stars) {
+                s.className = 'on';
+                s.style.animationDelay = (0.25 + i * 0.22) + 's';
+                setTimeout(() => Sound.star(i), 250 + i * 220);
+            }
+            st.appendChild(s);
+        }
 
         const modal = document.getElementById('dialogModal');
         const box = document.getElementById('dialogButtons');
         box.innerHTML = '';
+        if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
         buttons.forEach(b => {
             const el = document.createElement('button');
             el.className = 'btn ' + (b.cls || 'btn-primary');
             el.innerText = b.label;
-            el.onclick = () => { modal.style.display = 'none'; Sound.select(); if (b.action) b.action(); };
+            el.onclick = () => {
+                if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+                modal.style.display = 'none';
+                Sound.select();
+                if (b.action) b.action();
+            };
+            if (b.autoMs) {
+                el.classList.add('auto');
+                el.style.setProperty('--auto-ms', b.autoMs + 'ms');
+                autoTimer = setTimeout(() => { autoTimer = null; el.onclick(); }, b.autoMs);
+            }
             box.appendChild(el);
         });
         modal.style.display = 'flex';
+    }
+
+    function achievementsHtml() {
+        return '<div class="ach-list">' + ACHIEVEMENTS.map(a => {
+            const on = progress.achievements.includes(a.id);
+            return `<div class="ach ${on ? 'on' : ''}">${on ? '🏅' : '🔒'} ${a.name}<br><small>${a.desc}</small></div>`;
+        }).join('') + '</div>';
     }
 
     document.getElementById('settingsBtn').addEventListener('click', () => {
@@ -985,21 +1367,23 @@
         cancelDrag();
         const wasPaused = isPaused;
         if (!isPaused) setPaused(true);
-        showDialog('הגדרות', `רמה ${level.toFixed(1)} · שיא ${progress.peak.toFixed(1)} · ${progress.played} לוחות`, [
+        const msg = `רמה ${level.toFixed(1)} · שיא ${progress.peak.toFixed(1)} · ${progress.xp.toLocaleString()} ⭐\n`
+            + `רצף ניצחונות שיא: ${progress.bestWinStreak} · הישגים ${progress.achievements.length}/${ACHIEVEMENTS.length}`;
+        showDialog('הגדרות', msg, [
             { label: 'המשך לשחק', cls: 'btn-primary', action: () => { if (!wasPaused) setPaused(false); } },
             { label: 'קשה מדי — דלג (נחשב הפסד)', cls: 'btn-secondary', action: () => endGame(false, true) },
             { label: 'איפוס התקדמות', cls: 'btn-danger', action: () => {
-                showDialog('לאפס הכול?', 'הרמה והשיא יחזרו ל־1.0.', [
+                showDialog('לאפס הכול?', 'הרמה, השיא, הנקודות וההישגים יימחקו.', [
                     { label: 'כן, לאפס', cls: 'btn-danger', action: () => {
                         level = 1.0;
-                        progress = { peak: 1.0, easyStreak: 0, failStreak: 0, played: 0 };
+                        progress = freshProgress(1.0);
                         saveProgress();
                         initLevel();
                     } },
                     { label: 'ביטול', cls: 'btn-secondary', action: () => { if (!wasPaused) setPaused(false); } },
                 ]);
             } },
-        ]);
+        ], { extraHtml: achievementsHtml() });
     });
 
     /* ============================
@@ -1013,57 +1397,123 @@
         return arr;
     }
 
-    // A random pair of orthogonal 3x3 Latin squares. Permuting rows, columns and
-    // symbols (and transposing) keeps every row, column and pair distinct, so each
-    // board has a fresh solution instead of the same one every time.
-    function generateValidBoard() {
-        const rows = shuffle([0, 1, 2]);
-        const cols = shuffle([0, 1, 2]);
+    // Multiplication in GF(4) = {0, 1, x, x+1} with x² = x + 1; addition is XOR.
+    const GF4_MUL = [[0, 0, 0, 0], [0, 1, 2, 3], [0, 2, 3, 1], [0, 3, 1, 2]];
+
+    // Two N×N Latin squares (colour index, shape index). For N = 3, 4, 5, 7 they are
+    // orthogonal, so every colour+shape pair appears exactly once.
+    function baseSquares(n) {
+        const a = [], b = [];
+        for (let r = 0; r < n; r++) {
+            for (let c = 0; c < n; c++) {
+                if (n === 4) {
+                    a.push(r ^ c);
+                    b.push(GF4_MUL[2][r] ^ c);
+                } else if (n === 6) {
+                    // No orthogonal pair exists; two independent Latin squares
+                    a.push((r + c) % 6);
+                    b.push((c - r + 6) % 6);
+                } else {
+                    a.push((r + c) % n);
+                    b.push((r + 2 * c) % n);
+                }
+            }
+        }
+        return [a, b];
+    }
+
+    // Permuting rows, columns and symbols (and transposing) keeps every rule,
+    // so each board gets a fresh solution instead of the same one every time.
+    function generateValidBoard(n) {
+        let [a, b] = baseSquares(n);
+        if (n === 6) {
+            // make the second square less predictable: shuffle its rows, which keeps it Latin
+            const rp = shuffle([...Array(6).keys()]);
+            b = b.map((_, i) => b[rp[Math.floor(i / 6)] * 6 + (i % 6)]);
+        }
+        const rows = shuffle([...Array(n).keys()]);
+        const cols = shuffle([...Array(n).keys()]);
         const colorMap = shuffle([...colors]);
         const shapeMap = shuffle([...shapes]);
         const transpose = Math.random() < 0.5;
         const flip = Math.random() < 0.5;
 
         const solution = [];
-        for (let r = 0; r < 3; r++) {
-            for (let c = 0; c < 3; c++) {
+        for (let r = 0; r < n; r++) {
+            for (let c = 0; c < n; c++) {
                 let rr = rows[r], cc = cols[c];
                 if (transpose) [rr, cc] = [cc, rr];
-                const a = (rr + cc) % 3;
-                const b = (rr + 2 * cc) % 3;
+                const i = rr * n + cc;
                 solution.push({
-                    color: colorMap[flip ? b : a],
-                    shape: shapeMap[flip ? a : b],
+                    color: colorMap[flip ? b[i] : a[i]],
+                    shape: shapeMap[flip ? a[i] : b[i]],
                 });
             }
         }
         return solution;
     }
 
+    function updateHud() {
+        document.getElementById('levelDisplay').innerText = level.toFixed(1);
+        document.getElementById('peakDisplay').innerText = progress.peak.toFixed(1);
+        document.getElementById('rankTitle').innerText = rankFor(level);
+        document.getElementById('sizeDisplay').innerText = `${N}×${N}`;
+        document.getElementById('streakDisplay').innerText = liveDayStreak();
+        document.getElementById('xpDisplay').innerText = progress.xp.toLocaleString();
+
+        // Goal gradient: always show how close the next milestone is
+        const p = levelParams(level);
+        let label, fill;
+        if (p.nextAt) {
+            label = `בדרך ללוח ${p.N + 1}×${p.N + 1}`;
+            fill = p.t;
+        } else {
+            label = `בדרך לפסגה ${MAX_LEVEL.toFixed(0)}`;
+            fill = p.t;
+        }
+        if (level >= progress.peak - 0.05 && progress.played > 0) label += ' · ⛰ על השיא';
+        document.getElementById('goalLabel').innerHTML = `${label} <b>${Math.floor(fill * 100)}%</b>`;
+        document.getElementById('goalFill').style.width = (fill * 100) + '%';
+
+        const w = todayWins();
+        document.getElementById('dailyLabel').innerHTML = w >= DAILY_GOAL
+            ? `<span class="done">✓ יעד יומי</span>`
+            : `יעד יומי <b>${w}/${DAILY_GOAL}</b>`;
+    }
+
     function initLevel() {
-        selectedSource = null;
-        selectedId = null;
-        selectedIndex = null;
+        clearSelection();
         steps = 0;
         gameOver = false;
         popIndex = null;
+        lineCombo = 0;
 
         params = levelParams(level);
+        N = params.N;
+        colors = ALL_COLORS.slice(0, N);
+        shapes = ALL_SHAPES.slice(0, N);
         totalTime = params.time;
         timeLeft = totalTime;
         updateTimerUI();
 
-        document.getElementById('levelDisplay').innerText = level.toFixed(1);
-        document.getElementById('peakDisplay').innerText = progress.peak.toFixed(1);
-        document.getElementById('rankTitle').innerText = rankFor(level);
-        document.getElementById('stepsDisplay').innerText = steps;
-        document.getElementById('boardGrid').classList.toggle('no-guides', !params.guides);
+        // Variable reward: one board in eight is golden and pays double
+        golden = progress.played > 0 && Math.random() < 0.125;
 
-        const solution = generateValidBoard();
-        const order = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+        const bc = document.getElementById('boardContainer');
+        bc.className = 'board-container size-' + N + (golden ? ' golden' : '');
+        const grid = document.getElementById('boardGrid');
+        grid.style.gridTemplateColumns = `repeat(${N}, minmax(0, 1fr)) var(--dot-track)`;
+        grid.style.gridTemplateRows = `var(--dot-track) repeat(${N}, minmax(0, 1fr))`;
+        grid.classList.toggle('no-guides', !params.guides);
+        document.getElementById('chipUnique').style.display = params.unique ? '' : 'none';
+        updateHud();
+
+        const cells = N * N;
+        const solution = generateValidBoard(N);
+        const order = shuffle([...Array(cells).keys()]);
         const missingPos = order.slice(0, params.missing);
 
-        boardState = Array(9).fill(null);
+        boardState = Array(cells).fill(null);
         trayState = [];
         let idCounter = 1;
 
@@ -1095,8 +1545,10 @@
 
         shuffle(trayState);
         validLines = new Set();
+        document.getElementById('traySlots').scrollLeft = 0;
         render(true);
         setPaused(false);
+        if (golden) { toast('✨ לוח זהב!', 'הנקודות על הלוח הזה כפולות'); Sound.coin(); }
     }
 
     /* ============================
@@ -1120,8 +1572,9 @@
     }
 
     function render(silent = false) {
-        // 1. Tray
+        // 1. Tray — keep its scroll position across re-renders
         const trayEl = document.getElementById('traySlots');
+        const keepScroll = trayEl.scrollLeft;
         trayEl.innerHTML = '';
         trayState.forEach((item) => {
             const slot = document.createElement('div');
@@ -1140,13 +1593,15 @@
             empty.innerText = 'המגש ריק — גרור לכאן אריח כדי להחזיר אותו';
             trayEl.appendChild(empty);
         }
+        trayEl.scrollLeft = keepScroll;
         document.getElementById('trayCountDisplay').innerText = `${trayState.length} נותרו`;
+        document.getElementById('trayHint').style.visibility = trayEl.scrollWidth > trayEl.clientWidth + 2 ? 'visible' : 'hidden';
 
         // 2. Board
         const grid = document.getElementById('boardGrid');
         grid.innerHTML = '';
 
-        for (let c = 0; c < 3; c++) {
+        for (let c = 0; c < N; c++) {
             const dot = document.createElement('div');
             dot.className = 'dot';
             dot.id = `dot-col-${c}`;
@@ -1156,15 +1611,15 @@
         }
 
         boardState.forEach((item, index) => {
-            const r = Math.floor(index / 3);
-            const c = index % 3;
+            const r = Math.floor(index / N);
+            const c = index % N;
 
             if (c === 0) {
                 const dot = document.createElement('div');
                 dot.className = 'dot';
                 dot.id = `dot-row-${r}`;
                 dot.style.gridRow = `${r + 2}`;
-                dot.style.gridColumn = '4';
+                dot.style.gridColumn = `${N + 1}`;
                 grid.appendChild(dot);
             }
 
@@ -1194,6 +1649,16 @@
 
         validateState(silent);
     }
+
+    // A mouse wheel scrolls the tray sideways
+    document.getElementById('traySlots').addEventListener('wheel', (e) => {
+        const el = e.currentTarget;
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) {
+            // in RTL a positive scrollLeft runs toward the start, so flip the wheel
+            el.scrollBy({ left: getComputedStyle(el).direction === 'rtl' ? -e.deltaY : e.deltaY });
+            e.preventDefault();
+        }
+    }, { passive: false });
 
     /* ============================
        Moves (shared by tap and drag)
@@ -1250,7 +1715,6 @@
     }
 
     function afterMove() {
-        document.getElementById('stepsDisplay').innerText = steps;
         render();
     }
 
@@ -1267,7 +1731,7 @@
             selectedIndex = null;
             Sound.select();
         }
-        render();
+        render(true);
     }
 
     function handleBoardClick(index, el) {
@@ -1295,7 +1759,7 @@
             selectedSource = 'board';
             selectedIndex = index;
             Sound.select();
-            render();
+            render(true);
             return;
         } else {
             return;
@@ -1328,6 +1792,7 @@
             index: tile.dataset.index !== undefined ? +tile.dataset.index : null,
             el: tile,
             pointerId: e.pointerId,
+            pointerType: e.pointerType,
             startX: e.clientX,
             startY: e.clientY,
             ghost: null,
@@ -1338,7 +1803,21 @@
     document.addEventListener('pointermove', (e) => {
         if (!drag || e.pointerId !== drag.pointerId) return;
         if (!drag.ghost) {
-            if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < DRAG_THRESHOLD) return;
+            const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+            if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+            // A mouse dragging sideways in the tray means "scroll", like a finger would
+            if (drag.src === 'tray' && drag.pointerType === 'mouse' && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                const tray = document.getElementById('traySlots');
+                if (tray.scrollWidth > tray.clientWidth) {
+                    drag.scrolling = true;
+                    tray.scrollLeft -= e.movementX;
+                    return;
+                }
+            }
+            if (drag.scrolling) {
+                document.getElementById('traySlots').scrollLeft -= e.movementX;
+                return;
+            }
             startDragVisual();
         }
         e.preventDefault();
@@ -1349,21 +1828,23 @@
 
     document.addEventListener('pointerup', (e) => {
         if (!drag || e.pointerId !== drag.pointerId) return;
+        if (drag.scrolling) { drag = null; suppressClickUntil = performance.now() + 300; return; }
         if (!drag.ghost) { drag = null; return; } // a tap — the click handler takes it
         const target = drag.target;
         const d = drag;
         cancelDrag();
-        suppressClickUntil = performance.now() + 400;
+        suppressClickUntil = performance.now() + 300;
         performDrop(d, target);
     });
 
+    // The browser took the gesture (a sideways swipe scrolling the tray)
     document.addEventListener('pointercancel', (e) => {
         if (drag && e.pointerId === drag.pointerId) cancelDrag();
     });
 
     // A drag ends with a click on whatever was under the finger; swallow it.
     document.addEventListener('click', (e) => {
-        if (performance.now() < suppressClickUntil) {
+        if (performance.now() < suppressClickUntil && !e.target.closest('.modal-overlay, header')) {
             e.stopPropagation();
             e.preventDefault();
         }
@@ -1371,10 +1852,11 @@
 
     function startDragVisual() {
         const rect = drag.el.getBoundingClientRect();
+        const size = Math.max(rect.width, 48);
         const ghost = document.createElement('div');
         ghost.className = 'drag-ghost';
-        ghost.style.width = rect.width + 'px';
-        ghost.style.height = rect.height + 'px';
+        ghost.style.width = size + 'px';
+        ghost.style.height = size + 'px';
         const shape = drag.el.querySelector('.shape').cloneNode(true);
         ghost.appendChild(shape);
         document.body.appendChild(ghost);
@@ -1401,16 +1883,16 @@
             const idx = +zone.dataset.index;
             const ok = !boardState[idx]?.locked && !(drag.src === 'board' && drag.index === idx);
             zone.classList.add(ok ? 'drop-ok' : 'drop-bad');
-            drag.target = { kind: 'board', index: idx, ok, el: zone };
+            drag.target = { kind: 'board', index: idx, ok };
         } else if (zone.dataset.drop === 'tray' && drag.src === 'board') {
             zone.classList.add('drop-ok');
-            drag.target = { kind: 'tray', ok: true, el: zone };
+            drag.target = { kind: 'tray', ok: true };
         }
     }
 
     function performDrop(d, target) {
-        if (!target) { render(); return; } // dropped nowhere: snap back
-        if (!target.ok) { render(); rejectMove(document.querySelector(`.slot[data-index="${target.index}"]`)); return; }
+        if (!target) { render(true); return; } // dropped nowhere: snap back
+        if (!target.ok) { render(true); rejectMove(document.querySelector(`.slot[data-index="${target.index}"]`)); return; }
 
         let moved = false;
         if (target.kind === 'board') {
@@ -1418,7 +1900,7 @@
         } else if (target.kind === 'tray') {
             moved = returnToTray(d.index);
         }
-        if (moved) afterMove(); else render();
+        if (moved) afterMove(); else render(true);
     }
 
     function cancelDrag() {
@@ -1432,48 +1914,49 @@
     /* ============================
        Validation
        ============================ */
+    function lineOk(items) {
+        if (items.some(x => !x)) return false;
+        return new Set(items.map(x => x.color)).size === N && new Set(items.map(x => x.shape)).size === N;
+    }
+
     function validateState(silent = false) {
         let rowsV = true, colsV = true;
-        const uniquePairs = new Set();
         const nowValid = new Set();
+        const pairs = new Set();
+        let filled = 0;
 
-        for (let i = 0; i < 3; i++) {
-            const rColors = new Set(), rShapes = new Set();
-            let rCount = 0;
-            for (let c = 0; c < 3; c++) {
-                const item = boardState[i * 3 + c];
-                if (item) {
-                    rColors.add(item.color); rShapes.add(item.shape); rCount++;
-                    uniquePairs.add(item.color + item.shape);
-                }
+        for (let i = 0; i < N; i++) {
+            const row = [], col = [];
+            for (let k = 0; k < N; k++) {
+                row.push(boardState[i * N + k]);
+                col.push(boardState[k * N + i]);
             }
-            const rv = (rCount === 3 && rColors.size === 3 && rShapes.size === 3);
+            const rv = lineOk(row);
+            const cv = lineOk(col);
             document.getElementById(`dot-row-${i}`).className = 'dot' + (rv ? ' valid' : '');
-            if (rv) nowValid.add('r' + i); else rowsV = false;
-
-            const cColors = new Set(), cShapes = new Set();
-            let cCount = 0;
-            for (let r = 0; r < 3; r++) {
-                const item = boardState[r * 3 + i];
-                if (item) { cColors.add(item.color); cShapes.add(item.shape); cCount++; }
-            }
-            const cv = (cCount === 3 && cColors.size === 3 && cShapes.size === 3);
             document.getElementById(`dot-col-${i}`).className = 'dot' + (cv ? ' valid' : '');
+            if (rv) nowValid.add('r' + i); else rowsV = false;
             if (cv) nowValid.add('c' + i); else colsV = false;
         }
+        boardState.forEach(x => { if (x) { filled++; pairs.add(x.color + x.shape); } });
 
-        const uniqV = (uniquePairs.size === 9);
+        const uniqV = !params.unique || (filled === N * N && pairs.size === N * N);
 
         document.getElementById('chipRows').className = 'chip' + (rowsV ? ' valid' : '');
         document.getElementById('chipCols').className = 'chip' + (colsV ? ' valid' : '');
-        document.getElementById('chipUnique').className = 'chip' + (uniqV ? ' valid' : '');
+        document.getElementById('chipUnique').className = 'chip' + (params.unique && uniqV ? ' valid' : '');
 
         const won = rowsV && colsV && uniqV && trayState.length === 0;
 
-        // A little chime when a line newly completes — only where the guides are shown,
-        // or it would give away what the hidden dots hide.
-        if (!silent && !won && params.guides && [...nowValid].some(k => !validLines.has(k))) {
-            setTimeout(() => Sound.line(), 90);
+        // A chime when a line newly completes — rising if lines come quickly.
+        // Only where the guides are shown, or it would give away what the hidden dots hide.
+        const fresh = [...nowValid].some(k => !validLines.has(k));
+        if (!silent && !won && params.guides && fresh) {
+            const now = performance.now();
+            lineCombo = now - lastLineAt < 5000 ? lineCombo + 1 : 0;
+            lastLineAt = now;
+            const combo = lineCombo;
+            setTimeout(() => Sound.line(combo), 90);
         }
         validLines = nowValid;
 
@@ -1483,13 +1966,13 @@
     /* ============================
        End of a board
        ============================ */
-    function confetti() {
-        const palette = ['var(--color-red)', 'var(--color-blue)', 'var(--color-green)', 'var(--warning)', 'var(--accent)'];
-        for (let i = 0; i < 36; i++) {
+    function confetti(count = 36) {
+        const palette = ['var(--color-red)', 'var(--color-blue)', 'var(--color-green)', 'var(--color-yellow)', 'var(--color-purple)', 'var(--accent)'];
+        for (let i = 0; i < count; i++) {
             const c = document.createElement('div');
             c.className = 'confetti';
             const angle = Math.random() * Math.PI * 2;
-            const dist = 120 + Math.random() * 160;
+            const dist = 120 + Math.random() * 180;
             c.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
             c.style.setProperty('--dy', Math.sin(angle) * dist + 120 + 'px');
             c.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
@@ -1504,6 +1987,7 @@
         const badge = document.getElementById('levelBadge');
         badge.classList.remove('up', 'down');
         void badge.offsetWidth;
+        updateHud();
         if (Math.abs(res.delta) < 0.005) return;
         badge.classList.add(res.delta > 0 ? 'up' : 'down');
         const d = document.createElement('span');
@@ -1512,20 +1996,28 @@
         d.innerText = (res.delta > 0 ? '+' : '−') + Math.abs(res.delta).toFixed(2);
         badge.appendChild(d);
         setTimeout(() => d.remove(), 1500);
-        document.getElementById('levelDisplay').innerText = res.after.toFixed(1);
-        document.getElementById('peakDisplay').innerText = progress.peak.toFixed(1);
     }
 
     function levelChangeHtml(res) {
         const tags = {
             fast: '⚡ קל לך מדי — קפיצה',
             up: '↗ חוזר לשיא',
-            ceiling: '⛰ ליד השיא — כל צעד קשה',
+            ceiling: '⛰ על השיא — כל צעד קשה',
             drop: '↘ יורדים קצת',
         };
         const sign = res.delta >= 0 ? '+' : '−';
-        return `<span class="nums">${res.before.toFixed(1)} ← ${res.after.toFixed(1)}</span>`
-            + `<span class="tag ${res.tag}"><bdi dir="ltr">${sign}${Math.abs(res.delta).toFixed(2)}</bdi> · ${tags[res.tag]}</span>`;
+        return `<div class="level-change"><span class="nums">${res.before.toFixed(1)} ← ${res.after.toFixed(1)}</span>`
+            + `<span class="tag ${res.tag}"><bdi dir="ltr">${sign}${Math.abs(res.delta).toFixed(2)}</bdi> · ${tags[res.tag]}</span></div>`;
+    }
+
+    function rewardHtml(r) {
+        const parts = [`${r.base} בסיס`];
+        if (r.starMult > 1) parts.push(`כוכבים <bdi dir="ltr">×${r.starMult}</bdi>`);
+        if (r.combo > 1) parts.push(`רצף <bdi dir="ltr">×${r.combo}</bdi>`);
+        if (r.goldMult > 1) parts.push(`זהב ×2`);
+        let html = `<div class="reward"><b><bdi dir="ltr">+${r.xp}</bdi> ⭐</b><br>${parts.join(' · ')}`;
+        if (r.dailyBonus) html += `<br>🎯 יעד יומי הושלם: <b><bdi dir="ltr">+${r.dailyBonus}</bdi></b>`;
+        return html + '</div>';
     }
 
     // won: solved the board. skipped: gave up from settings.
@@ -1539,13 +2031,32 @@
             timeFrac: (totalTime - timeLeft) / totalTime,
             efficiency: steps > 0 ? Math.min(1, minSteps / steps) : 1,
         };
-        const res = applyResult(won, stats);
-        const newRecord = won && res.after > res.before && res.after >= progress.peak && res.before < progress.peak;
+        const perf = performance01(stats);
+        const stars = won ? starsFor(perf) : 0;
+        const prevPeak = progress.peak;
+        const res = applyResult(won, perf);
+        const reward = won ? grantRewards(stars, stats) : null;
+        if (!won) progress.winStreak = 0;
+
+        // Did this result open a bigger board for the first time?
+        const nextN = levelParams(level).N;
+        const unlockedN = nextN > progress.maxN ? nextN : null;
+        if (unlockedN) {
+            progress.maxN = nextN;
+            const extra = [];
+            unlockAchievement('size' + nextN, extra);
+            if (reward) reward.newAch.push(...extra);
+        }
+        saveProgress();
+
+        const newRecord = won && res.after > prevPeak + 0.005;
+        const usedSec = totalTime - timeLeft;
+        const placed = N * N - boardState.filter(Boolean).length;
 
         setTimeout(() => {
             if (won) {
                 Sound.win();
-                confetti();
+                confetti(golden ? 60 : 36);
                 buzz([30, 50, 30]);
             } else {
                 Sound.lose();
@@ -1555,19 +2066,40 @@
                 if (res.delta > 0.005) Sound.levelUp(); else if (res.delta < -0.005) Sound.levelDown();
             }, 450);
 
-            const usedSec = totalTime - timeLeft;
             let title, msg;
-            if (won) {
-                title = newRecord ? 'שיא חדש! 🏆' : 'אלופה! 🧩';
-                msg = `פתרת את הלוח תוך ${steps} צעדים ו־${usedSec} שניות.`;
+            if (unlockedN) {
+                title = `לוח ${unlockedN}×${unlockedN} נפתח! 🎉`;
+                msg = NEW_IN_SIZE[unlockedN];
+                setTimeout(() => { Sound.unlock(); confetti(80); }, 900);
+            } else if (won) {
+                title = newRecord ? 'שיא חדש! 🏆' : (stars === 3 ? 'מושלם! 🧩' : 'פתרת! 🧩');
+                msg = `${steps} צעדים · ${usedSec} שניות`;
+                if (stars < 3) msg += `\nעוד קצת יותר מהר — ושלושה כוכבים שלך`;
             } else if (skipped) {
                 title = 'דילגת על הלוח';
                 msg = 'נוריד קצת את הרמה ונמשיך.';
             } else {
                 title = 'הזמן נגמר! ⏰';
-                msg = 'לא הספקת לפתור את הלוח בזמן. הלוח הבא יהיה קצת יותר קל.';
+                // Near-miss framing: how close it was is the reason to go again
+                msg = placed <= 2
+                    ? `כמעט! חסרו רק ${placed === 1 ? 'אריח אחד' : 'שני אריחים'}.`
+                    : 'לא הספקת הפעם. הלוח הבא יהיה קצת יותר קל.';
             }
-            showDialog(title, msg, [{ label: 'ללוח הבא', cls: 'btn-primary', action: initLevel }], levelChangeHtml(res));
+            if (progress.winStreak >= 2 && won) msg += `\n🔥 ${progress.winStreak} ניצחונות ברצף`;
+
+            const extraHtml = (reward ? rewardHtml(reward) : '') + levelChangeHtml(res);
+            showDialog(title, msg, [
+                { label: unlockedN ? `ללוח ה־${unlockedN}×${unlockedN}` : 'ללוח הבא', cls: 'btn-primary', action: initLevel,
+                  autoMs: unlockedN ? 0 : (won ? 3500 : 4500) },
+            ], { stars, extraHtml });
+
+            if (reward) {
+                const xpStat = document.getElementById('xpStat');
+                xpStat.classList.remove('bump'); void xpStat.offsetWidth; xpStat.classList.add('bump');
+                setTimeout(() => Sound.coin(), 950);
+                reward.newAch.forEach((a, i) => setTimeout(() => { toast('🏅 ' + a.name, a.desc); Sound.coin(); }, 1300 + i * 700));
+                if (reward.dailyJustDone) setTimeout(() => toast('🎯 יעד יומי הושלם!', 'נתראה מחר — אל תשבור את הרצף 🔥'), 1000);
+            }
         }, won ? 300 : 0);
     }
 
@@ -1575,6 +2107,9 @@
     applyThemeUI();
     applySoundUI();
     initLevel();
+    if (liveDayStreak() > 0 && todayWins() === 0) {
+        setTimeout(() => toast(`🔥 רצף של ${liveDayStreak()} ימים`, 'נצח לוח אחד היום כדי לשמור עליו'), 600);
+    }
 </script>
 </body>
 </html>

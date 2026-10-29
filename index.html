@@ -14,6 +14,9 @@
             if (!t) t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
             if (st !== 'shapes') t = 'light'; // pictures, the default, are light-only
             document.documentElement.dataset.theme = t;
+            let lg = null;
+            try { lg = localStorage.getItem('klox_lang'); } catch (e) {}
+            if (lg === 'en') { document.documentElement.lang = 'en'; document.documentElement.dir = 'ltr'; }
         })();
     </script>
     <style>
@@ -651,6 +654,9 @@
         }
 
         .tray-slot .tile { --radius: 14px; --s: 50%; }
+        /* Only the tile on top can be picked; the rest are dimmed, and a tap on
+           one turns the wheel to bring it to the top */
+        .tray-slot.off .tile { opacity: 0.45; filter: saturate(0.7); cursor: pointer; }
         .tray-slot.center {
             border: 2px solid var(--accent);
             box-shadow: 0 6px 16px var(--shadow);
@@ -989,6 +995,9 @@
             inset: 0;
             background: rgba(255, 255, 255, 0.22);
             transform-origin: right;
+        }
+        [dir="ltr"] .btn.auto::after { transform-origin: left; }
+        .btn.auto::after {
             animation: autoFill var(--auto-ms, 3000ms) linear forwards;
         }
         @keyframes autoFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
@@ -1162,13 +1171,13 @@
     <!-- Header -->
     <header>
         <div class="header-actions">
-            <button class="icon-btn" id="settingsBtn" aria-label="הגדרות">
+            <button class="icon-btn" id="settingsBtn" aria-label="הגדרות" data-i18n-aria="a_settings">
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                 </svg>
             </button>
-            <button class="icon-btn" id="pauseBtn" aria-label="השהה/המשך">
+            <button class="icon-btn" id="pauseBtn" aria-label="השהה/המשך" data-i18n-aria="a_pause">
                 <svg id="icon-pause" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="6" y="4" width="4" height="16"></rect>
                     <rect x="14" y="4" width="4" height="16"></rect>
@@ -1177,7 +1186,7 @@
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
             </button>
-            <button class="icon-btn" id="themeBtn" aria-label="מצב כהה/בהיר">
+            <button class="icon-btn" id="themeBtn" aria-label="מצב כהה/בהיר" data-i18n-aria="a_theme">
                 <svg id="icon-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="4"></circle>
                     <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
@@ -1186,7 +1195,7 @@
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </button>
-            <button class="icon-btn" id="soundBtn" aria-label="צלילים">
+            <button class="icon-btn" id="soundBtn" aria-label="צלילים" data-i18n-aria="a_sound">
                 <svg id="icon-sound-on" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
@@ -1199,21 +1208,21 @@
             </button>
         </div>
         <div class="level-badge" id="levelBadge">
-            <span>רמה</span>
+            <span data-i18n="level">רמה</span>
             <strong id="levelDisplay">1</strong>
         </div>
         <div class="app-title">
-            <strong>קלוקס</strong>
+            <strong data-i18n="appName">קלוקס</strong>
             <span id="rankTitle">חושב מתחיל</span>
         </div>
     </header>
 
     <!-- Status Bar -->
     <div class="status-bar">
-        <span class="stat">לוח <b id="sizeDisplay">3×3</b></span>
+        <span class="stat"><span data-i18n="board">לוח</span> <b id="sizeDisplay">3×3</b></span>
         <span class="stat">⏱ <span class="timer" id="timerDisplay">02:00</span></span>
-        <span class="stat streak" id="streakStat" title="ימים ברצף">🔥 <b id="streakDisplay">0</b></span>
-        <span class="stat" id="xpStat" title="נקודות">⭐ <b id="xpDisplay">0</b></span>
+        <span class="stat streak" id="streakStat" title="ימים ברצף" data-i18n-title="streakTitle">🔥 <b id="streakDisplay">0</b></span>
+        <span class="stat" id="xpStat" title="נקודות" data-i18n-title="points">⭐ <b id="xpDisplay">0</b></span>
     </div>
 
     <!-- Goal strip -->
@@ -1227,9 +1236,9 @@
 
     <!-- Rule Chips -->
     <div class="chips">
-        <div class="chip" id="chipRows">שורות שונות</div>
-        <div class="chip" id="chipCols">עמודות שונות</div>
-        <div class="chip" id="chipUnique">זוגות ייחודיים</div>
+        <div class="chip" id="chipRows" data-i18n="chipRows">שורות שונות</div>
+        <div class="chip" id="chipCols" data-i18n="chipCols">עמודות שונות</div>
+        <div class="chip" id="chipUnique" data-i18n="chipUnique">זוגות ייחודיים</div>
     </div>
 
     <!-- Board Area -->
@@ -1241,13 +1250,13 @@
 
     <!-- Undo / reset -->
     <div class="board-tools">
-        <button class="tool-btn" id="undoBtn" aria-label="בטל מהלך" title="בטל מהלך">
+        <button class="tool-btn" id="undoBtn" aria-label="בטל מהלך" title="בטל מהלך" data-i18n-aria="undo" data-i18n-title="undo">
             <svg class="flip-rtl" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 14 4 9l5-5"></path>
                 <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path>
             </svg>
         </button>
-        <button class="tool-btn" id="resetBtn" aria-label="אפס לוח" title="אפס לוח">
+        <button class="tool-btn" id="resetBtn" aria-label="אפס לוח" title="אפס לוח" data-i18n-aria="resetBoard" data-i18n-title="resetBoard">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                 <path d="M3 3v5h5"></path>
@@ -1260,7 +1269,7 @@
         <div class="wheel-disc" id="wheelDisc"></div>
         <div class="tray-header">
             <span class="tray-count" id="trayCountDisplay">0 נותרו</span>
-            <span id="trayHint">↔ סובב את הגלגל</span>
+            <span id="trayHint" data-i18n="spinWheel">↔ סובב את הגלגל</span>
         </div>
         <div class="tray-slots" id="traySlots"></div>
     </div>
@@ -1270,62 +1279,73 @@
 <div class="modal-overlay" id="settingsModal">
     <div class="modal-content settings" role="dialog" aria-labelledby="setTitle">
         <div class="set-head">
-            <h2 id="setTitle">הגדרות</h2>
-            <button class="icon-btn set-close" id="setClose" aria-label="סגור">
+            <h2 id="setTitle" data-i18n="settings">הגדרות</h2>
+            <button class="icon-btn set-close" id="setClose" aria-label="סגור" data-i18n-aria="close">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
         </div>
 
         <div class="set-stats">
-            <div><b id="setLevel">1</b><span>רמה</span></div>
-            <div><b id="setPoints">0</b><span>נקודות</span></div>
-            <div><b id="setNext">1,000</b><span>לרמה הבאה</span></div>
+            <div><b id="setLevel">1</b><span data-i18n="level">רמה</span></div>
+            <div><b id="setPoints">0</b><span data-i18n="points">נקודות</span></div>
+            <div><b id="setNext">1,000</b><span data-i18n="toNext">לרמה הבאה</span></div>
         </div>
 
-        <div class="set-section">תצוגה</div>
+        <div class="set-section" data-i18n="display">תצוגה</div>
         <div class="set-group">
             <div class="set-row">
-                <span>סגנון אריחים</span>
+                <span data-i18n="tileStyle">סגנון אריחים</span>
                 <div class="seg" id="segStyle">
-                    <button data-v="shapes">🔷 צורות</button>
-                    <button data-v="animals">🐱 ציורים</button>
+                    <button data-v="shapes" data-i18n="shapes">🔷 צורות</button>
+                    <button data-v="animals" data-i18n="pictures">🐱 ציורים</button>
                 </div>
             </div>
             <div class="set-row">
-                <span>ערכת צבעים<small id="themeNote">במצב ציורים תמיד בהיר</small></span>
+                <span><span data-i18n="colorTheme">ערכת צבעים</span><small id="themeNote" data-i18n="themeNote">במצב ציורים תמיד בהיר</small></span>
                 <div class="seg" id="segTheme">
-                    <button data-v="light">☀️ בהיר</button>
-                    <button data-v="dark">🌙 כהה</button>
+                    <button data-v="light" data-i18n="light">☀️ בהיר</button>
+                    <button data-v="dark" data-i18n="dark">🌙 כהה</button>
                 </div>
             </div>
         </div>
 
-        <div class="set-section">צליל ומגע</div>
+        <div class="set-section" data-i18n="language">שפה</div>
         <div class="set-group">
             <div class="set-row">
-                <span>צלילים</span>
-                <button class="switch" id="swSound" role="switch" aria-label="צלילים"></button>
+                <span>עברית / English</span>
+                <div class="seg" id="segLang">
+                    <button data-v="he">עברית</button>
+                    <button data-v="en">English</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="set-section" data-i18n="soundTouch">צליל ומגע</div>
+        <div class="set-group">
+            <div class="set-row">
+                <span data-i18n="sounds">צלילים</span>
+                <button class="switch" id="swSound" role="switch" aria-label="צלילים" data-i18n-aria="sounds"></button>
             </div>
             <div class="set-row" id="rowVibe">
-                <span>רטט</span>
-                <button class="switch" id="swVibe" role="switch" aria-label="רטט"></button>
+                <span data-i18n="vibration">רטט</span>
+                <button class="switch" id="swVibe" role="switch" aria-label="רטט" data-i18n-aria="vibration"></button>
             </div>
         </div>
 
-        <div class="set-section">משחק</div>
+        <div class="set-section" data-i18n="game">משחק</div>
         <div class="set-group">
-            <button class="set-action" id="setSkip"><span>⏭ דלג על הלוח הזה</span><small>נחשב הפסד</small></button>
-            <button class="set-action danger" id="setReset"><span>🗑 איפוס כל ההתקדמות</span></button>
+            <button class="set-action" id="setSkip"><span data-i18n="skipBoard">⏭ דלג על הלוח הזה</span><small data-i18n="countsAsLoss">נחשב הפסד</small></button>
+            <button class="set-action danger" id="setReset"><span data-i18n="resetAll">🗑 איפוס כל ההתקדמות</span></button>
         </div>
 
-        <button class="btn btn-primary" id="setDone">המשך לשחק</button>
+        <button class="btn btn-primary" id="setDone" data-i18n="continue">המשך לשחק</button>
     </div>
 </div>
 
 <!-- Modal Dialog -->
 <div class="modal-overlay" id="dialogModal">
     <div class="modal-content" id="dialogContent">
-        <h2 class="modal-title" id="dialogTitle">הודעה</h2>
+        <h2 class="modal-title" id="dialogTitle" data-i18n="message">הודעה</h2>
         <div class="stars" id="dialogStars" style="display: none;"></div>
         <p class="modal-msg" id="dialogMessage"></p>
         <div id="dialogExtra"></div>
@@ -1415,6 +1435,135 @@
         if (Vibe.enabled && navigator.vibrate) navigator.vibrate(pattern);
     }
 
+
+    /* ============================
+       Language: Hebrew (default) or English
+
+       Every word a player sees comes from STRINGS through t(). Static markup
+       carries data-i18n (text), data-i18n-aria and data-i18n-title, and
+       applyLang() fills them. English also turns the page left-to-right, and
+       the tray wheel then runs the other way.
+       ============================ */
+    const STRINGS = {
+        he: {
+            appName: 'קלוקס', a_settings: 'הגדרות', a_pause: 'השהה/המשך', a_theme: 'מצב כהה/בהיר', a_sound: 'צלילים',
+            level: 'רמה', board: 'לוח', streakTitle: 'ימים ברצף', points: 'נקודות',
+            chipRows: 'שורות שונות', chipCols: 'עמודות שונות', chipUnique: 'זוגות ייחודיים',
+            undo: 'בטל מהלך', resetBoard: 'אפס לוח', spinWheel: '↔ סובב את הגלגל', left: '{n} נותרו',
+            trayEmpty: 'המגש ריק — גרור לכאן אריח כדי להחזיר אותו',
+            toLevel: 'לרמה {n}:', daily: 'יעד יומי', dailyDone: '✓ יעד יומי',
+            settings: 'הגדרות', close: 'סגור', toNext: 'לרמה הבאה', display: 'תצוגה', tileStyle: 'סגנון אריחים',
+            shapes: '🔷 צורות', pictures: '🐱 ציורים', colorTheme: 'ערכת צבעים', themeNote: 'במצב ציורים תמיד בהיר',
+            light: '☀️ בהיר', dark: '🌙 כהה', language: 'שפה', soundTouch: 'צליל ומגע', sounds: 'צלילים', vibration: 'רטט',
+            game: 'משחק', skipBoard: '⏭ דלג על הלוח הזה', countsAsLoss: 'נחשב הפסד', resetAll: '🗑 איפוס כל ההתקדמות',
+            continue: 'המשך לשחק', message: 'הודעה',
+            resetAllQ: 'לאפס הכול?', resetAllM: 'הרמה והנקודות יחזרו להתחלה.\nאי אפשר לבטל את זה.',
+            yesReset: 'כן, לאפס', cancel: 'ביטול',
+            resetBoardQ: 'לאפס את הלוח?', resetBoardM: 'כל האריחים שהנחת יחזרו לגלגל\nוהשעון יתחיל מחדש.',
+            timeUp: 'הזמן נגמר! ⏰', extraQ: 'להוסיף עוד {s} שניות? (פעם אחת בלוח)\nאם תפתור עכשיו — הלוח ייחשב, אבל בלי נקודות.',
+            trayLeft: '\nנשארו {n} אריחים במגש.', moreSecs: '⏳ עוד {s} שניות', noFinish: 'לא, סיים את הלוח',
+            goldenT: '✨ לוח זהב!', goldenS: 'הנקודות על הלוח הזה כפולות',
+            extendedNote: '⏳ נפתר עם זמן נוסף — 0 נקודות', tiles: '🧩 אריחים', timeLeft: '⏱ זמן שנותר',
+            goldenX2: '✨ לוח זהב ×2', dailyRow: '🎯 יעד יומי', total: 'סה״כ', zeroPts: '0 נקודות',
+            boardOpened: 'לוח {n}×{n} נפתח!', newLevel: 'רמה חדשה!',
+            boardOpenedT: 'לוח {n}×{n} נפתח! 🎉', levelUpT: 'עלית רמה! 🚀', perfectT: 'מושלם! 🧩', solvedT: 'פתרת! 🧩',
+            stepsSecs: '{s} צעדים · {t} שניות', extendedHint: 'בפעם הבאה בלי זמן נוסף — ותקבל נקודות',
+            starsHint: 'עוד קצת יותר מהר — ושלושה כוכבים שלך', skippedT: 'דילגת על הלוח', easierNext: 'הלוח הבא יהיה קצת יותר קל.',
+            nearMiss1: 'כמעט! חסר רק אריח אחד.', nearMiss2: 'כמעט! חסרו רק שני אריחים.',
+            timeUpM: 'לא הספקת הפעם. הלוח הבא יהיה קצת יותר קל.', winStreak: '🔥 {n} ניצחונות ברצף',
+            toBoard: 'ללוח ה־{n}×{n}', nextBoard: 'ללוח הבא',
+            dailyDoneT: '🎯 יעד יומי הושלם!', dailyDoneS: 'נתראה מחר — אל תשבור את הרצף 🔥',
+            streakT: '🔥 רצף של {n} ימים', streakS: 'נצח לוח אחד היום כדי לשמור עליו',
+            newColor: 'צבע חדש: {c}', newPicture: 'ציור חדש: {p}', newShape: 'צורה חדשה: {p}',
+            note6: 'בלוח 6×6 זוגות יכולים לחזור — רק שורות ועמודות צריכות להיות שונות.',
+            note7: 'הלוח הגדול ביותר — וכל זוג שוב חייב להיות ייחודי.',
+            c_yellow: 'צהוב', c_purple: 'סגול', c_orange: 'כתום', c_grey: 'אפור', c_brown: 'חום',
+            p_house: 'בית', p_cat: 'חתול', p_fish: 'דג', p_tree: 'עץ', p_umbrella: 'מטרייה', p_kid: 'ילד', p_car: 'מכונית',
+            s_square: 'ריבוע', s_circle: 'עיגול', s_triangle: 'משולש', s_diamond: 'מעוין', s_hexagon: 'משושה', s_star: 'כוכב', s_cross: 'פלוס',
+            r1: 'חושב מתחיל', r2: 'מתקדם', r3: 'חד', r4: 'מומחה', r5: 'מחונן', r6: 'מאסטר', r7: 'אגדה',
+            ach_first: 'ניצחון ראשון', ach_first_d: 'פתרת לוח', ach_perfect: 'מושלם', ach_perfect_d: 'שלושה כוכבים',
+            ach_size4: 'לוח 4×4', ach_size4_d: 'הגעת ל־4×4', ach_size5: 'לוח 5×5', ach_size5_d: 'הגעת ל־5×5',
+            ach_size6: 'לוח 6×6', ach_size6_d: 'הגעת ל־6×6', ach_size7: 'לוח 7×7', ach_size7_d: 'הגעת ל־7×7',
+            ach_streak5: 'רצף 5', ach_streak5_d: '5 ניצחונות ברצף', ach_streak10: 'בלתי ניתן לעצירה', ach_streak10_d: '10 ניצחונות ברצף',
+            ach_speed: 'ברק', ach_speed_d: 'סיימת ברבע מהזמן', ach_golden: 'נגיעת זהב', ach_golden_d: 'פתרת לוח זהב',
+            ach_daily: 'יעד יומי', ach_daily_d: '{n} לוחות ביום', ach_days3: '3 ימים ברצף', ach_days3_d: 'שיחקת 3 ימים רצופים',
+            ach_days7: 'שבוע שלם', ach_days7_d: '7 ימים רצופים', ach_xp1000: '10,000 נקודות', ach_xp1000_d: 'צברת 10,000 ⭐',
+            ach_peak8: 'פסגה', ach_peak8_d: 'הגעת לרמה 30',
+        },
+        en: {
+            appName: 'Klox', a_settings: 'Settings', a_pause: 'Pause/Resume', a_theme: 'Dark/Light', a_sound: 'Sound',
+            level: 'Level', board: 'Board', streakTitle: 'Days in a row', points: 'Points',
+            chipRows: 'Rows differ', chipCols: 'Columns differ', chipUnique: 'Unique pairs',
+            undo: 'Undo', resetBoard: 'Reset board', spinWheel: '↔ Spin the wheel', left: '{n} left',
+            trayEmpty: 'The tray is empty — drag a tile here to put it back',
+            toLevel: 'To level {n}:', daily: 'Daily goal', dailyDone: '✓ Daily goal',
+            settings: 'Settings', close: 'Close', toNext: 'To next level', display: 'Display', tileStyle: 'Tile style',
+            shapes: '🔷 Shapes', pictures: '🐱 Pictures', colorTheme: 'Colour theme', themeNote: 'Pictures are always light',
+            light: '☀️ Light', dark: '🌙 Dark', language: 'Language', soundTouch: 'Sound & touch', sounds: 'Sounds', vibration: 'Vibration',
+            game: 'Game', skipBoard: '⏭ Skip this board', countsAsLoss: 'Counts as a loss', resetAll: '🗑 Reset all progress',
+            continue: 'Keep playing', message: 'Message',
+            resetAllQ: 'Reset everything?', resetAllM: 'Your level and points go back to the start.\nThis can’t be undone.',
+            yesReset: 'Yes, reset', cancel: 'Cancel',
+            resetBoardQ: 'Reset the board?', resetBoardM: 'Every tile you placed goes back to the wheel\nand the clock starts over.',
+            timeUp: 'Time’s up! ⏰', extraQ: 'Add {s} more seconds? (once per board)\nIf you solve it now it counts, but earns no points.',
+            trayLeft: '\n{n} tiles left in the tray.', moreSecs: '⏳ {s} more seconds', noFinish: 'No, end the board',
+            goldenT: '✨ Golden board!', goldenS: 'Points on this board are doubled',
+            extendedNote: '⏳ Solved on extra time — 0 points', tiles: '🧩 Tiles', timeLeft: '⏱ Time left',
+            goldenX2: '✨ Golden board ×2', dailyRow: '🎯 Daily goal', total: 'Total', zeroPts: '0 points',
+            boardOpened: '{n}×{n} board unlocked!', newLevel: 'New level!',
+            boardOpenedT: '{n}×{n} board unlocked! 🎉', levelUpT: 'Level up! 🚀', perfectT: 'Perfect! 🧩', solvedT: 'Solved! 🧩',
+            stepsSecs: '{s} moves · {t} seconds', extendedHint: 'Next time without extra time — and you’ll score points',
+            starsHint: 'A little faster — and three stars are yours', skippedT: 'Board skipped', easierNext: 'The next board will be a little easier.',
+            nearMiss1: 'So close! Just one tile missing.', nearMiss2: 'So close! Just two tiles missing.',
+            timeUpM: 'Not this time. The next board will be a little easier.', winStreak: '🔥 {n} wins in a row',
+            toBoard: 'To the {n}×{n} board', nextBoard: 'Next board',
+            dailyDoneT: '🎯 Daily goal done!', dailyDoneS: 'See you tomorrow — don’t break the streak 🔥',
+            streakT: '🔥 {n}-day streak', streakS: 'Win one board today to keep it',
+            newColor: 'New colour: {c}', newPicture: 'New picture: {p}', newShape: 'New shape: {p}',
+            note6: 'On 6×6, pairs may repeat — only rows and columns must differ.',
+            note7: 'The biggest board — and every pair must be unique again.',
+            c_yellow: 'yellow', c_purple: 'purple', c_orange: 'orange', c_grey: 'grey', c_brown: 'brown',
+            p_house: 'house', p_cat: 'cat', p_fish: 'fish', p_tree: 'tree', p_umbrella: 'umbrella', p_kid: 'kid', p_car: 'car',
+            s_square: 'square', s_circle: 'circle', s_triangle: 'triangle', s_diamond: 'diamond', s_hexagon: 'hexagon', s_star: 'star', s_cross: 'plus',
+            r1: 'Beginner', r2: 'Improving', r3: 'Sharp', r4: 'Expert', r5: 'Gifted', r6: 'Master', r7: 'Legend',
+            ach_first: 'First win', ach_first_d: 'Solved a board', ach_perfect: 'Perfect', ach_perfect_d: 'Three stars',
+            ach_size4: '4×4 board', ach_size4_d: 'Reached 4×4', ach_size5: '5×5 board', ach_size5_d: 'Reached 5×5',
+            ach_size6: '6×6 board', ach_size6_d: 'Reached 6×6', ach_size7: '7×7 board', ach_size7_d: 'Reached 7×7',
+            ach_streak5: 'Streak of 5', ach_streak5_d: '5 wins in a row', ach_streak10: 'Unstoppable', ach_streak10_d: '10 wins in a row',
+            ach_speed: 'Lightning', ach_speed_d: 'Finished in a quarter of the time', ach_golden: 'Golden touch', ach_golden_d: 'Solved a golden board',
+            ach_daily: 'Daily goal', ach_daily_d: '{n} boards in a day', ach_days3: '3 days in a row', ach_days3_d: 'Played 3 days running',
+            ach_days7: 'A full week', ach_days7_d: '7 days running', ach_xp1000: '10,000 points', ach_xp1000_d: 'Earned 10,000 ⭐',
+            ach_peak8: 'Summit', ach_peak8_d: 'Reached level 30',
+        },
+    };
+    let lang = store.get('klox_lang') === 'en' ? 'en' : 'he';
+
+    function t(key, vars = {}) {
+        let str = (STRINGS[lang] && STRINGS[lang][key]) ?? STRINGS.he[key] ?? key;
+        for (const k in vars) str = str.split('{' + k + '}').join(vars[k]);
+        return str;
+    }
+
+    // The wheel's tiles run toward the reading direction's end
+    function dirSign() { return lang === 'en' ? -1 : 1; }
+
+    function applyStaticText() {
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === 'en' ? 'ltr' : 'rtl';
+        document.querySelectorAll('[data-i18n]').forEach(e => { e.textContent = t(e.dataset.i18n); });
+        document.querySelectorAll('[data-i18n-aria]').forEach(e => e.setAttribute('aria-label', t(e.dataset.i18nAria)));
+        document.querySelectorAll('[data-i18n-title]').forEach(e => e.setAttribute('title', t(e.dataset.i18nTitle)));
+    }
+
+    function setLang(next) {
+        if (next === lang) return;
+        lang = next;
+        store.set('klox_lang', lang);
+        applyStaticText();
+        updateHud();
+        render(true);
+    }
+
     /* ============================
        Theme & sound toggles
        ============================ */
@@ -1446,8 +1595,6 @@
        theme the player had (klox_theme is never written while in animals).
        ============================ */
     const ANIMAL_FOR = { square: 'house', circle: 'cat', triangle: 'fish', diamond: 'tree', hexagon: 'umbrella', star: 'kid', cross: 'car' };
-    const ANIMAL_NAME = { house: 'בית', cat: 'חתול', fish: 'דג', tree: 'עץ', umbrella: 'מטרייה', kid: 'ילד', car: 'מכונית' };
-    const SHAPE_NAME = { square: 'ריבוע', circle: 'עיגול', triangle: 'משולש', diamond: 'מעוין', hexagon: 'משושה', star: 'כוכב', cross: 'פלוס' };
     // Pictures are the default; only a player who chose shapes gets shapes.
     let style = store.get('klox_style') === 'shapes' ? 'shapes' : 'animals';
 
@@ -1510,14 +1657,14 @@
        ============================ */
     const ALL_COLORS = ['var(--color-red)', 'var(--color-blue)', 'var(--color-green)', 'var(--color-yellow)', 'var(--color-purple)', 'var(--color-orange)', 'var(--color-white)'];
     const ALL_SHAPES = ['square', 'circle', 'triangle', 'diamond', 'hexagon', 'star', 'cross'];
-    const NEW_COLOR_NAME = { 4: 'צהוב', 5: 'סגול', 6: 'כתום', 7: 'אפור' };
+    const NEW_COLOR_KEY = { 4: 'c_yellow', 5: 'c_purple', 6: 'c_orange', 7: 'c_grey' };
     function newInSize(n) {
         const sh = ALL_SHAPES[n - 1];
-        const colorName = style === 'animals' && n === 7 ? 'חום' : NEW_COLOR_NAME[n];
-        let text = `צבע חדש: ${colorName} · `
-            + (style === 'animals' ? `ציור חדש: ${ANIMAL_NAME[ANIMAL_FOR[sh]]}` : `צורה חדשה: ${SHAPE_NAME[sh]}`);
-        if (n === 6) text += '\nבלוח 6×6 זוגות יכולים לחזור — רק שורות ועמודות צריכות להיות שונות.';
-        if (n === 7) text += '\nהלוח הגדול ביותר — וכל זוג שוב חייב להיות ייחודי.';
+        const colorKey = style === 'animals' && n === 7 ? 'c_brown' : NEW_COLOR_KEY[n];
+        let text = t('newColor', { c: t(colorKey) }) + ' · '
+            + (style === 'animals' ? t('newPicture', { p: t('p_' + ANIMAL_FOR[sh]) }) : t('newShape', { p: t('s_' + sh) }));
+        if (n === 6) text += '\n' + t('note6');
+        if (n === 7) text += '\n' + t('note7');
         return text;
     }
 
@@ -1560,13 +1707,13 @@
     }
 
     function rankFor(L) {
-        if (L >= 12) return 'אגדה';
-        if (L >= 10.5) return 'מאסטר';
-        if (L >= 8) return 'מחונן';
-        if (L >= 6) return 'מומחה';
-        if (L >= 4.5) return 'חד';
-        if (L >= 3) return 'מתקדם';
-        return 'חושב מתחיל';
+        if (L >= 12) return t('r7');
+        if (L >= 10.5) return t('r6');
+        if (L >= 8) return t('r5');
+        if (L >= 6) return t('r4');
+        if (L >= 4.5) return t('r3');
+        if (L >= 3) return t('r2');
+        return t('r1');
     }
 
     /* ============================
@@ -1676,23 +1823,13 @@
     /* ============================
        Rewards: stars, XP, streaks, daily goal, achievements
        ============================ */
-    const ACHIEVEMENTS = [
-        { id: 'first',   name: 'ניצחון ראשון',       desc: 'פתרת לוח' },
-        { id: 'perfect', name: 'מושלם',              desc: 'שלושה כוכבים' },
-        { id: 'size4',   name: 'לוח 4×4',            desc: 'הגעת ל־4×4' },
-        { id: 'size5',   name: 'לוח 5×5',            desc: 'הגעת ל־5×5' },
-        { id: 'size6',   name: 'לוח 6×6',            desc: 'הגעת ל־6×6' },
-        { id: 'size7',   name: 'לוח 7×7',            desc: 'הגעת ל־7×7' },
-        { id: 'streak5', name: 'רצף 5',              desc: '5 ניצחונות ברצף' },
-        { id: 'streak10',name: 'בלתי ניתן לעצירה',   desc: '10 ניצחונות ברצף' },
-        { id: 'speed',   name: 'ברק',                desc: 'סיימת ברבע מהזמן' },
-        { id: 'golden',  name: 'נגיעת זהב',          desc: 'פתרת לוח זהב' },
-        { id: 'daily',   name: 'יעד יומי',           desc: `${DAILY_GOAL} לוחות ביום` },
-        { id: 'days3',   name: '3 ימים ברצף',        desc: 'שיחקת 3 ימים רצופים' },
-        { id: 'days7',   name: 'שבוע שלם',           desc: '7 ימים רצופים' },
-        { id: 'xp1000',  name: '10,000 נקודות',      desc: 'צברת 10,000 ⭐' },
-        { id: 'peak8',   name: 'פסגה',               desc: 'הגעת לרמה 30' },
-    ];
+    // Names and descriptions live in STRINGS as ach_<id> and ach_<id>_d
+    const ACHIEVEMENTS = ['first', 'perfect', 'size4', 'size5', 'size6', 'size7', 'streak5', 'streak10',
+        'speed', 'golden', 'daily', 'days3', 'days7', 'xp1000', 'peak8'].map(id => ({
+        id,
+        get name() { return t('ach_' + id); },
+        get desc() { return t('ach_' + id + '_d', { n: DAILY_GOAL }); },
+    }));
 
     function unlockAchievement(id, out) {
         if (progress.achievements.includes(id)) return;
@@ -1821,9 +1958,8 @@
         setPaused(true);
         Sound.lose();
         const left = trayState.length;
-        showDialog('הזמן נגמר! ⏰', `להוסיף עוד ${EXTRA_SECONDS} שניות? (פעם אחת בלוח)\nאם תפתור עכשיו — הלוח ייחשב, אבל בלי נקודות.`
-            + (left ? `\nנשארו ${left} אריחים במגש.` : ''), [
-            { label: `⏳ עוד ${EXTRA_SECONDS} שניות`, cls: 'btn-primary', action: () => {
+        showDialog(t('timeUp'), t('extraQ', { s: EXTRA_SECONDS }) + (left ? t('trayLeft', { n: left }) : ''), [
+            { label: t('moreSecs', { s: EXTRA_SECONDS }), cls: 'btn-primary', action: () => {
                 extended = true;
                 // the whole original clock is spent; keep "seconds used" honest across the extension
                 spentBeforeReset += EXTRA_SECONDS;
@@ -1833,7 +1969,7 @@
                 setPaused(false);
                 Sound.coin();
             } },
-            { label: 'לא, סיים את הלוח', cls: 'btn-secondary', action: () => {
+            { label: t('noFinish'), cls: 'btn-secondary', action: () => {
                 endGame(false);   // sets gameOver first, so un-pausing below does not restart the clock
                 setPaused(false);
             } },
@@ -1927,6 +2063,7 @@
         $id('setNext').innerText = (li.need - li.into).toLocaleString();
 
         $id('segStyle').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === style));
+        $id('segLang').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === lang));
         const theme = document.documentElement.dataset.theme;
         $id('segTheme').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === theme));
         $id('segTheme').classList.toggle('disabled', style === 'animals');
@@ -1965,6 +2102,13 @@
         Sound.select();
         refreshSettings();
     });
+    $id('segLang').addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        setLang(b.dataset.v);
+        Sound.select();
+        refreshSettings();
+    });
     $id('segTheme').addEventListener('click', (e) => {
         const b = e.target.closest('button');
         if (!b || style === 'animals') return;
@@ -1989,14 +2133,14 @@
     });
     $id('setReset').addEventListener('click', () => {
         closeSettings(false);
-        showDialog('לאפס הכול?', 'הרמה והנקודות יחזרו להתחלה.\nאי אפשר לבטל את זה.', [
-            { label: 'כן, לאפס', cls: 'btn-danger', action: () => {
+        showDialog(t('resetAllQ'), t('resetAllM'), [
+            { label: t('yesReset'), cls: 'btn-danger', action: () => {
                 progress = freshProgress();
                 level = 1;
                 saveProgress();
                 initLevel();
             } },
-            { label: 'ביטול', cls: 'btn-secondary', action: () => openSettings(true) },
+            { label: t('cancel'), cls: 'btn-secondary', action: () => openSettings(true) },
         ]);
     });
 
@@ -2077,13 +2221,13 @@
 
         // Goal gradient: how far into this level, always visible
         document.getElementById('goalLabel').innerHTML =
-            `לרמה ${li.L + 1}: <b class="num"><bdi dir="ltr">${li.into.toLocaleString()} / ${li.need.toLocaleString()}</bdi></b>`;
+            `${t('toLevel', { n: li.L + 1 })} <b class="num"><bdi dir="ltr">${li.into.toLocaleString()} / ${li.need.toLocaleString()}</bdi></b>`;
         document.getElementById('goalFill').style.width = (li.frac * 100) + '%';
 
         const w = todayWins();
         document.getElementById('dailyLabel').innerHTML = w >= DAILY_GOAL
-            ? `<span class="done">✓ יעד יומי</span>`
-            : `יעד יומי <b>${w}/${DAILY_GOAL}</b>`;
+            ? `<span class="done">${t('dailyDone')}</span>`
+            : `${t('daily')} <b>${w}/${DAILY_GOAL}</b>`;
     }
 
     function initLevel() {
@@ -2162,7 +2306,7 @@
         clashLines = new Set();
         render(true);
         setPaused(false);
-        if (golden) { toast('✨ לוח זהב!', 'הנקודות על הלוח הזה כפולות'); Sound.coin(); }
+        if (golden) { toast(t('goldenT'), t('goldenS')); Sound.coin(); }
     }
 
     /* ============================
@@ -2208,17 +2352,21 @@
             const tile = createTileElement(item, isSel);
             tile.dataset.src = 'tray';
             tile.dataset.id = item.id;
-            tile.addEventListener('click', (e) => { e.stopPropagation(); handleTrayClick(item.id); });
+            tile.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!slot.classList.contains('center')) { spinTo(trayState.findIndex(t => t.id === item.id)); return; }
+                handleTrayClick(item.id);
+            });
             slot.appendChild(tile);
             trayEl.appendChild(slot);
         });
         if (trayState.length === 0) {
             const empty = document.createElement('span');
             empty.className = 'tray-empty';
-            empty.innerText = 'המגש ריק — גרור לכאן אריח כדי להחזיר אותו';
+            empty.innerText = t('trayEmpty');
             trayEl.appendChild(empty);
         }
-        document.getElementById('trayCountDisplay').innerText = `${trayState.length} נותרו`;
+        document.getElementById('trayCountDisplay').innerText = t('left', { n: trayState.length });
         layoutWheel();
         updateToolButtons();
 
@@ -2300,6 +2448,11 @@
         const nearest = Math.round(-wheelAngle / wheel.step);
         if (nearest !== wheelNearest) {
             if (wheelNearest !== -1 && (drag?.mode === 'spin' || wheelAnim)) { Sound.click(); buzz(2); }
+            // a picked tile that turns away from the top is no longer picked
+            if (wheelNearest !== -1 && selectedSource === 'tray') {
+                clearSelection();
+                document.querySelectorAll('.tray-slot .tile.selected').forEach(t => t.classList.remove('selected'));
+            }
             wheelNearest = nearest;
         }
     }
@@ -2330,7 +2483,7 @@
             const th = wheelAngle + i * wheel.step;
             if (Math.abs(th) > 1.1) { slot.style.visibility = 'hidden'; return; }
             slot.style.visibility = '';
-            const x = wheel.cx - wheel.R * Math.sin(th);
+            const x = wheel.cx - dirSign() * wheel.R * Math.sin(th);
             const y = wheel.cy - wheel.R * Math.cos(th);
             // the tile on top is clearly bigger and framed; its neighbours shrink away
             const near = Math.max(0, 1 - Math.abs(th) / wheel.step); // 1 on top, 0 one tile away
@@ -2338,6 +2491,7 @@
             slot.style.transform = `translate(${x}px, ${y}px) scale(${sc.toFixed(3)})`;
             slot.style.zIndex = String(Math.round(near * 10));
             slot.classList.toggle('center', near > 0.5);
+            slot.classList.toggle('off', near <= 0.5);
         });
         document.getElementById('wheelDisc').style.setProperty('--spin', (-wheelAngle) + 'rad');
     }
@@ -2351,10 +2505,20 @@
     // away - and glide straight into it, so the wheel always locks on a tile
     // instead of coasting and then hunting for one.
     function spinWheel(v) {
-        stopWheelMotion();
         const coast = Math.max(-3 * wheel.step, Math.min(3 * wheel.step, v * 100));
-        const target = Math.max(wheelMinAngle(), Math.min(0,
-            Math.round((wheelAngle + coast) / wheel.step) * wheel.step));
+        glideTo(Math.round((wheelAngle + coast) / wheel.step) * wheel.step);
+    }
+
+    // Turn the wheel so tray tile i is on top
+    function spinTo(i) {
+        if (i < 0) return;
+        Sound.select();
+        glideTo(-i * wheel.step);
+    }
+
+    function glideTo(angle) {
+        stopWheelMotion();
+        const target = Math.max(wheelMinAngle(), Math.min(0, angle));
         let last = performance.now();
         const frame = (now) => {
             const dt = Math.min(32, now - last);
@@ -2418,8 +2582,8 @@
         if (isPaused || gameOver || !undoStack.length) return;
         cancelDrag();
         setPaused(true);
-        showDialog('לאפס את הלוח?', 'כל האריחים שהנחת יחזרו לגלגל\nוהשעון יתחיל מחדש.', [
-            { label: 'כן, לאפס', cls: 'btn-danger', action: () => {
+        showDialog(t('resetBoardQ'), t('resetBoardM'), [
+            { label: t('yesReset'), cls: 'btn-danger', action: () => {
                 pushUndo(); // so an accidental reset can be undone
                 restore(initialSnap);
                 // A fresh clock — but the time already spent still counts toward
@@ -2432,7 +2596,7 @@
                 setPaused(false);
                 render();
             } },
-            { label: 'ביטול', cls: 'btn-secondary', action: () => setPaused(false) },
+            { label: t('cancel'), cls: 'btn-secondary', action: () => setPaused(false) },
         ]);
     });
 
@@ -2563,8 +2727,10 @@
 
     document.addEventListener('pointerdown', (e) => {
         if (isPaused || gameOver || e.button > 0 || drag) return;
-        const tile = e.target.closest('.tile[data-src]');
+        let tile = e.target.closest('.tile[data-src]');
         const inWheel = !!e.target.closest('#trayContainer');
+        // a wheel tile that is not on top cannot be picked up; touching it only turns the wheel
+        if (tile && tile.dataset.src === 'tray' && !tile.closest('.tray-slot').classList.contains('center')) tile = null;
         if (!tile && !inWheel) return;
         if (inWheel) stopWheelMotion();
         drag = {
@@ -2607,8 +2773,8 @@
 
         if (drag.mode === 'spin') {
             const now = performance.now();
-            setWheelAngle(drag.startAngle - dx / wheel.R);
-            const inst = -(e.clientX - drag.lastX) / wheel.R / Math.max(1, now - drag.lastT);
+            setWheelAngle(drag.startAngle - dirSign() * dx / wheel.R);
+            const inst = -dirSign() * (e.clientX - drag.lastX) / wheel.R / Math.max(1, now - drag.lastT);
             drag.vel = 0.6 * inst + 0.4 * drag.vel;
             drag.lastX = e.clientX;
             drag.lastT = now;
@@ -2830,19 +2996,19 @@
         let html = '<div class="score">';
         if (r) {
             if (r.extendedSolve) {
-                html += `<div class="score-note">⏳ נפתר עם זמן נוסף — 0 נקודות</div>`;
+                html += `<div class="score-note">${t('extendedNote')}</div>`;
             } else {
-                html += row('scTiles', `🧩 אריחים <bdi dir="ltr" class="num">${r.tiles} × ${POINTS_PER_TILE}</bdi>`, 0);
-                html += row('scTime', `⏱ זמן שנותר <b class="num" id="scClock">${formatTime(r.secs)}</b>`, 0);
-                if (r.goldPts) html += row('scGold', '✨ לוח זהב ×2', 0);
-                if (r.dailyBonus) html += row('scDaily', '🎯 יעד יומי', 0);
+                html += row('scTiles', `${t('tiles')} <bdi dir="ltr" class="num">${r.tiles} × ${POINTS_PER_TILE}</bdi>`, 0);
+                html += row('scTime', `${t('timeLeft')} <b class="num" id="scClock">${formatTime(r.secs)}</b>`, 0);
+                if (r.goldPts) html += row('scGold', t('goldenX2'), 0);
+                if (r.dailyBonus) html += row('scDaily', t('dailyRow'), 0);
             }
-            html += `<div class="score-total"><span>סה״כ</span><b class="num"><bdi dir="ltr" id="scTotal">+0</bdi></b></div>`;
+            html += `<div class="score-total"><span>${t('total')}</span><b class="num"><bdi dir="ltr" id="scTotal">+0</bdi></b></div>`;
         } else {
-            html += `<div class="score-note">0 נקודות</div>`;
+            html += `<div class="score-note">${t('zeroPts')}</div>`;
         }
         html += `<div class="lvl-wrap">
-            <div class="lvl-label"><span>רמה <b class="num" id="scLevel">${startInfo.L}</b></span>
+            <div class="lvl-label"><span>${t('level')} <b class="num" id="scLevel">${startInfo.L}</b></span>
                 <bdi dir="ltr" class="num" id="scNums">${fmtPts(startInfo.into)} / ${fmtPts(startInfo.need)}</bdi></div>
             <div class="lvl-bar"><div class="lvl-fill" id="scFill" style="width:${startInfo.frac * 100}%"></div></div>
         </div></div>`;
@@ -2961,7 +3127,7 @@
             badge.style.left = src.left + 'px';
             badge.style.top = src.top + 'px';
             badge.style.width = src.width + 'px';
-            badge.innerHTML = `<span>רמה</span><div class="lvl-roll"><div>${L - 1}</div><div>${L}</div></div>`;
+            badge.innerHTML = `<span>${t('level')}</span><div class="lvl-roll"><div>${L - 1}</div><div>${L}</div></div>`;
             const centreY = innerHeight * 0.4;
             const dx = innerWidth / 2 - (src.left + src.width / 2);
             const dy = centreY - (src.top + src.height / 2);
@@ -2995,7 +3161,7 @@
                 Sound.unlock();
                 buzz([20, 40, 60]);
                 ribbon = mk('lvl-ribbon');
-                ribbon.innerText = n > prevN ? `לוח ${n}×${n} נפתח!` : 'רמה חדשה!';
+                ribbon.innerText = n > prevN ? t('boardOpened', { n }) : t('newLevel');
                 ribbon.style.top = (centreY + 70) + 'px';
                 void ribbon.offsetWidth;
                 ribbon.classList.add('open');
@@ -3074,28 +3240,28 @@
 
             let title, msg;
             if (unlockedN) {
-                title = `לוח ${unlockedN}×${unlockedN} נפתח! 🎉`;
+                title = t('boardOpenedT', { n: unlockedN });
                 msg = newInSize(unlockedN);
             } else if (won) {
-                title = endInfo.L > startInfo.L ? 'עלית רמה! 🚀' : (stars === 3 ? 'מושלם! 🧩' : 'פתרת! 🧩');
-                msg = `${steps} צעדים · ${usedSec} שניות`;
-                if (extended) msg += `\nבפעם הבאה בלי זמן נוסף — ותקבל נקודות`;
-                else if (stars < 3) msg += `\nעוד קצת יותר מהר — ושלושה כוכבים שלך`;
+                title = endInfo.L > startInfo.L ? t('levelUpT') : (stars === 3 ? t('perfectT') : t('solvedT'));
+                msg = t('stepsSecs', { s: steps, t: usedSec });
+                if (extended) msg += '\n' + t('extendedHint');
+                else if (stars < 3) msg += '\n' + t('starsHint');
             } else if (skipped) {
-                title = 'דילגת על הלוח';
-                msg = 'הלוח הבא יהיה קצת יותר קל.';
+                title = t('skippedT');
+                msg = t('easierNext');
             } else {
-                title = 'הזמן נגמר! ⏰';
+                title = t('timeUp');
                 // Near-miss framing: how close it was is the reason to go again
                 msg = placed <= 2
-                    ? `כמעט! חסרו רק ${placed === 1 ? 'אריח אחד' : 'שני אריחים'}.`
-                    : 'לא הספקת הפעם. הלוח הבא יהיה קצת יותר קל.';
+                    ? t(placed === 1 ? 'nearMiss1' : 'nearMiss2')
+                    : t('timeUpM');
             }
-            if (progress.winStreak >= 2 && won) msg += `\n🔥 ${progress.winStreak} ניצחונות ברצף`;
+            if (progress.winStreak >= 2 && won) msg += '\n' + t('winStreak', { n: progress.winStreak });
 
             const animMs = scoreAnimMs(reward, endInfo.L - startInfo.L);
             showDialog(title, msg, [
-                { label: unlockedN ? `ללוח ה־${unlockedN}×${unlockedN}` : 'ללוח הבא', cls: 'btn-primary', action: initLevel,
+                { label: unlockedN ? t('toBoard', { n: unlockedN }) : t('nextBoard'), cls: 'btn-primary', action: initLevel,
                   autoMs: unlockedN ? 0 : (won ? 3000 : 4500), autoDelay: animMs },
             ], { stars, extraHtml: scoreHtml(reward, startInfo) });
             animateScore(startPoints, reward).then(() => updateHud());
@@ -3104,7 +3270,7 @@
                 const xpStat = document.getElementById('xpStat');
                 xpStat.classList.remove('bump'); void xpStat.offsetWidth; xpStat.classList.add('bump');
                 reward.newAch.forEach((a, i) => setTimeout(() => { toast('🏅 ' + a.name, a.desc); Sound.coin(); }, animMs + 200 + i * 700));
-                if (reward.dailyJustDone) setTimeout(() => toast('🎯 יעד יומי הושלם!', 'נתראה מחר — אל תשבור את הרצף 🔥'), animMs);
+                if (reward.dailyJustDone) setTimeout(() => toast(t('dailyDoneT'), t('dailyDoneS')), animMs);
             }
         }, won ? burstMs + 150 : 0);
     }
@@ -3160,12 +3326,13 @@
     }
 
     // Startup
+    applyStaticText();
     applyStyleUI();
     applyThemeUI();
     applySoundUI();
     initLevel();
     if (liveDayStreak() > 0 && todayWins() === 0) {
-        setTimeout(() => toast(`🔥 רצף של ${liveDayStreak()} ימים`, 'נצח לוח אחד היום כדי לשמור עליו'), 600);
+        setTimeout(() => toast(t('streakT', { n: liveDayStreak() }), t('streakS')), 600);
     }
 </script>
 </body>

@@ -683,7 +683,7 @@
         .modal-title { font-size: 1.35rem; font-weight: 800; margin-bottom: 10px; }
         .modal-msg { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; white-space: pre-line; }
 
-        .stars { font-size: 2rem; letter-spacing: 6px; margin-bottom: 8px; }
+        .stars { font-size: 1.8rem; letter-spacing: 6px; margin-bottom: 6px; }
         .stars span { display: inline-block; opacity: 0.2; filter: grayscale(1); }
         .stars span.on { opacity: 1; filter: none; animation: starIn 0.45s cubic-bezier(.3,1.6,.5,1) backwards; }
         @keyframes starIn { from { transform: scale(0) rotate(-90deg); } to { transform: scale(1) rotate(0); } }
@@ -695,29 +695,115 @@
         }
         .reward b { color: var(--gold); font-size: 1.1rem; }
 
-        .level-change {
+        .score {
+            text-align: start;
+            margin-bottom: 16px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
             gap: 6px;
-            margin-bottom: 18px;
-            font-weight: 800;
-            font-variant-numeric: tabular-nums;
         }
-        .level-change .nums { white-space: nowrap; font-size: 1.25rem; }
-        .level-change .tag {
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 12px;
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 10px;
             background: var(--bg-slot);
+            font-size: 0.9rem;
             color: var(--text-muted);
+            opacity: 0.55;
+            transition: opacity 0.2s ease;
         }
-        .level-change .tag.fast { color: var(--warning); }
-        .level-change .tag.ceiling { color: var(--accent); }
-        .level-change .tag.drop { color: var(--danger); }
-        .level-change .tag.extended { color: var(--warning); }
+        .score-row.on { opacity: 1; color: var(--text-main); }
+        .score-row b { font-size: 1rem; }
+        .score-note { text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+        .score-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 2px 10px;
+            font-weight: 800;
+        }
+        .score-total b { font-size: 1.35rem; color: var(--gold); }
+        .score-total.done b { animation: pop 0.35s ease; }
+        .lvl-wrap { margin-top: 4px; }
+        .lvl-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .lvl-label b { color: var(--accent); font-size: 1.05rem; }
+        .lvl-bar {
+            height: 12px;
+            border-radius: 6px;
+            background: var(--bg-slot);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .lvl-fill {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, var(--accent), var(--success), var(--gold));
+            background-size: 200% 100%;
+            animation: barShine 1.6s linear infinite;
+            transition: width 0.12s linear;
+        }
+        @keyframes barShine { from { background-position: 0 0; } to { background-position: 200% 0; } }
+        .num { font-variant-numeric: tabular-nums; }
+
+        /* Level-up show */
+        .lvlup {
+            position: fixed;
+            inset: 0;
+            z-index: 260;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* dark in both themes, so the white number always stands out */
+            background: radial-gradient(circle, rgba(30, 64, 175, 0.96) 0%, rgba(8, 12, 24, 0.97) 65%);
+            animation: lvlIn 0.25s ease;
+            overflow: hidden;
+        }
+        .lvlup.out { animation: lvlOut 0.35s ease forwards; }
+        @keyframes lvlIn { from { opacity: 0; } }
+        @keyframes lvlOut { to { opacity: 0; transform: scale(1.08); } }
+        .lvlup-rays {
+            position: absolute;
+            width: 180vmax;
+            height: 180vmax;
+            background: repeating-conic-gradient(rgba(251, 191, 36, 0.35) 0 8deg, transparent 8deg 22deg);
+            -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+            mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+            animation: raysSpin 6s linear infinite;
+        }
+        @keyframes raysSpin { to { transform: rotate(360deg); } }
+        .lvlup-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+            animation: cardIn 0.6s cubic-bezier(.2,1.6,.4,1);
+        }
+        .lvlup-card small { font-size: 1.1rem; font-weight: 800; letter-spacing: 1px; }
+        .lvlup-card b {
+            font-size: 6.5rem;
+            line-height: 1;
+            font-weight: 900;
+            background: linear-gradient(180deg, #fff 20%, #fbbf24);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.7));
+        }
+        .lvlup-card span { font-size: 1rem; font-weight: 700; margin-top: 4px; }
+        @keyframes cardIn {
+            0% { transform: scale(0.2) rotate(-12deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
 
         .ach-list {
             display: grid;
@@ -903,8 +989,8 @@
             </button>
         </div>
         <div class="level-badge" id="levelBadge">
-            <span>רמה · שיא <span id="peakDisplay">1.0</span></span>
-            <strong id="levelDisplay">1.0</strong>
+            <span>רמה</span>
+            <strong id="levelDisplay">1</strong>
         </div>
         <div class="app-title">
             <strong>קלוקס</strong>
@@ -923,7 +1009,7 @@
     <!-- Goal strip -->
     <div class="goal-strip">
         <div class="goal-text">
-            <span id="goalLabel">בדרך ללוח 4×4</span>
+            <span id="goalLabel">לרמה 2</span>
             <span id="dailyLabel">יעד יומי 0/5</span>
         </div>
         <div class="bar"><div class="bar-fill" id="goalFill"></div></div>
@@ -1173,43 +1259,86 @@
     }
 
     /* ============================
-       Progress & adaptive difficulty
+       Progress: points and levels
 
-       The level is a continuous rating from 1.0 to 12.0. After every board:
-       - A win that was clearly easy (fast and with few wasted moves) jumps the
-         level up, and consecutive easy wins jump further each time — so a
-         player who is far below their ability gets there in a few boards.
-       - Below the player's peak, wins climb back quickly.
-       - At the peak, ordinary wins are heavily damped: the player has to win
-         well, repeatedly, to push the peak higher. That is the "stuck at your
-         ceiling" feeling.
-       - A loss drops the level, and consecutive losses drop it further, so a
-         player who is over their head comes down fast.
+       Every solved board earns points: 50 for each tile you placed and 10 for
+       each second left on the clock (doubled on a golden board). Points only
+       add up, and the level is read off the total. Each level costs more than
+       the one before, so the early ones come almost every board and later
+       ones take several good boards. A fast solve leaves more seconds and so
+       climbs faster — "too easy, jump ahead" falls out of the scoring.
+
+       The level sets the board on the 1–13 difficulty scale above, a quarter
+       step per level: 3×3 for levels 1–8, 4×4 from 9, 5×5 from 19, 6×6 from
+       29, 7×7 from 39. Levels go on past 49; the board stops getting harder.
+
+       A loss earns nothing and never takes points away. After losses in a
+       row the boards ease a little — inside the current board size, without
+       touching the level — so nobody is stuck on a wall for good. A win
+       clears it.
        ============================ */
     const DAILY_GOAL = 5;
+    const DAILY_BONUS = 250;
+    const POINTS_PER_TILE = 50;
+    const POINTS_PER_SECOND = 10;
+    const DIFF_PER_LEVEL = 0.25;
 
-    function freshProgress(lvl = 1.0) {
+    // Points from level L to L+1: 1,000 at level 1, ~2,150 at 10, ~4,000 at 20, ~9,450 at 40
+    function pointsToNext(L) {
+        const k = L - 1;
+        return Math.round((1000 + 100 * k + 3 * k * k) / 50) * 50;
+    }
+
+    function pointsForLevel(L) {
+        let sum = 0;
+        for (let i = 1; i < L; i++) sum += pointsToNext(i);
+        return sum;
+    }
+
+    // { L, into: points into this level, need: points this level takes, frac }
+    function levelInfo(points) {
+        let L = 1, floor = 0;
+        while (points >= floor + pointsToNext(L)) { floor += pointsToNext(L); L++; }
+        const need = pointsToNext(L);
+        return { L, into: points - floor, need, frac: (points - floor) / need };
+    }
+
+    function difficultyFor(L) {
+        return Math.min(MAX_LEVEL, MIN_LEVEL + (L - 1) * DIFF_PER_LEVEL);
+    }
+
+    // The board actually dealt: the level's difficulty, eased after losses in a row
+    function boardDifficulty() {
+        const d = difficultyFor(level);
+        if (!progress.failStreak) return d;
+        const sizeStart = SIZE_BANDS.filter(b => b.from <= d).pop().from;
+        return Math.max(sizeStart, d - Math.min(1, 0.25 * progress.failStreak));
+    }
+
+    function freshProgress() {
         return {
-            peak: lvl, easyStreak: 0, failStreak: 0, played: 0,
-            xp: 0, winStreak: 0, bestWinStreak: 0, maxN: 3,
+            points: 0, failStreak: 0, played: 0,
+            winStreak: 0, bestWinStreak: 0, maxN: 3,
             dayStreak: 0, lastWinDay: null, today: { date: null, wins: 0 },
             achievements: [],
         };
     }
 
-    let level = parseFloat(store.get('klox_level')) || 1.0;
+    // Points started everyone over from zero, under a new key; the old
+    // klox_level / klox_progress are left alone and never read.
+    const PROGRESS_KEY = 'klox_progress_v2';
     let progress = (() => {
-        const base = freshProgress(level);
+        const base = freshProgress();
         try {
-            const p = JSON.parse(store.get('klox_progress'));
-            if (p && typeof p.peak === 'number') return Object.assign(base, p);
+            const saved = JSON.parse(store.get(PROGRESS_KEY));
+            if (saved && typeof saved === 'object') Object.assign(base, saved);
         } catch (e) {}
         return base;
     })();
+    let level = levelInfo(progress.points).L;
 
     function saveProgress() {
-        store.set('klox_level', level.toFixed(2));
-        store.set('klox_progress', JSON.stringify(progress));
+        store.set(PROGRESS_KEY, JSON.stringify(progress));
     }
 
     function dayKey(d = new Date()) {
@@ -1229,54 +1358,8 @@
     }
 
     function performance01(stats) {
-        // mostly speed, some move efficiency
+        // mostly speed, some move efficiency — this now only sets the stars
         return 0.6 * (1 - stats.timeFrac) + 0.4 * stats.efficiency;
-    }
-
-    // Returns { before, after, delta, tag } and updates level/progress.
-    function applyResult(won, perf, extendedSolve = false) {
-        const before = level;
-        const atCeiling = before >= progress.peak - 0.05;
-        let delta;
-        let tag;
-
-        if (won && extendedSolve) {
-            // solved on bought time: no penalty, no progress
-            progress.failStreak = 0;
-            progress.easyStreak = 0;
-            delta = 0;
-            tag = 'extended';
-        } else if (won) {
-            progress.failStreak = 0;
-            if (perf >= 0.72) {
-                progress.easyStreak++;
-                delta = 0.4 + 0.2 * Math.min(3, progress.easyStreak - 1); // 0.4, 0.6, 0.8, 1.0
-                tag = 'fast';
-            } else {
-                progress.easyStreak = 0;
-                delta = perf >= 0.45 ? 0.2 : 0.08;
-                if (atCeiling) {
-                    delta *= 0.4; // the grind at the top
-                    tag = 'ceiling';
-                } else {
-                    delta *= 1.5; // recovering ground you already proved
-                    // ...but only up to the peak; anything past it is damped like the grind
-                    const over = before + delta - progress.peak;
-                    if (over > 0) delta -= over * 0.6;
-                    tag = 'up';
-                }
-            }
-        } else {
-            progress.easyStreak = 0;
-            progress.failStreak++;
-            delta = -Math.min(1.0, 0.25 + 0.15 * (progress.failStreak - 1));
-            tag = 'drop';
-        }
-
-        level = Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, Math.round((before + delta) * 100) / 100));
-        progress.peak = Math.max(progress.peak, level);
-        progress.played++;
-        return { before, after: level, delta: level - before, tag };
     }
 
     /* ============================
@@ -1296,8 +1379,8 @@
         { id: 'daily',   name: 'יעד יומי',           desc: `${DAILY_GOAL} לוחות ביום` },
         { id: 'days3',   name: '3 ימים ברצף',        desc: 'שיחקת 3 ימים רצופים' },
         { id: 'days7',   name: 'שבוע שלם',           desc: '7 ימים רצופים' },
-        { id: 'xp1000',  name: '1,000 נקודות',       desc: 'צברת 1,000 ⭐' },
-        { id: 'peak8',   name: 'פסגה',               desc: 'שיא 8.0' },
+        { id: 'xp1000',  name: '10,000 נקודות',      desc: 'צברת 10,000 ⭐' },
+        { id: 'peak8',   name: 'פסגה',               desc: 'הגעת לרמה 30' },
     ];
 
     function unlockAchievement(id, out) {
@@ -1310,9 +1393,10 @@
         return perf >= 0.72 ? 3 : perf >= 0.45 ? 2 : 1;
     }
 
-    // Called once per won board, after applyResult.
-    function grantRewards(stars, stats) {
+    // Called once per won board. Adds the board's points and returns the breakdown.
+    function grantRewards(stars, stats, secondsLeft, extendedSolve) {
         const newAch = [];
+        progress.failStreak = 0;
         progress.winStreak++;
         progress.bestWinStreak = Math.max(progress.bestWinStreak, progress.winStreak);
 
@@ -1326,34 +1410,36 @@
         progress.today.wins++;
         const dailyJustDone = progress.today.wins === DAILY_GOAL;
 
-        // XP: tiles placed × stars × win-streak combo × golden
-        const base = params.missing * 10;
-        const starMult = [1, 1, 1.5, 2][stars];
-        const combo = 1 + 0.25 * Math.min(4, progress.winStreak - 1); // up to ×2
-        const goldMult = golden ? 2 : 1;
-        let xp = Math.round(base * starMult * combo * goldMult);
-        const dailyBonus = dailyJustDone ? 100 : 0;
-        progress.xp += xp + dailyBonus;
+        // Points: 50 per tile placed + 10 per second left; golden doubles both.
+        // Solving on bought time earns none — that is what "no level gain" means now.
+        const tiles = params.missing;
+        const secs = extendedSolve ? 0 : Math.max(0, secondsLeft);
+        const tilePts = extendedSolve ? 0 : tiles * POINTS_PER_TILE;
+        const timePts = secs * POINTS_PER_SECOND;
+        const goldPts = golden && !extendedSolve ? tilePts + timePts : 0;
+        const dailyBonus = dailyJustDone && !extendedSolve ? DAILY_BONUS : 0;
+        const total = tilePts + timePts + goldPts + dailyBonus;
+        progress.points += total;
 
         unlockAchievement('first', newAch);
         if (stars === 3) unlockAchievement('perfect', newAch);
         if (progress.winStreak >= 5) unlockAchievement('streak5', newAch);
         if (progress.winStreak >= 10) unlockAchievement('streak10', newAch);
-        if (stats.timeFrac <= 0.25) unlockAchievement('speed', newAch);
+        if (stats.timeFrac <= 0.25 && !extendedSolve) unlockAchievement('speed', newAch);
         if (golden) unlockAchievement('golden', newAch);
         if (dailyJustDone) unlockAchievement('daily', newAch);
         if (progress.dayStreak >= 3) unlockAchievement('days3', newAch);
         if (progress.dayStreak >= 7) unlockAchievement('days7', newAch);
-        if (progress.xp >= 1000) unlockAchievement('xp1000', newAch);
-        if (progress.peak >= 8) unlockAchievement('peak8', newAch);
+        if (progress.points >= 10000) unlockAchievement('xp1000', newAch);
+        if (levelInfo(progress.points).L >= 30) unlockAchievement('peak8', newAch);
 
-        return { xp, base, starMult, combo, goldMult, dailyBonus, dailyJustDone, newAch };
+        return { tiles, tilePts, secs, timePts, goldPts, dailyBonus, total, dailyJustDone, newAch, extendedSolve };
     }
 
     /* ============================
        State
        ============================ */
-    let params = levelParams(level);
+    let params = levelParams(boardDifficulty());
     let N = params.N;
     let colors = ALL_COLORS.slice(0, N);
     let shapes = ALL_SHAPES.slice(0, N);
@@ -1377,7 +1463,7 @@
     let undoStack = [];        // snapshots before each move
     let initialSnap = null;    // the board as dealt, for "reset board"
     let spentBeforeReset = 0;  // seconds used before the board was reset; still counts for stars
-    let extended = false;      // the player bought extra time: solving still counts, but no level gain
+    let extended = false;      // the player bought extra time: solving still counts, but earns no points
 
     /* ============================
        Timer
@@ -1418,13 +1504,13 @@
     const EXTRA_SECONDS = 30;
 
     // Out of time: offer 30 more seconds, once per board. Solving after that still
-    // counts as a solve (stars, streaks, daily goal) but never raises the level.
+    // counts as a solve (streaks, daily goal) but earns no points.
     function offerExtraTime() {
         cancelDrag();
         setPaused(true);
         Sound.lose();
         const left = trayState.length;
-        showDialog('הזמן נגמר! ⏰', `להוסיף עוד ${EXTRA_SECONDS} שניות? (פעם אחת בלוח)\nאם תפתור עכשיו — הלוח ייחשב, אבל הרמה לא תעלה.`
+        showDialog('הזמן נגמר! ⏰', `להוסיף עוד ${EXTRA_SECONDS} שניות? (פעם אחת בלוח)\nאם תפתור עכשיו — הלוח ייחשב, אבל בלי נקודות.`
             + (left ? `\nנשארו ${left} אריחים במגש.` : ''), [
             { label: `⏳ עוד ${EXTRA_SECONDS} שניות`, cls: 'btn-primary', action: () => {
                 extended = true;
@@ -1504,9 +1590,13 @@
                 if (b.action) b.action();
             };
             if (b.autoMs) {
-                el.classList.add('auto');
-                el.style.setProperty('--auto-ms', b.autoMs + 'ms');
-                autoTimer = setTimeout(() => { autoTimer = null; el.onclick(); }, b.autoMs);
+                const begin = () => {
+                    el.classList.add('auto');
+                    el.style.setProperty('--auto-ms', b.autoMs + 'ms');
+                    autoTimer = setTimeout(() => { autoTimer = null; el.onclick(); }, b.autoMs);
+                };
+                // autoDelay: start the countdown only once the score has finished counting
+                if (b.autoDelay) autoTimer = setTimeout(begin, b.autoDelay); else begin();
             }
             box.appendChild(el);
         });
@@ -1525,16 +1615,17 @@
         cancelDrag();
         const wasPaused = isPaused;
         if (!isPaused) setPaused(true);
-        const msg = `רמה ${level.toFixed(1)} · שיא ${progress.peak.toFixed(1)} · ${progress.xp.toLocaleString()} ⭐\n`
+        const li = levelInfo(progress.points);
+        const msg = `רמה ${li.L} · ${progress.points.toLocaleString()} ⭐ · עוד ${(li.need - li.into).toLocaleString()} לרמה ${li.L + 1}\n`
             + `רצף ניצחונות שיא: ${progress.bestWinStreak} · הישגים ${progress.achievements.length}/${ACHIEVEMENTS.length}`;
         showDialog('הגדרות', msg, [
             { label: 'המשך לשחק', cls: 'btn-primary', action: () => { if (!wasPaused) setPaused(false); } },
             { label: 'קשה מדי — דלג (נחשב הפסד)', cls: 'btn-secondary', action: () => endGame(false, true) },
             { label: 'איפוס התקדמות', cls: 'btn-danger', action: () => {
-                showDialog('לאפס הכול?', 'הרמה, השיא, הנקודות וההישגים יימחקו.', [
+                showDialog('לאפס הכול?', 'הרמה, הנקודות וההישגים יימחקו.', [
                     { label: 'כן, לאפס', cls: 'btn-danger', action: () => {
-                        level = 1.0;
-                        progress = freshProgress(1.0);
+                        progress = freshProgress();
+                        level = 1;
                         saveProgress();
                         initLevel();
                     } },
@@ -1612,26 +1703,17 @@
     }
 
     function updateHud() {
-        document.getElementById('levelDisplay').innerText = level.toFixed(1);
-        document.getElementById('peakDisplay').innerText = progress.peak.toFixed(1);
-        document.getElementById('rankTitle').innerText = rankFor(level);
+        const li = levelInfo(progress.points);
+        document.getElementById('levelDisplay').innerText = li.L;
+        document.getElementById('rankTitle').innerText = rankFor(difficultyFor(li.L));
         document.getElementById('sizeDisplay').innerText = `${N}×${N}`;
         document.getElementById('streakDisplay').innerText = liveDayStreak();
-        document.getElementById('xpDisplay').innerText = progress.xp.toLocaleString();
+        document.getElementById('xpDisplay').innerText = progress.points.toLocaleString();
 
-        // Goal gradient: always show how close the next milestone is
-        const p = levelParams(level);
-        let label, fill;
-        if (p.nextAt) {
-            label = `בדרך ללוח ${p.N + 1}×${p.N + 1}`;
-            fill = p.t;
-        } else {
-            label = `בדרך לפסגה ${MAX_LEVEL.toFixed(0)}`;
-            fill = p.t;
-        }
-        if (level >= progress.peak - 0.05 && progress.played > 0) label += ' · ⛰ על השיא';
-        document.getElementById('goalLabel').innerHTML = `${label} <b>${Math.floor(fill * 100)}%</b>`;
-        document.getElementById('goalFill').style.width = (fill * 100) + '%';
+        // Goal gradient: how far into this level, always visible
+        document.getElementById('goalLabel').innerHTML =
+            `לרמה ${li.L + 1}: <b class="num"><bdi dir="ltr">${li.into.toLocaleString()} / ${li.need.toLocaleString()}</bdi></b>`;
+        document.getElementById('goalFill').style.width = (li.frac * 100) + '%';
 
         const w = todayWins();
         document.getElementById('dailyLabel').innerHTML = w >= DAILY_GOAL
@@ -1646,7 +1728,10 @@
         popIndex = null;
         lineCombo = 0;
 
-        params = levelParams(level);
+        scoreAnimId++; // stop any score count still running from the last board
+        document.querySelectorAll('.lvlup').forEach(el => el.remove());
+        level = levelInfo(progress.points).L;
+        params = levelParams(boardDifficulty());
         N = params.N;
         colors = ALL_COLORS.slice(0, N);
         shapes = ALL_SHAPES.slice(0, N);
@@ -2357,42 +2442,158 @@
         }
     }
 
-    function showLevelChange(res) {
-        const badge = document.getElementById('levelBadge');
-        badge.classList.remove('up', 'down');
-        void badge.offsetWidth;
-        updateHud();
-        if (Math.abs(res.delta) < 0.005) return;
-        badge.classList.add(res.delta > 0 ? 'up' : 'down');
-        const d = document.createElement('span');
-        d.className = 'level-delta ' + (res.delta > 0 ? 'pos' : 'neg');
-        d.dir = 'ltr';
-        d.innerText = (res.delta > 0 ? '+' : '−') + Math.abs(res.delta).toFixed(2);
-        badge.appendChild(d);
-        setTimeout(() => d.remove(), 1500);
+    /* ============================
+       Score window: points count up into the level bar
+       ============================ */
+    const fmtPts = n => n.toLocaleString();
+
+    function scoreHtml(r, startInfo) {
+        const row = (id, label, pts) => `<div class="score-row" id="${id}"><span>${label}</span><b class="num" id="${id}Pts">${pts}</b></div>`;
+        let html = '<div class="score">';
+        if (r) {
+            if (r.extendedSolve) {
+                html += `<div class="score-note">⏳ נפתר עם זמן נוסף — 0 נקודות</div>`;
+            } else {
+                html += row('scTiles', `🧩 אריחים <bdi dir="ltr" class="num">${r.tiles} × ${POINTS_PER_TILE}</bdi>`, 0);
+                html += row('scTime', `⏱ זמן שנותר <b class="num" id="scClock">${formatTime(r.secs)}</b>`, 0);
+                if (r.goldPts) html += row('scGold', '✨ לוח זהב ×2', 0);
+                if (r.dailyBonus) html += row('scDaily', '🎯 יעד יומי', 0);
+            }
+            html += `<div class="score-total"><span>סה״כ</span><b class="num"><bdi dir="ltr" id="scTotal">+0</bdi></b></div>`;
+        } else {
+            html += `<div class="score-note">0 נקודות</div>`;
+        }
+        html += `<div class="lvl-wrap">
+            <div class="lvl-label"><span>רמה <b class="num" id="scLevel">${startInfo.L}</b></span>
+                <bdi dir="ltr" class="num" id="scNums">${fmtPts(startInfo.into)} / ${fmtPts(startInfo.need)}</bdi></div>
+            <div class="lvl-bar"><div class="lvl-fill" id="scFill" style="width:${startInfo.frac * 100}%"></div></div>
+        </div></div>`;
+        return html;
     }
 
-    function levelChangeHtml(res) {
-        const tags = {
-            fast: '⚡ קל לך מדי — קפיצה',
-            up: '↗ חוזר לשיא',
-            ceiling: '⛰ על השיא — כל צעד קשה',
-            drop: '↘ יורדים קצת',
-            extended: '⏳ עם זמן נוסף — הרמה נשארת',
+    let scoreAnimId = 0;
+    const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+    // Count the board's points into the bar: tiles one by one, then the clock
+    // running down ten points a second, then the bonuses. Crossing a level
+    // fills the bar, plays the level-up show, and starts it again from empty.
+    async function animateScore(startPoints, r) {
+        const id = ++scoreAnimId;
+        const alive = () => id === scoreAnimId;
+        let pts = startPoints, shownL = levelInfo(pts).L, total = 0;
+        const $ = k => document.getElementById(k);
+
+        const bar = async () => {
+            const li = levelInfo(pts);
+            if (li.L > shownL) {
+                $('scFill').style.width = '100%';
+                await sleep(260);
+                if (!alive()) return;
+                await levelUpShow(li.L);
+                if (!alive()) return;
+                shownL = li.L;
+                $('scLevel').innerText = li.L;
+                const f = $('scFill');
+                f.style.transition = 'none';
+                f.style.width = '0%';
+                void f.offsetWidth;
+                f.style.transition = '';
+            }
+            $('scFill').style.width = (li.frac * 100) + '%';
+            $('scNums').innerText = `${fmtPts(li.into)} / ${fmtPts(li.need)}`;
+            $('scTotal').innerText = '+' + fmtPts(total);
         };
-        const sign = res.delta >= 0 ? '+' : '−';
-        return `<div class="level-change"><span class="nums">${res.before.toFixed(1)} ← ${res.after.toFixed(1)}</span>`
-            + `<span class="tag ${res.tag}"><bdi dir="ltr">${sign}${Math.abs(res.delta).toFixed(2)}</bdi> · ${tags[res.tag]}</span></div>`;
+        const add = async (rowId, n) => {
+            pts += n; total += n;
+            const el = $(rowId + 'Pts');
+            el.innerText = fmtPts(+el.innerText.replace(/\D/g, '') + n);
+            await bar();
+        };
+
+        await sleep(450);
+        if (!alive() || !r || r.extendedSolve) return;
+
+        for (let i = 0; i < r.tiles; i++) {
+            $('scTiles').classList.add('on');
+            await add('scTiles', POINTS_PER_TILE);
+            if (!alive()) return;
+            Sound.pop(i, r.tiles);
+            await sleep(Math.max(55, Math.min(150, 900 / r.tiles)));
+            if (!alive()) return;
+        }
+        await sleep(200);
+
+        // the clock runs down; about 1.5s whatever the time left
+        $('scTime').classList.add('on');
+        let secs = r.secs;
+        const chunk = Math.max(1, Math.ceil(secs / 45));
+        while (secs > 0) {
+            const d = Math.min(chunk, secs);
+            secs -= d;
+            $('scClock').innerText = formatTime(secs);
+            await add('scTime', d * POINTS_PER_SECOND);
+            if (!alive()) return;
+            Sound.click();
+            await sleep(32);
+            if (!alive()) return;
+        }
+
+        for (const [rowId, amount] of [['scGold', r.goldPts], ['scDaily', r.dailyBonus]]) {
+            if (!amount) continue;
+            await sleep(200);
+            $(rowId).classList.add('on');
+            for (let k = 0; k < 10; k++) {
+                await add(rowId, amount / 10);
+                if (!alive()) return;
+                await sleep(40);
+            }
+            Sound.coin();
+        }
+        $('scTotal').closest('.score-total').classList.add('done');
     }
 
-    function rewardHtml(r) {
-        const parts = [`${r.base} בסיס`];
-        if (r.starMult > 1) parts.push(`כוכבים <bdi dir="ltr">×${r.starMult}</bdi>`);
-        if (r.combo > 1) parts.push(`רצף <bdi dir="ltr">×${r.combo}</bdi>`);
-        if (r.goldMult > 1) parts.push(`זהב ×2`);
-        let html = `<div class="reward"><b><bdi dir="ltr">+${r.xp}</bdi> ⭐</b><br>${parts.join(' · ')}`;
-        if (r.dailyBonus) html += `<br>🎯 יעד יומי הושלם: <b><bdi dir="ltr">+${r.dailyBonus}</bdi></b>`;
-        return html + '</div>';
+    // How long animateScore will run, so auto-continue waits for it
+    function scoreAnimMs(r, levelsGained) {
+        if (!r || r.extendedSolve) return 500;
+        return 450 + r.tiles * Math.max(55, Math.min(150, 900 / r.tiles)) + 200
+            + Math.ceil(r.secs / Math.max(1, Math.ceil(r.secs / 45))) * 32
+            + (r.goldPts ? 600 : 0) + (r.dailyBonus ? 600 : 0)
+            + levelsGained * 2100;
+    }
+
+    // Full-screen level-up: rays, the new number, confetti. Tap to skip.
+    function levelUpShow(L) {
+        return new Promise(resolve => {
+            const prevN = levelParams(difficultyFor(L - 1)).N;
+            const n = levelParams(difficultyFor(L)).N;
+            const el = document.createElement('div');
+            el.className = 'lvlup';
+            el.innerHTML = `<div class="lvlup-rays"></div>
+                <div class="lvlup-card">
+                    <small>עלית רמה!</small>
+                    <b class="num">${L}</b>
+                    <span>${n > prevN ? `לוח ${n}×${n} נפתח 🎉` : rankFor(difficultyFor(L))}</span>
+                </div>`;
+            document.body.appendChild(el);
+            Sound.levelUp();
+            setTimeout(() => Sound.unlock(), 250);
+            confetti(70);
+            buzz([20, 40, 60]);
+            const badge = document.getElementById('levelBadge');
+            badge.classList.remove('up'); void badge.offsetWidth; badge.classList.add('up');
+            document.getElementById('levelDisplay').innerText = L;
+
+            let done = false;
+            const finish = () => {
+                if (done) return;
+                done = true;
+                el.classList.add('out');
+                setTimeout(() => el.remove(), 350);
+                resolve();
+            };
+            el.addEventListener('pointerdown', finish);
+            setTimeout(finish, 1700);
+        });
     }
 
     // won: solved the board. skipped: gave up from settings.
@@ -2409,13 +2610,22 @@
         };
         const perf = performance01(stats);
         const stars = won ? (extended ? 1 : starsFor(perf)) : 0;
-        const prevPeak = progress.peak;
-        const res = applyResult(won, perf, extended);
-        const reward = won ? grantRewards(stars, stats) : null;
-        if (!won) progress.winStreak = 0;
+        const startPoints = progress.points;
+        const startInfo = levelInfo(startPoints);
+
+        progress.played++;
+        let reward = null;
+        if (won) {
+            reward = grantRewards(stars, stats, timeLeft, extended);
+        } else {
+            progress.winStreak = 0;
+            progress.failStreak++;
+        }
+        const endInfo = levelInfo(progress.points);
+        level = endInfo.L;
 
         // Did this result open a bigger board for the first time?
-        const nextN = levelParams(level).N;
+        const nextN = levelParams(difficultyFor(level)).N;
         const unlockedN = nextN > progress.maxN ? nextN : null;
         if (unlockedN) {
             progress.maxN = nextN;
@@ -2425,7 +2635,6 @@
         }
         saveProgress();
 
-        const newRecord = won && res.after > prevPeak + 0.005;
         const usedSec = spentBeforeReset + totalTime - timeLeft;
         const placed = N * N - boardState.filter(Boolean).length;
         const burstMs = won ? burstBoard() : 0;
@@ -2438,24 +2647,19 @@
             } else {
                 Sound.lose();
             }
-            setTimeout(() => {
-                showLevelChange(res);
-                if (res.delta > 0.005) Sound.levelUp(); else if (res.delta < -0.005) Sound.levelDown();
-            }, 450);
 
             let title, msg;
             if (unlockedN) {
                 title = `לוח ${unlockedN}×${unlockedN} נפתח! 🎉`;
                 msg = NEW_IN_SIZE[unlockedN];
-                setTimeout(() => { Sound.unlock(); confetti(80); }, 900);
             } else if (won) {
-                title = newRecord ? 'שיא חדש! 🏆' : (stars === 3 ? 'מושלם! 🧩' : 'פתרת! 🧩');
+                title = endInfo.L > startInfo.L ? 'עלית רמה! 🚀' : (stars === 3 ? 'מושלם! 🧩' : 'פתרת! 🧩');
                 msg = `${steps} צעדים · ${usedSec} שניות`;
-                if (extended) msg += `\nפתרת עם זמן נוסף — בפעם הבאה בלי, והרמה תעלה`;
+                if (extended) msg += `\nבפעם הבאה בלי זמן נוסף — ותקבל נקודות`;
                 else if (stars < 3) msg += `\nעוד קצת יותר מהר — ושלושה כוכבים שלך`;
             } else if (skipped) {
                 title = 'דילגת על הלוח';
-                msg = 'נוריד קצת את הרמה ונמשיך.';
+                msg = 'הלוח הבא יהיה קצת יותר קל.';
             } else {
                 title = 'הזמן נגמר! ⏰';
                 // Near-miss framing: how close it was is the reason to go again
@@ -2465,18 +2669,18 @@
             }
             if (progress.winStreak >= 2 && won) msg += `\n🔥 ${progress.winStreak} ניצחונות ברצף`;
 
-            const extraHtml = (reward ? rewardHtml(reward) : '') + levelChangeHtml(res);
+            const animMs = scoreAnimMs(reward, endInfo.L - startInfo.L);
             showDialog(title, msg, [
                 { label: unlockedN ? `ללוח ה־${unlockedN}×${unlockedN}` : 'ללוח הבא', cls: 'btn-primary', action: initLevel,
-                  autoMs: unlockedN ? 0 : (won ? 3500 : 4500) },
-            ], { stars, extraHtml });
+                  autoMs: unlockedN ? 0 : (won ? 3000 : 4500), autoDelay: animMs },
+            ], { stars, extraHtml: scoreHtml(reward, startInfo) });
+            animateScore(startPoints, reward).then(() => updateHud());
 
             if (reward) {
                 const xpStat = document.getElementById('xpStat');
                 xpStat.classList.remove('bump'); void xpStat.offsetWidth; xpStat.classList.add('bump');
-                setTimeout(() => Sound.coin(), 950);
-                reward.newAch.forEach((a, i) => setTimeout(() => { toast('🏅 ' + a.name, a.desc); Sound.coin(); }, 1300 + i * 700));
-                if (reward.dailyJustDone) setTimeout(() => toast('🎯 יעד יומי הושלם!', 'נתראה מחר — אל תשבור את הרצף 🔥'), 1000);
+                reward.newAch.forEach((a, i) => setTimeout(() => { toast('🏅 ' + a.name, a.desc); Sound.coin(); }, animMs + 200 + i * 700));
+                if (reward.dailyJustDone) setTimeout(() => toast('🎯 יעד יומי הושלם!', 'נתראה מחר — אל תשבור את הרצף 🔥'), animMs);
             }
         }, won ? burstMs + 150 : 0);
     }

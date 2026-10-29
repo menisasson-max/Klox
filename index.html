@@ -7,10 +7,12 @@
     <title>Klox</title>
     <script>
         // Apply the saved theme before first paint, so light mode never flashes dark.
+        // The animals style is always light.
         (function () {
-            let t = null;
-            try { t = localStorage.getItem('klox_theme'); } catch (e) {}
+            let t = null, st = null;
+            try { t = localStorage.getItem('klox_theme'); st = localStorage.getItem('klox_style'); } catch (e) {}
             if (!t) t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            if (st === 'animals') t = 'light';
             document.documentElement.dataset.theme = t;
         })();
     </script>
@@ -499,6 +501,13 @@
         }
 
         .shape.square { border-radius: 18%; }
+
+        /* Animals are drawn edge to edge in their box, so they get more of the tile */
+        .shape.animal {
+            width: min(90%, calc(var(--s, 45%) + 32%));
+            height: min(90%, calc(var(--s, 45%) + 32%));
+            overflow: visible;
+        }
         .shape.circle { border-radius: 50%; }
 
         /* Pointed shapes read smaller than their box, so they get a little more of it */
@@ -948,6 +957,89 @@
 
 <div class="toasts" id="toasts"></div>
 
+<!-- Animal heads for the animals style. Each is filled with currentColor (the
+     tile's colour) and drawn as a distinct silhouette, so they stay apart even
+     on a 7×7 board: round ears, pointed ears, long ears, wool, antlers, a
+     snout, ear tufts. White and dark details give the face. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+        <symbol id="a-bear" viewBox="0 0 100 100">
+            <circle cx="21" cy="24" r="14" fill="currentColor"/>
+            <circle cx="79" cy="24" r="14" fill="currentColor"/>
+            <circle cx="21" cy="24" r="7" fill="#fff" opacity=".5"/>
+            <circle cx="79" cy="24" r="7" fill="#fff" opacity=".5"/>
+            <circle cx="50" cy="57" r="38" fill="currentColor"/>
+            <ellipse cx="50" cy="71" rx="16" ry="12" fill="#fff"/>
+            <ellipse cx="50" cy="65" rx="6" ry="4.5" fill="#1e293b"/>
+            <circle cx="35" cy="50" r="5" fill="#1e293b"/><circle cx="65" cy="50" r="5" fill="#1e293b"/>
+            <circle cx="36.6" cy="48.4" r="1.6" fill="#fff"/><circle cx="66.6" cy="48.4" r="1.6" fill="#fff"/>
+        </symbol>
+        <symbol id="a-cat" viewBox="0 0 100 100">
+            <path d="M10 56 L16 6 L46 30 Z" fill="currentColor" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+            <path d="M90 56 L84 6 L54 30 Z" fill="currentColor" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+            <path d="M21 34 L22 17 L34 27 Z" fill="#fff" opacity=".5"/>
+            <path d="M79 34 L78 17 L66 27 Z" fill="#fff" opacity=".5"/>
+            <ellipse cx="50" cy="61" rx="40" ry="33" fill="currentColor"/>
+            <ellipse cx="35" cy="56" rx="5" ry="6.5" fill="#1e293b"/><ellipse cx="65" cy="56" rx="5" ry="6.5" fill="#1e293b"/>
+            <circle cx="36.5" cy="53.5" r="1.7" fill="#fff"/><circle cx="66.5" cy="53.5" r="1.7" fill="#fff"/>
+            <path d="M44.5 68 L55.5 68 L50 74 Z" fill="#fff"/>
+            <path d="M18 69 L36 72 M18 78 L36 76 M82 69 L64 72 M82 78 L64 76" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="a-rabbit" viewBox="0 0 100 100">
+            <ellipse cx="35" cy="27" rx="10" ry="25" fill="currentColor" transform="rotate(-10 35 27)"/>
+            <ellipse cx="65" cy="27" rx="10" ry="25" fill="currentColor" transform="rotate(10 65 27)"/>
+            <ellipse cx="35" cy="28" rx="4.5" ry="17" fill="#fff" opacity=".5" transform="rotate(-10 35 28)"/>
+            <ellipse cx="65" cy="28" rx="4.5" ry="17" fill="#fff" opacity=".5" transform="rotate(10 65 28)"/>
+            <circle cx="50" cy="67" r="31" fill="currentColor"/>
+            <circle cx="39" cy="63" r="4.6" fill="#1e293b"/><circle cx="61" cy="63" r="4.6" fill="#1e293b"/>
+            <circle cx="40.4" cy="61.5" r="1.5" fill="#fff"/><circle cx="62.4" cy="61.5" r="1.5" fill="#fff"/>
+            <ellipse cx="50" cy="73" rx="4.5" ry="3.2" fill="#fff"/>
+            <rect x="45.5" y="78" width="9" height="8" rx="2" fill="#fff"/>
+        </symbol>
+        <symbol id="a-sheep" viewBox="0 0 100 100">
+            <ellipse cx="12" cy="58" rx="12" ry="6" fill="currentColor" transform="rotate(20 12 58)"/>
+            <ellipse cx="88" cy="58" rx="12" ry="6" fill="currentColor" transform="rotate(-20 88 58)"/>
+            <g fill="currentColor">
+                <circle cx="30" cy="28" r="15"/><circle cx="50" cy="20" r="16"/><circle cx="70" cy="28" r="15"/>
+                <circle cx="21" cy="46" r="14"/><circle cx="79" cy="46" r="14"/>
+                <circle cx="26" cy="66" r="12"/><circle cx="74" cy="66" r="12"/><circle cx="50" cy="42" r="22"/>
+            </g>
+            <ellipse cx="50" cy="63" rx="20" ry="26" fill="#fff"/>
+            <circle cx="42" cy="58" r="4.2" fill="#1e293b"/><circle cx="58" cy="58" r="4.2" fill="#1e293b"/>
+            <path d="M45 73 Q50 78 55 73" stroke="#1e293b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="a-deer" viewBox="0 0 100 100">
+            <path d="M36 34 L25 9 M29 20 L14 15 M26 12 L32 3 M64 34 L75 9 M71 20 L86 15 M74 12 L68 3"
+                  stroke="currentColor" stroke-width="6.5" stroke-linecap="round" fill="none"/>
+            <ellipse cx="20" cy="47" rx="14" ry="7" fill="currentColor" transform="rotate(-25 20 47)"/>
+            <ellipse cx="80" cy="47" rx="14" ry="7" fill="currentColor" transform="rotate(25 80 47)"/>
+            <ellipse cx="50" cy="60" rx="26" ry="31" fill="currentColor"/>
+            <ellipse cx="50" cy="79" rx="16" ry="12" fill="#fff"/>
+            <ellipse cx="50" cy="75" rx="6.5" ry="4.5" fill="#1e293b"/>
+            <circle cx="40" cy="54" r="4.6" fill="#1e293b"/><circle cx="60" cy="54" r="4.6" fill="#1e293b"/>
+            <circle cx="41.4" cy="52.5" r="1.5" fill="#fff"/><circle cx="61.4" cy="52.5" r="1.5" fill="#fff"/>
+        </symbol>
+        <symbol id="a-pig" viewBox="0 0 100 100">
+            <path d="M14 42 L10 6 L42 22 Z" fill="currentColor" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+            <path d="M86 42 L90 6 L58 22 Z" fill="currentColor" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+            <path d="M18 30 L17 15 L30 22 Z" fill="#1e293b" opacity=".25"/>
+            <path d="M82 30 L83 15 L70 22 Z" fill="#1e293b" opacity=".25"/>
+            <circle cx="50" cy="57" r="38" fill="currentColor"/>
+            <ellipse cx="50" cy="68" rx="20" ry="14" fill="currentColor" stroke="#fff" stroke-width="5"/>
+            <ellipse cx="43" cy="68" rx="3.6" ry="5.5" fill="#1e293b"/><ellipse cx="57" cy="68" rx="3.6" ry="5.5" fill="#1e293b"/>
+            <circle cx="35" cy="44" r="4.8" fill="#1e293b"/><circle cx="65" cy="44" r="4.8" fill="#1e293b"/>
+            <circle cx="36.5" cy="42.5" r="1.6" fill="#fff"/><circle cx="66.5" cy="42.5" r="1.6" fill="#fff"/>
+        </symbol>
+        <symbol id="a-owl" viewBox="0 0 100 100">
+            <path d="M12 16 L32 32 Q50 25 68 32 L88 16 L86 58 Q82 95 50 95 Q18 95 14 58 Z" fill="currentColor" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+            <circle cx="34" cy="52" r="15" fill="#fff"/><circle cx="66" cy="52" r="15" fill="#fff"/>
+            <circle cx="35" cy="53" r="7.5" fill="#1e293b"/><circle cx="65" cy="53" r="7.5" fill="#1e293b"/>
+            <circle cx="37" cy="50.5" r="2.4" fill="#fff"/><circle cx="67" cy="50.5" r="2.4" fill="#fff"/>
+            <path d="M44 67 L56 67 L50 78 Z" fill="#f59e0b"/>
+        </symbol>
+    </defs>
+</svg>
+
 <div class="app-container">
     <!-- Header -->
     <header>
@@ -1165,6 +1257,36 @@
         Sound.select();
     });
 
+    /* ============================
+       Style: shapes or animals
+
+       The animals style swaps each shape for an animal head of the same
+       colour; the rules don't change. It is light-only: switching to it shows
+       the light theme and hides the moon, and switching back restores whatever
+       theme the player had (klox_theme is never written while in animals).
+       ============================ */
+    const ANIMAL_FOR = { square: 'bear', circle: 'cat', triangle: 'rabbit', diamond: 'sheep', hexagon: 'deer', star: 'pig', cross: 'owl' };
+    const ANIMAL_NAME = { bear: 'דוב', cat: 'חתול', rabbit: 'ארנב', sheep: 'כבשה', deer: 'אייל', pig: 'חזיר', owl: 'ינשוף' };
+    const SHAPE_NAME = { square: 'ריבוע', circle: 'עיגול', triangle: 'משולש', diamond: 'מעוין', hexagon: 'משושה', star: 'כוכב', cross: 'פלוס' };
+    let style = store.get('klox_style') === 'animals' ? 'animals' : 'shapes';
+
+    function applyStyleUI() {
+        document.documentElement.dataset.style = style;
+        document.getElementById('themeBtn').style.display = style === 'animals' ? 'none' : '';
+    }
+
+    function setStyle(next) {
+        if (next === style) return;
+        style = next;
+        store.set('klox_style', style);
+        document.documentElement.dataset.theme = style === 'animals'
+            ? 'light'
+            : (store.get('klox_theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+        applyStyleUI();
+        applyThemeUI();
+        render(true);
+    }
+
     function applySoundUI() {
         document.getElementById('icon-sound-on').style.display = Sound.enabled ? 'block' : 'none';
         document.getElementById('icon-sound-off').style.display = Sound.enabled ? 'none' : 'block';
@@ -1203,12 +1325,15 @@
        ============================ */
     const ALL_COLORS = ['var(--color-red)', 'var(--color-blue)', 'var(--color-green)', 'var(--color-yellow)', 'var(--color-purple)', 'var(--color-orange)', 'var(--color-white)'];
     const ALL_SHAPES = ['square', 'circle', 'triangle', 'diamond', 'hexagon', 'star', 'cross'];
-    const NEW_IN_SIZE = {
-        4: 'צבע חדש: צהוב · צורה חדשה: מעוין',
-        5: 'צבע חדש: סגול · צורה חדשה: משושה',
-        6: 'צבע חדש: כתום · צורה חדשה: כוכב\nבלוח 6×6 זוגות יכולים לחזור — רק שורות ועמודות צריכות להיות שונות.',
-        7: 'צבע חדש: אפור · צורה חדשה: פלוס\nהלוח הגדול ביותר — וכל זוג שוב חייב להיות ייחודי.',
-    };
+    const NEW_COLOR_NAME = { 4: 'צהוב', 5: 'סגול', 6: 'כתום', 7: 'אפור' };
+    function newInSize(n) {
+        const sh = ALL_SHAPES[n - 1];
+        let text = `צבע חדש: ${NEW_COLOR_NAME[n]} · `
+            + (style === 'animals' ? `חיה חדשה: ${ANIMAL_NAME[ANIMAL_FOR[sh]]}` : `צורה חדשה: ${SHAPE_NAME[sh]}`);
+        if (n === 6) text += '\nבלוח 6×6 זוגות יכולים לחזור — רק שורות ועמודות צריכות להיות שונות.';
+        if (n === 7) text += '\nהלוח הגדול ביותר — וכל זוג שוב חייב להיות ייחודי.';
+        return text;
+    }
 
     // Each size owns a stretch of the level scale; within it, t runs 0 → 1.
     const SIZE_BANDS = [
@@ -1261,7 +1386,7 @@
     /* ============================
        Progress: points and levels
 
-       Every solved board earns points: 50 for each tile you placed and 10 for
+       Every solved board earns points: 50 for each tile you placed and 3 for
        each second left on the clock (doubled on a golden board). Points only
        add up, and the level is read off the total. Each level costs more than
        the one before, so the early ones come almost every board and later
@@ -1280,7 +1405,7 @@
     const DAILY_GOAL = 5;
     const DAILY_BONUS = 250;
     const POINTS_PER_TILE = 50;
-    const POINTS_PER_SECOND = 10;
+    const POINTS_PER_SECOND = 3;
     const DIFF_PER_LEVEL = 0.25;
 
     // Points from level L to L+1: 1,000 at level 1, ~2,150 at 10, ~4,000 at 20, ~9,450 at 40
@@ -1410,7 +1535,7 @@
         progress.today.wins++;
         const dailyJustDone = progress.today.wins === DAILY_GOAL;
 
-        // Points: 50 per tile placed + 10 per second left; golden doubles both.
+        // Points: 50 per tile placed + 3 per second left; golden doubles both.
         // Solving on bought time earns none — that is what "no level gain" means now.
         const tiles = params.missing;
         const secs = extendedSolve ? 0 : Math.max(0, secondsLeft);
@@ -1620,6 +1745,10 @@
             + `רצף ניצחונות שיא: ${progress.bestWinStreak} · הישגים ${progress.achievements.length}/${ACHIEVEMENTS.length}`;
         showDialog('הגדרות', msg, [
             { label: 'המשך לשחק', cls: 'btn-primary', action: () => { if (!wasPaused) setPaused(false); } },
+            { label: style === 'animals' ? '🔷 עבור לצורות' : '🐻 עבור לחיות', cls: 'btn-secondary', action: () => {
+                setStyle(style === 'animals' ? 'shapes' : 'animals');
+                if (!wasPaused) setPaused(false);
+            } },
             { label: 'קשה מדי — דלג (נחשב הפסד)', cls: 'btn-secondary', action: () => endGame(false, true) },
             { label: 'איפוס התקדמות', cls: 'btn-danger', action: () => {
                 showDialog('לאפס הכול?', 'הרמה, הנקודות וההישגים יימחקו.', [
@@ -1807,9 +1936,21 @@
         const tile = document.createElement('div');
         tile.className = 'tile' + (isSelected ? ' selected' : '') + (data.locked ? ' locked-tile' : '');
 
-        const shape = document.createElement('div');
-        shape.className = 'shape ' + data.shape;
-        shape.style.backgroundColor = data.color; // inline so clip-path shapes are coloured
+        let shape;
+        if (style === 'animals') {
+            const NS = 'http://www.w3.org/2000/svg';
+            shape = document.createElementNS(NS, 'svg');
+            shape.setAttribute('viewBox', '0 0 100 100');
+            shape.setAttribute('class', 'shape animal');
+            shape.style.color = data.color; // the sprite paints with currentColor
+            const use = document.createElementNS(NS, 'use');
+            use.setAttribute('href', '#a-' + ANIMAL_FOR[data.shape]);
+            shape.appendChild(use);
+        } else {
+            shape = document.createElement('div');
+            shape.className = 'shape ' + data.shape;
+            shape.style.backgroundColor = data.color; // inline so clip-path shapes are coloured
+        }
         tile.appendChild(shape);
 
         if (data.locked) {
@@ -2475,7 +2616,7 @@
     const sleep = ms => new Promise(res => setTimeout(res, ms));
 
     // Count the board's points into the bar: tiles one by one, then the clock
-    // running down ten points a second, then the bonuses. Crossing a level
+    // running down (3 points a second), then the bonuses. Crossing a level
     // fills the bar, plays the level-up show, and starts it again from empty.
     async function animateScore(startPoints, r) {
         const id = ++scoreAnimId;
@@ -2651,7 +2792,7 @@
             let title, msg;
             if (unlockedN) {
                 title = `לוח ${unlockedN}×${unlockedN} נפתח! 🎉`;
-                msg = NEW_IN_SIZE[unlockedN];
+                msg = newInSize(unlockedN);
             } else if (won) {
                 title = endInfo.L > startInfo.L ? 'עלית רמה! 🚀' : (stars === 3 ? 'מושלם! 🧩' : 'פתרת! 🧩');
                 msg = `${steps} צעדים · ${usedSec} שניות`;
@@ -2700,7 +2841,7 @@
     function burstTile(tile, k, count) {
         const r = tile.getBoundingClientRect();
         const shape = tile.querySelector('.shape');
-        const color = shape ? shape.style.backgroundColor : 'var(--accent)';
+        const color = shape ? (shape.style.backgroundColor || shape.style.color) : 'var(--accent)';
         const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
 
         tile.classList.add('burst');
@@ -2736,6 +2877,7 @@
     }
 
     // Startup
+    applyStyleUI();
     applyThemeUI();
     applySoundUI();
     initLevel();

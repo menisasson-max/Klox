@@ -1327,7 +1327,8 @@
     let lastLineAt = 0;
     let autoTimer = null;
     let undoStack = [];        // snapshots before each move
-    let initialSnap = null;    // the board as dealt, for "reset board"
+    let initialSnap = null;
+    let spentBeforeReset = 0;  // seconds used before the board was reset; still counts for stars    // the board as dealt, for "reset board"
 
     /* ============================
        Timer
@@ -1573,6 +1574,7 @@
         shapes = ALL_SHAPES.slice(0, N);
         totalTime = params.time;
         timeLeft = totalTime;
+        spentBeforeReset = 0;
         updateTimerUI();
 
         // Variable reward: one board in eight is golden and pays double
@@ -1873,10 +1875,15 @@
         if (isPaused || gameOver || !undoStack.length) return;
         cancelDrag();
         setPaused(true);
-        showDialog('לאפס את הלוח?', 'כל האריחים שהנחת יחזרו לגלגל.\nהשעון ממשיך מאותו מקום.', [
+        showDialog('לאפס את הלוח?', 'כל האריחים שהנחת יחזרו לגלגל\nוהשעון יתחיל מחדש.', [
             { label: 'כן, לאפס', cls: 'btn-danger', action: () => {
                 pushUndo(); // so an accidental reset can be undone
                 restore(initialSnap);
+                // A fresh clock — but the time already spent still counts toward
+                // stars and the level, so a reset cannot buy an "easy" win.
+                spentBeforeReset += totalTime - timeLeft;
+                timeLeft = totalTime;
+                updateTimerUI();
                 wheelAngle = null;
                 Sound.back();
                 setPaused(false);
@@ -2316,7 +2323,7 @@
         updateToolButtons();
 
         const stats = {
-            timeFrac: (totalTime - timeLeft) / totalTime,
+            timeFrac: Math.min(1, (spentBeforeReset + totalTime - timeLeft) / totalTime),
             efficiency: steps > 0 ? Math.min(1, minSteps / steps) : 1,
         };
         const perf = performance01(stats);
@@ -2338,7 +2345,7 @@
         saveProgress();
 
         const newRecord = won && res.after > prevPeak + 0.005;
-        const usedSec = totalTime - timeLeft;
+        const usedSec = spentBeforeReset + totalTime - timeLeft;
         const placed = N * N - boardState.filter(Boolean).length;
 
         setTimeout(() => {

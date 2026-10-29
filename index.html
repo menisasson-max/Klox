@@ -779,57 +779,75 @@
         @keyframes barShine { from { background-position: 0 0; } to { background-position: 200% 0; } }
         .num { font-variant-numeric: tabular-nums; }
 
-        /* Level-up show */
-        .lvlup {
+        /* Level-up: the header badge flies to the middle, rolls its number,
+           a ribbon opens under it, confetti falls, and it flies home.
+           Everything it makes carries .lvlfx so a new board can sweep it away. */
+        .lvl-veil {
             position: fixed;
             inset: 0;
             z-index: 260;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            /* dark in both themes, so the white number always stands out */
-            background: radial-gradient(circle, rgba(30, 64, 175, 0.96) 0%, rgba(8, 12, 24, 0.97) 65%);
-            animation: lvlIn 0.25s ease;
-            overflow: hidden;
+            background: color-mix(in srgb, var(--bg-base) 78%, transparent);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            animation: lvlFadeIn 0.25s ease;
         }
-        .lvlup.out { animation: lvlOut 0.35s ease forwards; }
-        @keyframes lvlIn { from { opacity: 0; } }
-        @keyframes lvlOut { to { opacity: 0; transform: scale(1.08); } }
-        .lvlup-rays {
-            position: absolute;
-            width: 180vmax;
-            height: 180vmax;
-            background: repeating-conic-gradient(rgba(251, 191, 36, 0.35) 0 8deg, transparent 8deg 22deg);
-            -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 55%);
-            mask-image: radial-gradient(circle, #000 0%, transparent 55%);
-            animation: raysSpin 6s linear infinite;
-        }
-        @keyframes raysSpin { to { transform: rotate(360deg); } }
-        .lvlup-card {
-            position: relative;
+        .lvl-veil.out { animation: lvlFadeOut 0.35s ease forwards; }
+        @keyframes lvlFadeIn { from { opacity: 0; } }
+        @keyframes lvlFadeOut { to { opacity: 0; } }
+        .lvl-badge {
+            position: fixed;
+            z-index: 262;
             display: flex;
             flex-direction: column;
             align-items: center;
+            background: var(--bg-surface);
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            padding: 3px 10px;
+            box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 30%, transparent);
+            transition: transform 0.55s cubic-bezier(.3,1.3,.5,1);
+            pointer-events: none;
+        }
+        .lvl-badge span { font-size: 0.65rem; color: var(--text-muted); }
+        .lvl-roll {
+            height: 1.4rem;
+            overflow: hidden;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1.4rem;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+        .lvl-roll div { transition: transform 0.7s cubic-bezier(.3,1.4,.5,1); }
+        .lvl-roll.go div { transform: translateY(-1.4rem); }
+        .lvl-ribbon {
+            position: fixed;
+            left: 50%;
+            z-index: 263;
+            transform: translateX(-50%) scaleX(0);
+            background: var(--accent);
             color: #fff;
-            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
-            animation: cardIn 0.6s cubic-bezier(.2,1.6,.4,1);
+            font-weight: 800;
+            font-size: 1.05rem;
+            padding: 8px 34px;
+            white-space: nowrap;
+            clip-path: polygon(0 0, 100% 0, 92% 50%, 100% 100%, 0 100%, 8% 50%);
+            transition: transform 0.45s cubic-bezier(.3,1.5,.5,1), opacity 0.25s ease;
+            pointer-events: none;
         }
-        .lvlup-card small { font-size: 1.1rem; font-weight: 800; letter-spacing: 1px; }
-        .lvlup-card b {
-            font-size: 6.5rem;
-            line-height: 1;
-            font-weight: 900;
-            background: linear-gradient(180deg, #fff 20%, #fbbf24);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.7));
+        .lvl-ribbon.open { transform: translateX(-50%) scaleX(1); }
+        .lvl-bit {
+            position: fixed;
+            top: -20px;
+            z-index: 261;
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+            pointer-events: none;
+            animation: lvlFall var(--t) cubic-bezier(.3,.4,.6,1) forwards;
         }
-        .lvlup-card span { font-size: 1rem; font-weight: 700; margin-top: 4px; }
-        @keyframes cardIn {
-            0% { transform: scale(0.2) rotate(-12deg); opacity: 0; }
-            100% { transform: scale(1) rotate(0); opacity: 1; }
-        }
+        @keyframes lvlFall { to { transform: translate(var(--sway), 105vh) rotate(var(--rot)); } }
 
         /* Settings sheet */
         .settings { text-align: start; padding: 18px 18px 14px; }
@@ -2076,7 +2094,7 @@
         lineCombo = 0;
 
         scoreAnimId++; // stop any score count still running from the last board
-        document.querySelectorAll('.lvlup').forEach(el => el.remove());
+        document.querySelectorAll('.lvlfx').forEach(el => el.remove());
         level = levelInfo(progress.points).L;
         params = levelParams(boardDifficulty());
         N = params.N;
@@ -2918,41 +2936,87 @@
         return 450 + r.tiles * Math.max(55, Math.min(150, 900 / r.tiles)) + 200
             + Math.ceil(r.secs / Math.max(1, Math.ceil(r.secs / 45))) * 32
             + (r.goldPts ? 600 : 0) + (r.dailyBonus ? 600 : 0)
-            + levelsGained * 2100;
+            + levelsGained * 3400;
     }
 
-    // Full-screen level-up: rays, the new number, confetti. Tap to skip.
+    // Level-up: the header badge flies to the middle, its number rolls from
+    // the old level to the new one, a ribbon opens under it (naming a newly
+    // opened board size when there is one), confetti in the tile colours
+    // falls, and the badge flies home. A tap anywhere skips to the end.
     function levelUpShow(L) {
         return new Promise(resolve => {
             const prevN = levelParams(difficultyFor(L - 1)).N;
             const n = levelParams(difficultyFor(L)).N;
-            const el = document.createElement('div');
-            el.className = 'lvlup';
-            el.innerHTML = `<div class="lvlup-rays"></div>
-                <div class="lvlup-card">
-                    <small>עלית רמה!</small>
-                    <b class="num">${L}</b>
-                    <span>${n > prevN ? `לוח ${n}×${n} נפתח 🎉` : rankFor(difficultyFor(L))}</span>
-                </div>`;
-            document.body.appendChild(el);
-            Sound.levelUp();
-            setTimeout(() => Sound.unlock(), 250);
-            confetti(70);
-            buzz([20, 40, 60]);
-            const badge = document.getElementById('levelBadge');
-            badge.classList.remove('up'); void badge.offsetWidth; badge.classList.add('up');
-            document.getElementById('levelDisplay').innerText = L;
+            const home = document.getElementById('levelBadge');
+            const src = home.getBoundingClientRect();
+            const mk = (cls, parent = document.body) => {
+                const e = document.createElement('div');
+                e.className = cls + ' lvlfx';
+                parent.appendChild(e);
+                return e;
+            };
 
+            const veil = mk('lvl-veil');
+            const badge = mk('lvl-badge');
+            badge.style.left = src.left + 'px';
+            badge.style.top = src.top + 'px';
+            badge.style.width = src.width + 'px';
+            badge.innerHTML = `<span>רמה</span><div class="lvl-roll"><div>${L - 1}</div><div>${L}</div></div>`;
+            const centreY = innerHeight * 0.4;
+            const dx = innerWidth / 2 - (src.left + src.width / 2);
+            const dy = centreY - (src.top + src.height / 2);
+
+            const timers = [];
+            const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+            let ribbon = null;
             let done = false;
-            const finish = () => {
+
+            const land = () => {
+                document.getElementById('levelDisplay').innerText = L;
+                home.classList.remove('up'); void home.offsetWidth; home.classList.add('up');
+            };
+            const finish = (skipped) => {
                 if (done) return;
                 done = true;
-                el.classList.add('out');
-                setTimeout(() => el.remove(), 350);
+                timers.forEach(clearTimeout);
+                if (skipped) land();
+                veil.classList.add('out');
+                [badge, ribbon].forEach(e => e && e.remove());
+                setTimeout(() => veil.remove(), 350);
                 resolve();
             };
-            el.addEventListener('pointerdown', finish);
-            setTimeout(finish, 1700);
+            veil.addEventListener('pointerdown', () => finish(true));
+
+            // fly to the middle and grow
+            at(30, () => { badge.style.transform = `translate(${dx}px, ${dy}px) scale(2.6)`; Sound.levelUp(); });
+            // roll the number, open the ribbon, let the confetti fall
+            at(630, () => badge.querySelector('.lvl-roll').classList.add('go'));
+            at(980, () => {
+                Sound.unlock();
+                buzz([20, 40, 60]);
+                ribbon = mk('lvl-ribbon');
+                ribbon.innerText = n > prevN ? `לוח ${n}×${n} נפתח!` : 'רמה חדשה!';
+                ribbon.style.top = (centreY + 70) + 'px';
+                void ribbon.offsetWidth;
+                ribbon.classList.add('open');
+                for (let i = 0; i < 46; i++) {
+                    const c = mk('lvl-bit');
+                    c.style.left = (Math.random() * 100) + 'vw';
+                    c.style.background = ALL_COLORS[i % ALL_COLORS.length];
+                    c.style.setProperty('--t', (1.6 + Math.random() * 1.2) + 's');
+                    c.style.setProperty('--sway', (Math.random() * 80 - 40) + 'px');
+                    c.style.setProperty('--rot', (Math.random() * 540 - 270) + 'deg');
+                    c.style.animationDelay = (Math.random() * 0.4) + 's';
+                    if (i % 3 === 0) c.style.borderRadius = '50%';
+                    setTimeout(() => c.remove(), 3400);
+                }
+            });
+            // fly home
+            at(2500, () => {
+                if (ribbon) ribbon.style.opacity = 0;
+                badge.style.transform = 'translate(0, 0) scale(1)';
+            });
+            at(3050, () => { land(); Sound.click(); finish(false); });
         });
     }
 

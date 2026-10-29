@@ -3,963 +3,1578 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>כרומה-גריד | אימון חשיבה אדפטיבי</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js for Rating Graph -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&family=Rubik:wght@500;700;800&display=swap" rel="stylesheet">
-    
+    <meta name="theme-color" content="#0b1120">
+    <title>Klox</title>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        sys: {
-                            bg: 'var(--bg-sys)',
-                            panel: 'var(--bg-panel)',
-                            border: 'var(--border-sys)',
-                            text: 'var(--text-sys)',
-                            muted: 'var(--text-muted)',
-                            overlay: 'var(--bg-overlay)',
-                            highlight: 'var(--bg-highlight)',
-                        }
-                    }
-                }
-            }
-        }
+        // Apply the saved theme before first paint, so light mode never flashes dark.
+        (function () {
+            let t = null;
+            try { t = localStorage.getItem('klox_theme'); } catch (e) {}
+            if (!t) t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            document.documentElement.dataset.theme = t;
+        })();
     </script>
-
     <style>
+        /* ============================
+           Variables & Theming
+           ============================ */
         :root {
-            /* Dark Theme (Default) */
-            --bg-sys: #0b0f19;
-            --bg-panel: #151c2c;
-            --border-sys: rgba(51, 65, 85, 0.8);
-            --text-sys: #f8fafc;
+            /* Dark Theme Colors (default) */
+            --bg-base: #0b1120;
+            --bg-surface: #1e293b;
+            --bg-slot: #0f172a;
+            --bg-locked: rgba(255, 255, 255, 0.03);
+            --border-color: #334155;
+            --border-highlight: #64748b;
+
+            --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --bg-overlay: rgba(2, 6, 23, 0.85);
-            --bg-highlight: rgba(30, 41, 59, 0.8);
-            --shadow-panel: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            --dot-bg: #334155;
+
+            --color-red: #f43f5e;
+            --color-blue: #38bdf8;
+            --color-green: #10b981;
+
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+
+            --shadow: rgba(0, 0, 0, 0.35);
+            --overlay: rgba(0, 0, 0, 0.7);
         }
 
-        [data-theme="light"] {
-            /* Light Theme */
-            --bg-sys: #f1f5f9;
-            --bg-panel: #ffffff;
-            --border-sys: rgba(203, 213, 225, 0.8);
-            --text-sys: #0f172a;
-            --text-muted: #475569;
-            --bg-overlay: rgba(255, 255, 255, 0.85);
-            --bg-highlight: rgba(226, 232, 240, 0.8);
-            --shadow-panel: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
-            --dot-bg: #cbd5e1;
+        :root[data-theme="light"] {
+            --bg-base: #eef2f7;
+            --bg-surface: #ffffff;
+            --bg-slot: #e2e8f0;
+            --bg-locked: rgba(15, 23, 42, 0.06);
+            --border-color: #cbd5e1;
+            --border-highlight: #94a3b8;
+
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+
+            --color-red: #e11d48;
+            --color-blue: #0284c7;
+            --color-green: #059669;
+
+            --accent: #2563eb;
+            --success: #059669;
+            --danger: #dc2626;
+            --warning: #d97706;
+
+            --shadow: rgba(15, 23, 42, 0.15);
+            --overlay: rgba(15, 23, 42, 0.45);
         }
 
+        /* ============================
+           Global Reset & Layout
+           ============================ */
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
             -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
-        }
-        body {
-            font-family: 'Heebo', sans-serif;
-            background-color: var(--bg-sys);
-            color: var(--text-sys);
-            overflow-x: hidden;
-            touch-action: manipulation;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
-        .bg-sys-gradient {
-            background-image: 
-                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.08) 0%, transparent 35%),
-                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.08) 0%, transparent 35%);
-        }
-        .font-num {
-            font-family: 'Rubik', sans-serif;
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 500px;
+            height: 100%;
+            padding: 12px;
+            gap: 14px;
         }
 
-        /* Tile & Grid Animations */
-        .grid-cell {
-            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        /* ============================
+           Header & Status
+           ============================ */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 10px 12px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 6px -1px var(--shadow);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: var(--bg-slot);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.92);
+            background: var(--border-highlight);
+        }
+
+        .level-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--bg-slot);
+            border: 1px solid var(--border-color);
+            padding: 4px 12px;
+            border-radius: 12px;
             position: relative;
-        }
-        .tile-item {
-            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease, opacity 0.15s ease;
-            cursor: grab;
-            touch-action: none;
-        }
-        .tile-item:active {
-            cursor: grabbing;
-        }
-        .tile-selected {
-            transform: scale(1.09) translateY(-3px);
-            box-shadow: 0 0 0 3px var(--text-sys), 0 12px 25px -4px rgba(0, 0, 0, 0.6) !important;
-            z-index: 20;
-        }
-        .cell-highlight-target {
-            box-shadow: inset 0 0 0 2px rgba(56, 189, 248, 0.7);
-            background-color: rgba(56, 189, 248, 0.12) !important;
-        }
-        
-        @keyframes conflictPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.8), inset 0 0 0 2.5px #f43f5e; }
-            50% { box-shadow: 0 0 14px 3px rgba(244, 63, 94, 0.55), inset 0 0 0 2.5px #fb7185; }
-        }
-        .tile-conflict {
-            animation: conflictPulse 1.4s infinite ease-in-out;
+            min-width: 76px;
         }
 
-        @keyframes popIn {
-            0% { transform: scale(0.75); opacity: 0.4; }
-            70% { transform: scale(1.06); }
-            100% { transform: scale(1); opacity: 1; }
+        .level-badge span { font-size: 0.7rem; color: var(--text-muted); }
+        .level-badge strong { font-size: 1.25rem; color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums; }
+        .level-badge .peak { font-size: 0.65rem; }
+        .level-badge.up { animation: badgeUp 0.9s ease; }
+        .level-badge.down { animation: badgeDown 0.9s ease; }
+
+        @keyframes badgeUp {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.18); box-shadow: 0 0 18px var(--success); border-color: var(--success); }
+            100% { transform: scale(1); }
         }
-        .animate-pop {
-            animation: popIn 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        @keyframes badgeDown {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-4px); border-color: var(--danger); }
+            40% { transform: translateX(4px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(2px); }
         }
 
-        /* Floating Drag Clone */
-        #drag-ghost {
-            position: fixed;
+        .level-delta {
+            position: absolute;
+            top: -10px;
+            inset-inline-start: 50%;
+            transform: translateX(50%);
+            font-size: 0.8rem;
+            font-weight: 800;
             pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%, -50%) scale(1.15);
-            box-shadow: 0 20px 35px rgba(0,0,0,0.65), 0 0 0 3px rgba(255,255,255,0.9);
-            border-radius: 1rem;
+            animation: floatUp 1.4s ease forwards;
+        }
+        .level-delta.pos { color: var(--success); }
+        .level-delta.neg { color: var(--danger); }
+        @keyframes floatUp {
+            0% { opacity: 0; translate: 0 6px; }
+            20% { opacity: 1; }
+            100% { opacity: 0; translate: 0 -22px; }
+        }
+
+        .app-title {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .app-title strong { font-size: 1.2rem; display: flex; align-items: center; gap: 6px; }
+        .app-title span { font-size: 0.75rem; color: var(--text-muted); }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 8px;
+            flex-shrink: 0;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .timer {
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 1.1rem;
+        }
+        .timer.danger { color: var(--danger); animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ============================
+           Chips (Rules)
+           ============================ */
+        .chips {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .chip {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            transition: 0.3s ease;
+        }
+
+        .chip::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-color);
+            transition: 0.3s ease;
+        }
+
+        .chip.valid { color: var(--text-main); border-color: var(--success); }
+        .chip.valid::before { background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+        /* ============================
+           Board Layout
+           ============================ */
+        .board-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            min-height: 0; /* Important for flex child to shrink properly */
+            position: relative;
+            container-type: size; /* lets the board size itself to the smaller side */
+        }
+
+        .board-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 16px;
+            width: min(100cqw, 100cqh, 400px);
+            aspect-ratio: 1 / 1;
+            box-shadow: 0 10px 30px var(--shadow);
+            transition: filter 0.3s ease;
+        }
+
+        .board-container.paused {
+            filter: grayscale(100%) blur(8px);
+            pointer-events: none;
+        }
+
+        /* CSS Grid strictly dividing the space for dots and slots */
+        /* RTL: 24px track for dots on the LEFT (column 4) */
+        .board-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 24px;
+            grid-template-rows: 24px 1fr 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .board-grid.no-guides .dot { visibility: hidden; }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-color);
+            justify-self: center;
+            align-self: center;
+            transition: 0.3s ease;
+        }
+        .dot.valid {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            transform: scale(1.2);
+        }
+
+        /* ============================
+           Slots & Tiles
+           ============================ */
+        .slot {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-slot);
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            position: relative; /* Anchor for absolute children */
+            overflow: hidden; /* Prevent ANY visual escape */
+            transition: border-color 0.15s ease, background-color 0.15s ease;
+        }
+
+        .slot.locked {
+            background: var(--bg-locked);
+        }
+
+        .slot.drop-ok {
+            border: 2px dashed var(--accent);
+            background: color-mix(in srgb, var(--accent) 12%, var(--bg-slot));
+        }
+        .slot.drop-bad {
+            border: 2px dashed var(--danger);
+        }
+
+        .tile {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: grab;
+            border-radius: 14px;
+            border: 3px solid transparent;
+            transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+            box-sizing: border-box;
+            touch-action: none; /* lets a finger drag the tile instead of scrolling */
+        }
+
+        .tile.locked-tile { cursor: default; }
+        .tile:not(.locked-tile):active { transform: scale(0.95); }
+
+        .tile.selected {
+            border-color: var(--text-main);
+            transform: scale(0.92);
+            box-shadow: 0 4px 15px var(--shadow);
+            z-index: 10;
+        }
+
+        .tile.drag-origin { opacity: 0.25; }
+        .tile.pop { animation: pop 0.28s ease; }
+        .tile.shake { animation: shake 0.35s ease; }
+
+        @keyframes pop {
+            0% { transform: scale(0.6); }
+            60% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-3px); }
+        }
+
+        .drag-ghost {
+            position: fixed;
+            z-index: 200;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 14px;
+            background: var(--bg-surface);
+            border: 2px solid var(--accent);
+            box-shadow: 0 12px 28px var(--shadow);
+            transform: translate(-50%, -50%) scale(1.12) rotate(-4deg);
+            transition: transform 0.12s ease;
+        }
+
+        .lock-svg {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 14px;
+            height: 14px;
+            stroke: var(--text-muted);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none;
+        }
+
+        /* ============================
+           Shapes (Pure CSS)
+           ============================ */
+        .shape {
+            width: 45%;
+            height: 45%;
+        }
+
+        .shape.square { border-radius: 8px; }
+
+        .shape.circle { border-radius: 50%; }
+
+        .shape.triangle {
+            width: 52%;
+            height: 52%;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            /* Background color injected via inline style */
+        }
+
+        /* ============================
+           Tray Area
+           ============================ */
+        .tray-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 14px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 8px;
+            transition: border-color 0.15s ease;
+        }
+
+        .tray-container.drop-ok { border: 2px dashed var(--accent); }
+
+        .tray-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .tray-count {
+            background: var(--bg-slot);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Wraps instead of scrolling: a sideways-scrolling tray fights with dragging. */
+        .tray-slots {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            min-height: 56px;
+        }
+
+        .tray-slot {
+            flex-shrink: 0;
+            width: 56px;
+            aspect-ratio: 1 / 1;
+            background: var(--bg-slot);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tray-empty {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            align-self: center;
+        }
+
+        /* ============================
+           Modals
+           ============================ */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--overlay);
+            backdrop-filter: blur(4px);
             display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
         }
 
-        /* Status Dot Glow */
-        .status-dot {
-            transition: all 0.3s ease;
-            background-color: var(--dot-bg);
-        }
-        .status-dot.valid {
-            background-color: #10b981;
-            box-shadow: 0 0 8px #10b981;
-            transform: scale(1.25);
-        }
-        .status-dot.conflict {
-            background-color: #f43f5e;
-            box-shadow: 0 0 8px #f43f5e;
+        .modal-content {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            border-radius: 24px;
+            width: 85%;
+            max-width: 340px;
+            text-align: center;
+            box-shadow: 0 20px 40px var(--shadow);
+            animation: pop 0.25s ease;
         }
 
-        /* Toggles */
-        .toggle-knob { transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
-        .toggle-on .toggle-knob { transform: translateX(-24px); } /* RTL right to left */
+        .modal-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 12px; }
+        .modal-msg { font-size: 1rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; white-space: pre-line; }
 
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-sys); }
-        ::-webkit-scrollbar-thumb { background: var(--border-sys); border-radius: 9999px; }
+        .level-change {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-weight: 800;
+            font-size: 1.15rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .level-change .nums { white-space: nowrap; font-size: 1.3rem; }
+        .level-change .tag {
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: var(--bg-slot);
+            color: var(--text-muted);
+        }
+        .level-change .tag.fast { color: var(--warning); }
+        .level-change .tag.ceiling { color: var(--accent); }
+        .level-change .tag.drop { color: var(--danger); }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: white;
+            transition: 0.2s ease;
+            margin-bottom: 10px;
+        }
+
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: var(--accent); }
+        .btn-secondary { background: var(--bg-slot); color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+
+        /* ============================
+           Confetti
+           ============================ */
+        .confetti {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            pointer-events: none;
+            z-index: 150;
+            animation: confetti 1.2s cubic-bezier(.2,.7,.4,1) forwards;
+        }
+        @keyframes confetti {
+            0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between pb-4 bg-sys-gradient" data-theme="dark">
+<body>
 
-    <div id="drag-ghost"></div>
-
-    <!-- Top Navigation & Rating Bar -->
-    <header class="w-full max-w-lg mx-auto px-4 pt-3 pb-2">
-        <div class="flex items-center justify-between bg-sys-panel border border-sys-border rounded-2xl p-3 shadow-[var(--shadow-panel)] backdrop-blur-md transition-colors">
-            <!-- Brand & Title -->
-            <div class="flex items-center gap-2.5">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 via-indigo-500 to-fuchsia-500 flex items-center justify-center shadow-md">
-                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
-                        <rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" fill-opacity="0.25"/>
-                        <circle cx="17.5" cy="6.5" r="3.5" fill="currentColor" fill-opacity="0.25"/>
-                        <polygon points="6.5,14 10,21 3,21" fill="currentColor" fill-opacity="0.25"/>
-                        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
-                    </svg>
-                </div>
-                <div>
-                    <div class="flex items-center gap-1.5">
-                        <h1 class="font-extrabold text-lg leading-none tracking-tight bg-gradient-to-l from-indigo-400 to-cyan-400 bg-clip-text text-transparent">כרומה-גריד</h1>
-                        <span id="practice-badge" class="hidden text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/30">תרגול</span>
-                    </div>
-                    <p id="rank-title" class="text-xs text-sys-muted font-medium mt-0.5 transition-colors">חושב מתחיל</p>
-                </div>
-            </div>
-
-            <!-- Adaptive Rating Pill -->
-            <button onclick="openStatsModal()" class="group flex items-center gap-2.5 bg-sys-highlight hover:opacity-80 border border-sys-border rounded-xl px-3 py-1.5 transition active:scale-95">
-                <div class="text-right">
-                    <div class="text-[10px] text-sys-muted font-medium leading-none">מדד רמה (1-10)</div>
-                    <div class="flex items-baseline gap-1 mt-0.5">
-                        <span id="current-rating-display" class="font-num font-extrabold text-lg text-cyan-500 dark:text-cyan-400 leading-none">1.0</span>
-                        <span id="rating-delta-pill" class="text-[11px] font-num font-bold text-emerald-500 hidden">+0.4</span>
-                    </div>
-                </div>
-                <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-500 dark:text-cyan-400 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
-                    </svg>
-                </div>
+<div class="app-container">
+    <!-- Header -->
+    <header>
+        <div class="header-actions">
+            <button class="icon-btn" id="settingsBtn" aria-label="הגדרות">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
             </button>
-
-            <!-- Quick Actions -->
-            <div class="flex items-center gap-1.5">
-                <button onclick="openSettingsModal()" title="הגדרות" class="w-9 h-9 rounded-xl bg-sys-highlight text-sys-text flex items-center justify-center border border-sys-border transition active:scale-95 hover:opacity-80">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-                    </svg>
-                </button>
-            </div>
+            <button class="icon-btn" id="pauseBtn" aria-label="השהה/המשך">
+                <svg id="icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+                <svg id="icon-play" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+            </button>
+            <button class="icon-btn" id="themeBtn" aria-label="מצב כהה/בהיר">
+                <!-- Sun: shown in dark mode (tap for light) -->
+                <svg id="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+                </svg>
+                <!-- Moon: shown in light mode (tap for dark) -->
+                <svg id="icon-moon" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+            <button class="icon-btn" id="soundBtn" aria-label="צלילים">
+                <svg id="icon-sound-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+                <svg id="icon-sound-off" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                </svg>
+            </button>
         </div>
-
-        <!-- Level Progress Bar -->
-        <div class="mt-2 px-1">
-            <div class="flex justify-between text-[11px] text-sys-muted mb-1 font-medium">
-                <span id="puzzle-spec-badge">לוח 3×3 • 3 צבעים וצורות</span>
-                <div class="flex items-center gap-3 font-num">
-                    <span>צעדים: <strong id="moves-counter" class="text-sys-text">0</strong><span id="optimal-moves-label" class="text-sys-muted text-[10px]">/4</span></span>
-                    <span>זמן: <strong id="timer-display" class="text-sys-text">00:00</strong></span>
-                </div>
-            </div>
-            <div class="w-full h-1.5 bg-sys-highlight rounded-full overflow-hidden border border-sys-border/50">
-                <div id="rating-progress-bar" class="h-full bg-gradient-to-l from-cyan-400 via-indigo-500 to-fuchsia-500 transition-all duration-500 rounded-full" style="width: 10%"></div>
-            </div>
+        <div class="level-badge" id="levelBadge">
+            <span>מדד רמה</span>
+            <strong id="levelDisplay">1.0</strong>
+            <span class="peak">שיא <span id="peakDisplay">1.0</span></span>
+        </div>
+        <div class="app-title">
+            <strong>קלוקס</strong>
+            <span id="rankTitle">חושב מתחיל</span>
         </div>
     </header>
 
-    <!-- Main Interactive Puzzle Area -->
-    <main class="flex-1 w-full max-w-lg mx-auto px-4 flex flex-col justify-center items-center gap-3 my-1">
-        
-        <!-- Live Rule Checklist Bar -->
-        <div class="w-full grid grid-cols-3 gap-1.5 text-center">
-            <div id="rule-pill-rows" class="bg-sys-highlight border border-sys-border rounded-xl py-1.5 px-2 flex items-center justify-center gap-1.5 text-xs text-sys-muted transition">
-                <span class="w-2 h-2 rounded-full" id="dot-rule-rows" style="background:var(--dot-bg)"></span>
-                <span>שורות שונות</span>
-            </div>
-            <div id="rule-pill-cols" class="bg-sys-highlight border border-sys-border rounded-xl py-1.5 px-2 flex items-center justify-center gap-1.5 text-xs text-sys-muted transition">
-                <span class="w-2 h-2 rounded-full" id="dot-rule-cols" style="background:var(--dot-bg)"></span>
-                <span>עמודות שונות</span>
-            </div>
-            <div id="rule-pill-pairs" class="bg-sys-highlight border border-sys-border rounded-xl py-1.5 px-2 flex items-center justify-center gap-1.5 text-xs text-sys-muted transition">
-                <span class="w-2 h-2 rounded-full" id="dot-rule-pairs" style="background:var(--dot-bg)"></span>
-                <span id="rule-pairs-text">זוגות שונים</span>
-            </div>
-        </div>
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <span>לוח 3x3</span>
+        <span>זמן שנותר: <span class="timer" id="timerDisplay">02:00</span></span>
+        <span>צעדים: <span id="stepsDisplay">0</span></span>
+    </div>
 
-        <!-- The Board Container -->
-        <div class="relative w-full flex flex-col items-center justify-center my-0.5">
-            <div id="col-indicators" class="grid w-full max-w-[360px] mb-1.5 px-2 justify-items-center"></div>
-            <div class="flex items-center justify-center w-full">
-                <div id="row-indicators" class="flex flex-col justify-around h-full ml-1.5 py-2"></div>
-                <div id="board-grid" class="w-full max-w-[360px] aspect-square bg-sys-panel border-2 border-sys-border rounded-2xl p-2.5 shadow-[var(--shadow-panel)] grid gap-2 relative"></div>
-            </div>
-        </div>
+    <!-- Rule Chips -->
+    <div class="chips">
+        <div class="chip" id="chipRows">שורות שונות</div>
+        <div class="chip" id="chipCols">עמודות שונות</div>
+        <div class="chip" id="chipUnique">זוגות ייחודיים</div>
+    </div>
 
-        <div id="feedback-banner" class="min-h-[24px] text-xs font-medium text-sys-muted text-center flex items-center justify-center gap-1.5 px-3">
-            <span>גרור אריח או הקש לבחירה והנחה במשבצת</span>
-        </div>
-
-        <!-- Tile Bank -->
-        <div class="w-full bg-sys-panel border border-sys-border rounded-2xl p-3 shadow-lg">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold text-sys-text flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                    מגש אריחים
-                </span>
-                <span id="bank-count-badge" class="text-[11px] font-num text-sys-muted bg-sys-highlight px-2 py-0.5 rounded-full border border-sys-border">0 נותרו</span>
-            </div>
-            <div id="tile-bank" class="min-h-[64px] flex flex-wrap items-center justify-center gap-2 p-1.5 rounded-xl bg-sys-highlight border border-sys-border/50"></div>
-        </div>
-    </main>
-
-    <!-- Bottom Controls Bar -->
-    <footer class="w-full max-w-lg mx-auto px-4 pt-1">
-        <div class="grid grid-cols-4 gap-2">
-            <button onclick="undoMove()" id="btn-undo" disabled class="flex flex-col items-center justify-center py-2 px-3 rounded-xl bg-sys-panel hover:bg-sys-highlight disabled:opacity-40 border border-sys-border text-sys-text transition active:scale-95">
-                <svg class="w-5 h-5 mb-0.5 text-sys-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                <span class="text-[11px] font-bold">בטל</span>
-            </button>
-            <button onclick="useSmartHint()" class="flex flex-col items-center justify-center py-2 px-3 rounded-xl bg-sys-panel hover:bg-sys-highlight border border-sys-border text-amber-500 transition active:scale-95">
-                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                <span class="text-[11px] font-bold">רמז</span>
-            </button>
-            <button onclick="resetCurrentBoard()" class="flex flex-col items-center justify-center py-2 px-3 rounded-xl bg-sys-panel hover:bg-sys-highlight border border-sys-border text-sys-text transition active:scale-95">
-                <svg class="w-5 h-5 mb-0.5 text-sys-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                <span class="text-[11px] font-bold">נקה</span>
-            </button>
-            <button onclick="handleTooHardSkip()" class="flex flex-col items-center justify-center py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-500 transition active:scale-95">
-                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
-                <span class="text-[11px] font-bold">קשה לי</span>
-            </button>
-        </div>
-    </footer>
-
-    <!-- ================= MODALS ================= -->
-
-    <!-- Victory Modal -->
-    <div id="victory-modal" class="fixed inset-0 z-50 bg-sys-overlay backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-sys-panel border border-sys-border rounded-3xl p-6 shadow-2xl text-center animate-pop">
-            <div id="fast-track-badge" class="hidden mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-cyan-500/20 border border-amber-400/40 text-amber-500 dark:text-amber-400 text-xs font-extrabold">
-                <span>⚡ קפיצת רמה מהירה!</span>
-            </div>
-            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shadow-lg">
-                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-            </div>
-            <h2 class="text-2xl font-black text-sys-text">הלוח פוצח בהצלחה!</h2>
-            <p class="text-sm text-sys-muted mt-1">כל השורות, העמודות והזוגות מאוזנים לחלוטין</p>
-            <div class="grid grid-cols-3 gap-2.5 my-5">
-                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-3">
-                    <div class="text-[11px] text-sys-muted">דיוק מהלכים</div>
-                    <div id="vic-accuracy" class="font-num text-xl font-extrabold text-sys-text mt-0.5">100%</div>
-                </div>
-                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-3">
-                    <div class="text-[11px] text-sys-muted">זמן פתרון</div>
-                    <div id="vic-time" class="font-num text-xl font-extrabold text-sys-text mt-0.5">00:18</div>
-                </div>
-                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-3">
-                    <div class="text-[11px] text-sys-muted">מדד חדש</div>
-                    <div class="flex items-baseline justify-center gap-1 mt-0.5">
-                        <span id="vic-new-rating" class="font-num text-xl font-extrabold text-cyan-500 dark:text-cyan-400">1.6</span>
-                        <span id="vic-rating-diff" class="font-num text-xs font-bold text-emerald-500">(+0.6)</span>
-                    </div>
-                </div>
-            </div>
-            <div id="adaptive-explanation" class="text-xs text-sys-muted bg-sys-highlight border border-sys-border rounded-xl p-3 mb-5 text-right leading-relaxed"></div>
-            <div class="flex gap-2.5">
-                <button onclick="openStatsModal(); closeVictoryModal();" class="flex-1 py-3 px-4 rounded-xl bg-sys-highlight hover:opacity-80 text-sys-text font-bold text-sm transition border border-sys-border">גרף</button>
-                <button onclick="closeVictoryModal(); startNextLevel();" class="flex-[2] py-3 px-4 rounded-xl bg-gradient-to-l from-cyan-500 to-indigo-500 text-white font-extrabold text-sm shadow-lg transition active:scale-95">ללוח הבא ←</button>
+    <!-- Board Area -->
+    <div class="board-wrapper">
+        <div class="board-container" id="boardContainer">
+            <div class="board-grid" id="boardGrid">
+                <!-- Generated by JS -->
             </div>
         </div>
     </div>
 
-    <!-- Stats Modal -->
-    <div id="stats-modal" class="fixed inset-0 z-50 bg-sys-overlay backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="w-full max-w-lg bg-sys-panel border border-sys-border rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h2 class="text-xl font-black text-sys-text">גרף התקדמות ומדד יכולת</h2>
-                    <p class="text-xs text-sys-muted">מעקב רב-שלבי מסולם 1.0 עד 10.0</p>
-                </div>
-                <button onclick="closeStatsModal()" class="w-8 h-8 rounded-lg bg-sys-highlight text-sys-muted hover:text-sys-text flex items-center justify-center">✕</button>
-            </div>
-            <div class="grid grid-cols-4 gap-2 mb-4 text-center">
-                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-2.5">
-                    <div class="text-[10px] text-sys-muted">נוכחית</div>
-                    <div id="stat-curr-rating" class="font-num text-lg font-extrabold text-cyan-500 dark:text-cyan-400 mt-0.5">1.0</div>
-                </div>
-                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-2.5">
-                    <div class="text-[10px] text-sys-muted">שיא</div>
-                    <div id="stat-peak-rating" class="font-num text-lg font-extrabold text-fuchsia-500 dark:text-fuchsia-400 mt-0.5">1.0</div>
-                </div>
-                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-2.5">
-                    <div class="text-[10px] text-sys-muted">נפתרו</div>
-                    <div id="stat-total-solved" class="font-num text-lg font-extrabold text-sys-text mt-0.5">0</div>
-                </div>
-                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-2.5">
-                    <div class="text-[10px] text-sys-muted">דיוק ממוצע</div>
-                    <div id="stat-avg-acc" class="font-num text-lg font-extrabold text-emerald-500 mt-0.5">0%</div>
-                </div>
-            </div>
-            <div class="bg-[var(--bg-sys)] border border-sys-border rounded-2xl p-3 mb-4">
-                <div class="h-52 w-full relative"><canvas id="ratingChart"></canvas></div>
-            </div>
-            <div class="flex justify-between items-center">
-                <button onclick="resetAllStats()" class="text-xs text-rose-500 underline">איפוס היסטוריה</button>
-                <button onclick="closeStatsModal()" class="py-2.5 px-6 rounded-xl bg-cyan-500 text-white font-extrabold text-sm">סגור</button>
-            </div>
+    <!-- Tray Area -->
+    <div class="tray-container" id="trayContainer" data-drop="tray">
+        <div class="tray-header">
+            <span>מגש אריחים</span>
+            <span class="tray-count" id="trayCountDisplay">0 נותרו</span>
+        </div>
+        <div class="tray-slots" id="traySlots">
+            <!-- Generated by JS -->
         </div>
     </div>
+</div>
 
-    <!-- Settings & Simulator Modal -->
-    <div id="settings-modal" class="fixed inset-0 z-50 bg-sys-overlay backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-sys-panel border border-sys-border rounded-3xl p-5 shadow-2xl">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-black text-sys-text">הגדרות מתקדמות</h2>
-                <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-lg bg-sys-highlight text-sys-muted hover:text-sys-text flex items-center justify-center">✕</button>
-            </div>
-
-            <!-- Toggles -->
-            <div class="bg-sys-highlight rounded-2xl p-4 mb-4 border border-sys-border">
-                <h3 class="text-xs font-bold text-sys-muted mb-3 uppercase tracking-wider">מערכת</h3>
-                
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-sm font-bold text-sys-text">מצב תצוגה (בהיר / כהה)</span>
-                    <button onclick="toggleTheme()" id="theme-toggle-btn" class="w-12 h-6 rounded-full relative transition-colors bg-slate-300 dark:bg-cyan-500 toggle-on">
-                        <div class="toggle-knob w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"></div>
-                    </button>
-                </div>
-                
-                <div class="flex justify-between items-center mb-3">
-                    <span class="text-sm font-bold text-sys-text">אפקטים קוליים ורטט</span>
-                    <button onclick="toggleSound()" id="sound-toggle-btn" class="w-12 h-6 rounded-full relative transition-colors bg-slate-300 dark:bg-cyan-500 toggle-on">
-                        <div class="toggle-knob w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"></div>
-                    </button>
-                </div>
-
-                <div class="flex justify-between text-xs text-sys-muted mb-1 mt-2">
-                    <span>עוצמת שמע</span>
-                    <span id="vol-val">50%</span>
-                </div>
-                <input type="range" id="vol-slider" min="0" max="1" step="0.1" value="0.5" oninput="updateVolume(this.value)" class="w-full accent-cyan-500 cursor-pointer">
-            </div>
-
-            <!-- Simulator -->
-            <div class="bg-sys-highlight border border-sys-border rounded-2xl p-4 mb-4">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-bold text-sys-text">סימולטור רמות (תרגול)</span>
-                    <span id="sim-slider-val" class="font-num text-sm font-extrabold text-amber-500">1.0</span>
-                </div>
-                <input id="sim-level-slider" type="range" min="1.0" max="10.0" step="0.5" value="1.0" oninput="document.getElementById('sim-slider-val').textContent = parseFloat(this.value).toFixed(1)" class="w-full accent-amber-500 cursor-pointer mb-3">
-                <div class="flex gap-2">
-                    <button onclick="launchSimulatedLevel()" class="flex-1 py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-bold text-xs transition">נסה רמה זו</button>
-                    <button onclick="returnToRealRating()" class="py-2 px-3 rounded-xl bg-sys-panel border border-sys-border text-sys-text font-bold text-xs transition hover:opacity-80">חזור לדירוג שלי</button>
-                </div>
-            </div>
-
-            <button onclick="closeSettingsModal()" class="w-full py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-sm">סגור</button>
-        </div>
+<!-- Modal Dialog -->
+<div class="modal-overlay" id="dialogModal">
+    <div class="modal-content" id="dialogContent">
+        <h2 class="modal-title" id="dialogTitle">הודעה</h2>
+        <p class="modal-msg" id="dialogMessage"></p>
+        <div class="level-change" id="dialogLevel" style="display: none;"></div>
+        <div id="dialogButtons"></div>
     </div>
+</div>
 
-    <script>
-        /**************************************************************
-         * AUDIO & HAPTIC ENGINE
-         **************************************************************/
-        let audioCtx = null;
-        let globalSettings = {
-            theme: 'dark',
-            soundOn: true,
-            volume: 0.5
-        };
+<script>
+    /* ============================
+       Storage (never throws: private windows can refuse it)
+       ============================ */
+    const store = {
+        get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+        set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    };
 
-        function loadSettings() {
-            try {
-                const saved = localStorage.getItem('chromagrid_settings_v1');
-                if (saved) {
-                    globalSettings = { ...globalSettings, ...JSON.parse(saved) };
-                }
-            } catch(e) {}
-            applySettingsUI();
-        }
+    /* ============================
+       Sound — tiny synthesised bleeps, no audio files
+       ============================ */
+    const Sound = {
+        ctx: null,
+        enabled: store.get('klox_sound') !== 'off',
 
-        function saveSettings() {
-            localStorage.setItem('chromagrid_settings_v1', JSON.stringify(globalSettings));
-        }
-
-        function initAudio() {
-            if (!audioCtx && globalSettings.soundOn) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioContext();
+        ensure() {
+            if (!this.enabled) return null;
+            if (!this.ctx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) return null;
+                this.ctx = new AC();
             }
-        }
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            return this.ctx;
+        },
 
-        function playTone(freq, type = 'sine', duration = 0.1, volMult = 1) {
-            if (!globalSettings.soundOn) return;
-            initAudio();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+        tone(freq, { type = 'sine', dur = 0.12, vol = 0.16, delay = 0, slideTo = null } = {}) {
+            const ctx = this.ensure();
+            if (!ctx) return;
+            const t0 = ctx.currentTime + delay;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
             osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            
-            const effectiveVol = globalSettings.volume * volMult * 0.5; 
-            gain.gain.setValueAtTime(effectiveVol, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        }
+            osc.frequency.setValueAtTime(freq, t0);
+            if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+            // Fast attack, soft exponential tail: reads as a "plink", not a beep.
+            gain.gain.setValueAtTime(0.0001, t0);
+            gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(t0);
+            osc.stop(t0 + dur + 0.02);
+        },
 
-        function vibrate(pattern) {
-            if (globalSettings.soundOn && navigator.vibrate) {
-                try { navigator.vibrate(pattern); } catch(e){}
-            }
-        }
+        pick()  { this.tone(620, { dur: 0.09, slideTo: 940, vol: 0.13 }); },
+        drop()  { this.tone(880, { type: 'triangle', dur: 0.11, slideTo: 520 }); this.tone(1320, { dur: 0.06, vol: 0.05, delay: 0.03 }); },
+        swap()  { this.tone(700, { type: 'triangle', dur: 0.07 }); this.tone(940, { type: 'triangle', dur: 0.08, delay: 0.07 }); },
+        back()  { this.tone(740, { dur: 0.1, slideTo: 420, vol: 0.12 }); },
+        select(){ this.tone(1040, { dur: 0.05, vol: 0.08 }); },
+        nope()  { this.tone(220, { type: 'square', dur: 0.09, vol: 0.05 }); this.tone(185, { type: 'square', dur: 0.12, vol: 0.05, delay: 0.09 }); },
+        tick()  { this.tone(1500, { dur: 0.03, vol: 0.04 }); },
+        line()  { [784, 988, 1175].forEach((f, i) => this.tone(f, { dur: 0.16, vol: 0.1, delay: i * 0.06 })); },
+        win()   {
+            [523, 659, 784, 1047].forEach((f, i) => this.tone(f, { type: 'triangle', dur: 0.22, vol: 0.14, delay: i * 0.09 }));
+            [1568, 2093, 2637].forEach((f, i) => this.tone(f, { dur: 0.12, vol: 0.05, delay: 0.42 + i * 0.07 }));
+        },
+        lose()  { [523, 440, 349].forEach((f, i) => this.tone(f, { type: 'triangle', dur: 0.25, vol: 0.12, delay: i * 0.14 })); },
+        levelUp()   { this.tone(440, { dur: 0.35, slideTo: 1320, vol: 0.1 }); this.tone(1760, { dur: 0.15, vol: 0.05, delay: 0.3 }); },
+        levelDown() { this.tone(520, { type: 'triangle', dur: 0.4, slideTo: 260, vol: 0.1 }); },
+    };
 
-        // SFX Library
-        const sfx = {
-            pickup: () => { playTone(400, 'sine', 0.1, 0.4); vibrate(20); },
-            drop: () => { playTone(300, 'sine', 0.15, 0.5); vibrate(30); },
-            error: () => { playTone(150, 'sawtooth', 0.3, 0.4); vibrate([40, 40, 40]); },
-            rowMatch: () => { playTone(600, 'sine', 0.1, 0.4); setTimeout(()=>playTone(800, 'sine', 0.2, 0.4), 100); },
-            win: () => {
-                [400, 500, 600, 800, 1000].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.2, 0.5), i * 100));
-                vibrate([100, 50, 100, 50, 200]);
-            }
+    function buzz(pattern) {
+        if (Sound.enabled && navigator.vibrate) navigator.vibrate(pattern);
+    }
+
+    /* ============================
+       Theme & sound toggles
+       ============================ */
+    function applyThemeUI() {
+        const light = document.documentElement.dataset.theme === 'light';
+        document.getElementById('icon-sun').style.display = light ? 'none' : 'block';
+        document.getElementById('icon-moon').style.display = light ? 'block' : 'none';
+        document.querySelector('meta[name="theme-color"]').content = light ? '#eef2f7' : '#0b1120';
+    }
+
+    document.getElementById('themeBtn').addEventListener('click', () => {
+        const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+        document.documentElement.dataset.theme = next;
+        store.set('klox_theme', next);
+        applyThemeUI();
+        Sound.select();
+    });
+
+    function applySoundUI() {
+        document.getElementById('icon-sound-on').style.display = Sound.enabled ? 'block' : 'none';
+        document.getElementById('icon-sound-off').style.display = Sound.enabled ? 'none' : 'block';
+    }
+
+    document.getElementById('soundBtn').addEventListener('click', () => {
+        Sound.enabled = !Sound.enabled;
+        store.set('klox_sound', Sound.enabled ? 'on' : 'off');
+        applySoundUI();
+        Sound.select();
+    });
+
+    /* ============================
+       Adaptive difficulty
+
+       The level is a continuous rating from 1.0 to 10.0. After every board:
+       - A win that was clearly easy (fast and with few wasted moves) jumps the
+         level up, and consecutive easy wins jump further each time — so a
+         player who is far below their ability gets there in a few boards.
+       - Below the player's peak, wins climb back quickly.
+       - At the peak, ordinary wins are heavily damped: the player has to win
+         well, repeatedly, to push the peak higher. That is the "stuck at your
+         ceiling" feeling.
+       - A loss drops the level, and consecutive losses drop it further, so a
+         player who is over their head comes down fast.
+       ============================ */
+    const MIN_LEVEL = 1.0;
+    const MAX_LEVEL = 10.0;
+
+    let level = parseFloat(store.get('klox_level')) || 1.0;
+    let progress = (() => {
+        try {
+            const p = JSON.parse(store.get('klox_progress'));
+            if (p && typeof p.peak === 'number') return p;
+        } catch (e) {}
+        return { peak: level, easyStreak: 0, failStreak: 0, played: 0 };
+    })();
+
+    function saveProgress() {
+        store.set('klox_level', level.toFixed(2));
+        store.set('klox_progress', JSON.stringify(progress));
+    }
+
+    // What a level means on the board.
+    function levelParams(L) {
+        return {
+            // Tiles you must place: 3 at level 1, all 9 from about level 9.6
+            missing: Math.min(9, Math.round(3 + (L - 1) * 0.7)),
+            // From level 5.5, some of those start on the board in the wrong place (unlocked)
+            scrambled: L >= 5.5 ? Math.min(3, Math.floor((L - 4) / 1.5)) : 0,
+            // Less time as the level rises: 150s at 1, 42s at 10
+            time: Math.max(40, Math.round(150 - (L - 1) * 12)),
+            // The per-row/column dots go away from level 7 — you must check lines yourself
+            guides: L < 7,
         };
+    }
 
-        /**************************************************************
-         * SETTINGS & THEME LOGIC
-         **************************************************************/
-        function applySettingsUI() {
-            // Theme
-            const body = document.body;
-            const themeBtn = document.getElementById('theme-toggle-btn');
-            if (globalSettings.theme === 'light') {
-                body.setAttribute('data-theme', 'light');
-                document.documentElement.classList.remove('dark');
-                themeBtn.classList.remove('toggle-on', 'bg-cyan-500');
-                themeBtn.classList.add('bg-slate-300');
+    function rankFor(L) {
+        if (L >= 9) return 'מחונן';
+        if (L >= 7) return 'מומחה';
+        if (L >= 5) return 'חד';
+        if (L >= 3) return 'מתקדם';
+        return 'חושב מתחיל';
+    }
+
+    // Returns { before, after, delta, tag } and updates level/progress.
+    function applyResult(won, stats) {
+        const before = level;
+        const atCeiling = before >= progress.peak - 0.05;
+        let delta;
+        let tag;
+
+        if (won) {
+            progress.failStreak = 0;
+            // 0..1: mostly speed, some move efficiency
+            const perf = 0.6 * (1 - stats.timeFrac) + 0.4 * stats.efficiency;
+
+            if (perf >= 0.72) {
+                progress.easyStreak++;
+                delta = 0.4 + 0.2 * Math.min(3, progress.easyStreak - 1); // 0.4, 0.6, 0.8, 1.0
+                tag = 'fast';
             } else {
-                body.setAttribute('data-theme', 'dark');
-                document.documentElement.classList.add('dark');
-                themeBtn.classList.add('toggle-on', 'bg-cyan-500');
-                themeBtn.classList.remove('bg-slate-300');
-            }
-
-            // Sound
-            const soundBtn = document.getElementById('sound-toggle-btn');
-            if (globalSettings.soundOn) {
-                soundBtn.classList.add('toggle-on', 'bg-cyan-500');
-                soundBtn.classList.remove('bg-slate-300');
-            } else {
-                soundBtn.classList.remove('toggle-on', 'bg-cyan-500');
-                soundBtn.classList.add('bg-slate-300');
-            }
-
-            // Volume
-            document.getElementById('vol-slider').value = globalSettings.volume;
-            document.getElementById('vol-val').textContent = Math.round(globalSettings.volume * 100) + '%';
-        }
-
-        function toggleTheme() {
-            globalSettings.theme = globalSettings.theme === 'dark' ? 'light' : 'dark';
-            saveSettings();
-            applySettingsUI();
-            if (chartInstance) renderRatingChart(); // Update chart colors
-        }
-
-        function toggleSound() {
-            globalSettings.soundOn = !globalSettings.soundOn;
-            saveSettings();
-            applySettingsUI();
-            if (globalSettings.soundOn) initAudio();
-        }
-
-        function updateVolume(val) {
-            globalSettings.volume = parseFloat(val);
-            document.getElementById('vol-val').textContent = Math.round(globalSettings.volume * 100) + '%';
-            saveSettings();
-        }
-
-        /**************************************************************
-         * CHROMAGRID - GAME LOGIC
-         **************************************************************/
-        const COLORS = [
-            { id: 0, hex: '#f43f5e', bg: 'rgba(244, 63, 94, 0.22)', border: '#fb7185', glow: 'rgba(244, 63, 94, 0.4)' },
-            { id: 1, hex: '#38bdf8', bg: 'rgba(56, 189, 248, 0.22)', border: '#7dd3fc', glow: 'rgba(56, 189, 248, 0.4)' },
-            { id: 2, hex: '#10b981', bg: 'rgba(16, 185, 129, 0.22)', border: '#34d399', glow: 'rgba(16, 185, 129, 0.4)' },
-            { id: 3, hex: '#f59e0b', bg: 'rgba(245, 158, 11, 0.22)', border: '#fbbf24', glow: 'rgba(245, 158, 11, 0.4)' },
-            { id: 4, hex: '#a855f7', bg: 'rgba(168, 85, 247, 0.22)', border: '#c084fc', glow: 'rgba(168, 85, 247, 0.4)' },
-            { id: 5, hex: '#f97316', bg: 'rgba(249, 115, 22, 0.22)', border: '#fb923c', glow: 'rgba(249, 115, 22, 0.4)' }
-        ];
-
-        function getShapeSVG(shapeId, colorHex, sizeClass = "w-7 h-7") {
-            switch (shapeId) {
-                case 0: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><circle cx="18" cy="18" r="11.5" fill="${colorHex}" stroke="#ffffff" stroke-width="2" stroke-opacity="0.85"/></svg>`;
-                case 1: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><rect x="7.5" y="7.5" width="21" height="21" rx="4" fill="${colorHex}" stroke="#ffffff" stroke-width="2" stroke-opacity="0.85"/></svg>`;
-                case 2: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><polygon points="18,6 30,28 6,28" stroke-linejoin="round" fill="${colorHex}" stroke="#ffffff" stroke-width="2" stroke-opacity="0.85"/></svg>`;
-                case 3: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><polygon points="18,5 31,18 18,31 5,18" stroke-linejoin="round" fill="${colorHex}" stroke="#ffffff" stroke-width="2" stroke-opacity="0.85"/></svg>`;
-                case 4: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><polygon points="18,4.5 21.9,13 31.2,14.1 24.3,20.4 26.2,29.6 18,25 9.8,29.6 11.7,20.4 4.8,14.1 14.1,13" stroke-linejoin="round" fill="${colorHex}" stroke="#ffffff" stroke-width="1.8" stroke-opacity="0.85"/></svg>`;
-                case 5: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><polygon points="18,5 29.5,11.5 29.5,24.5 18,31 6.5,24.5 6.5,11.5" stroke-linejoin="round" fill="${colorHex}" stroke="#ffffff" stroke-width="2" stroke-opacity="0.85"/></svg>`;
-            }
-        }
-
-        const STORAGE_KEY = 'chromagrid_player_state_v1';
-        let playerState = { rating: 1.0, peakRating: 1.0, gamesPlayed: 0, streak: 0, history: [{ game: 0, rating: 1.0, accuracy: 100, timeSec: 0, gridSize: 3 }] };
-        let currentGame = {};
-        let chartInstance = null;
-
-        function loadPlayerState() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (raw) playerState = { ...playerState, ...JSON.parse(raw) };
-            } catch (e) {}
-        }
-        function savePlayerState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(playerState)); }
-
-        function shuffleArray(arr) {
-            const copy = [...arr];
-            for (let i = copy.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [copy[i], copy[j]] = [copy[j], copy[i]];
-            }
-            return copy;
-        }
-
-        function generateSolutionGrid(N) {
-            const colorPerm = shuffleArray([...Array(N).keys()]);
-            const shapePerm = shuffleArray([...Array(N).keys()]);
-            const rowPerm = shuffleArray([...Array(N).keys()]);
-            const colPerm = shuffleArray([...Array(N).keys()]);
-            const grid = [];
-            
-            let baseColors = [], baseShapes = [];
-            if (N === 3 || N === 5) {
-                for (let r = 0; r < N; r++) {
-                    baseColors[r] = []; baseShapes[r] = [];
-                    for (let c = 0; c < N; c++) {
-                        baseColors[r][c] = (r + c) % N;
-                        baseShapes[r][c] = (r + 2 * c) % N;
-                    }
-                }
-            } else if (N === 4) {
-                baseColors = [[0,1,2,3],[1,0,3,2],[2,3,0,1],[3,2,1,0]];
-                baseShapes = [[0,1,2,3],[2,3,0,1],[3,2,1,0],[1,0,3,2]];
-            }
-
-            for (let r = 0; r < N; r++) {
-                grid[r] = [];
-                for (let c = 0; c < N; c++) {
-                    if (N <= 5) {
-                        grid[r][c] = { color: colorPerm[baseColors[rowPerm[r]][colPerm[c]]], shape: shapePerm[baseShapes[rowPerm[r]][colPerm[c]]] };
-                    } else { // N=6 fallback
-                        grid[r][c] = { color: colorPerm[(rowPerm[r] + colPerm[c])%N], shape: shapePerm[(shuffleArray([...Array(N).keys()])[r] + colPerm[c])%N] };
-                    }
-                }
-            }
-            return grid;
-        }
-
-        function getDifficultyParams(rating) {
-            const r = Math.max(1.0, Math.min(10.0, rating));
-            if (r < 3.0) return { N: 3, missingCount: Math.round(4 + ((r - 1.0)/1.9)*2.3), hints: r >= 2.2 ? 1 : 0 };
-            if (r < 6.0) return { N: 4, missingCount: Math.round(6 + ((r - 3.0)/2.9)*5), hints: r >= 4.2 ? 2 : 0 };
-            if (r < 8.5) return { N: 5, missingCount: Math.round(10 + ((r - 6.0)/2.4)*6), hints: 3 };
-            return { N: 6, missingCount: Math.round(14 + ((r - 8.5)/1.5)*8), hints: 4 };
-        }
-
-        function generatePuzzle(rating, isPractice = false) {
-            clearInterval(currentGame.timerInterval);
-            const params = getDifficultyParams(rating);
-            const solution = generateSolutionGrid(params.N);
-
-            const allCoords = [];
-            for (let r=0; r<params.N; r++) for (let c=0; c<params.N; c++) allCoords.push({r,c});
-            const removedCoords = shuffleArray(allCoords).slice(0, params.missingCount);
-            const removedSet = new Set(removedCoords.map(pt => `${pt.r},${pt.c}`));
-
-            const hintCoords = removedCoords.slice(0, params.hints);
-            const hintMap = new Map();
-            hintCoords.forEach((pt, i) => hintMap.set(`${pt.r},${pt.c}`, i%2===0?'color':'shape'));
-
-            const boardGrid = [], bankTiles = [];
-            let uid = 1;
-
-            for (let r=0; r<params.N; r++) {
-                boardGrid[r] = [];
-                for (let c=0; c<params.N; c++) {
-                    const sol = solution[r][c];
-                    if (removedSet.has(`${r},${c}`)) {
-                        const ht = hintMap.get(`${r},${c}`);
-                        boardGrid[r][c] = { tile: null, locked: false, hintColor: ht==='color'?sol.color:null, hintShape: ht==='shape'?sol.shape:null };
-                        bankTiles.push({ id: uid++, color: sol.color, shape: sol.shape });
-                    } else {
-                        // Keep on board, but mark as locked (level > 3 usually leaves some locked)
-                        boardGrid[r][c] = { tile: { id: uid++, ...sol }, locked: true, hintColor: null, hintShape: null };
-                    }
-                }
-            }
-
-            currentGame = {
-                isPractice, activeRating: rating, N: params.N,
-                solutionGrid: solution, boardGrid, bankTiles: shuffleArray(bankTiles),
-                initialBoardSnap: JSON.parse(JSON.stringify(boardGrid)), initialBankSnap: JSON.parse(JSON.stringify(bankTiles)),
-                undoStack: [], movesCount: 0, optimalMoves: params.missingCount, hintsUsed: 0,
-                startTime: Date.now(), elapsedSeconds: 0, prevValidRows: 0, prevValidCols: 0, selectedSource: null
-            };
-
-            updateHeaderUI();
-            currentGame.timerInterval = setInterval(() => {
-                currentGame.elapsedSeconds = Math.floor((Date.now() - currentGame.startTime)/1000);
-                document.getElementById('timer-display').textContent = String(Math.floor(currentGame.elapsedSeconds/60)).padStart(2,'0') + ':' + String(currentGame.elapsedSeconds%60).padStart(2,'0');
-            }, 1000);
-            renderAll();
-        }
-
-        function evaluateBoardState() {
-            const { N, boardGrid } = currentGame;
-            const conflictCells = new Set();
-            let validRowsCount = 0, validColsCount = 0, allFilled = true;
-            const rowStates = [], colStates = [];
-
-            for (let r=0; r<N; r++) {
-                const colors = new Map(), shapes = new Map();
-                let full = true, conflict = false;
-                for (let c=0; c<N; c++) {
-                    const t = boardGrid[r][c].tile, cell = boardGrid[r][c];
-                    if (!t) { full = false; allFilled = false; continue; }
-                    if ((cell.hintColor!==null && t.color!==cell.hintColor) || (cell.hintShape!==null && t.shape!==cell.hintShape)) {
-                        conflictCells.add(`${r},${c}`); conflict = true;
-                    }
-                    if (colors.has(t.color)) { conflictCells.add(`${r},${c}`); conflictCells.add(`${r},${colors.get(t.color)}`); conflict = true; } 
-                    else colors.set(t.color, c);
-                    if (shapes.has(t.shape)) { conflictCells.add(`${r},${c}`); conflictCells.add(`${r},${shapes.get(t.shape)}`); conflict = true; } 
-                    else shapes.set(t.shape, c);
-                }
-                if (conflict) rowStates[r] = 'conflict'; else if (full) { rowStates[r] = 'valid'; validRowsCount++; } else rowStates[r] = 'incomplete';
-            }
-
-            for (let c=0; c<N; c++) {
-                const colors = new Map(), shapes = new Map();
-                let full = true, conflict = false;
-                for (let r=0; r<N; r++) {
-                    const t = boardGrid[r][c].tile;
-                    if (!t) { full = false; continue; }
-                    if (colors.has(t.color)) { conflictCells.add(`${r},${c}`); conflictCells.add(`${colors.get(t.color)},${c}`); conflict = true; } 
-                    else colors.set(t.color, r);
-                    if (shapes.has(t.shape)) { conflictCells.add(`${r},${c}`); conflictCells.add(`${shapes.get(t.shape)},${c}`); conflict = true; } 
-                    else shapes.set(t.shape, r);
-                }
-                if (conflict) colStates[c] = 'conflict'; else if (full) { colStates[c] = 'valid'; validColsCount++; } else colStates[c] = 'incomplete';
-            }
-
-            let pairsHasConflict = false;
-            if (N < 6) { // N=6 Euler's exception handled loosely
-                const pairs = new Map();
-                for (let r=0; r<N; r++) for (let c=0; c<N; c++) {
-                    const t = boardGrid[r][c].tile;
-                    if (t) {
-                        const pk = `${t.color}_${t.shape}`;
-                        if (pairs.has(pk)) { conflictCells.add(`${r},${c}`); conflictCells.add(pairs.get(pk)); pairsHasConflict = true; }
-                        else pairs.set(pk, `${r},${c}`);
-                    }
-                }
-            }
-
-            return { conflictCells, rowStates, colStates, validRowsCount, validColsCount, pairsHasConflict, allFilled, isSolved: allFilled && conflictCells.size===0 && validRowsCount===N && validColsCount===N };
-        }
-
-        function updateHeaderUI() {
-            document.getElementById('current-rating-display').textContent = currentGame.activeRating.toFixed(1);
-            document.getElementById('puzzle-spec-badge').textContent = `לוח ${currentGame.N}×${currentGame.N}`;
-            document.getElementById('rating-progress-bar').style.width = `${Math.min(100, Math.max(5, ((currentGame.activeRating - 1)/9)*100))}%`;
-            if (currentGame.isPractice) document.getElementById('practice-badge').classList.remove('hidden');
-            else document.getElementById('practice-badge').classList.add('hidden');
-        }
-
-        function renderAll() {
-            const st = evaluateBoardState();
-            const { N, boardGrid, bankTiles, selectedSource } = currentGame;
-
-            if (st.validRowsCount > currentGame.prevValidRows || st.validColsCount > currentGame.prevValidCols) {
-                if (!st.isSolved) sfx.rowMatch();
-            }
-            currentGame.prevValidRows = st.validRowsCount; currentGame.prevValidCols = st.validColsCount;
-
-            const colInd = document.getElementById('col-indicators');
-            colInd.style.gridTemplateColumns = `repeat(${N}, minmax(0, 1fr))`;
-            colInd.innerHTML = st.colStates.map(s => `<div class="status-dot w-2.5 h-2.5 rounded-full ${s}"></div>`).join('');
-
-            const rowInd = document.getElementById('row-indicators');
-            rowInd.innerHTML = st.rowStates.map(s => `<div class="status-dot w-2.5 h-2.5 rounded-full my-auto ${s}"></div>`).join('');
-
-            ['rows', 'cols', 'pairs'].forEach(rule => {
-                const pill = document.getElementById(`rule-pill-${rule}`), dot = document.getElementById(`dot-rule-${rule}`);
-                const isConflict = rule==='rows'?st.rowStates.includes('conflict'):rule==='cols'?st.colStates.includes('conflict'):st.pairsHasConflict;
-                const isDone = rule==='rows'?st.validRowsCount===N:rule==='cols'?st.validColsCount===N:(st.allFilled && !isConflict);
-                
-                pill.className = `rounded-xl py-1.5 px-2 flex items-center justify-center gap-1.5 text-xs transition border ${isConflict?'bg-rose-500/10 border-rose-500/50 text-rose-500 font-bold':isDone?'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 font-bold':'bg-sys-highlight border-sys-border text-sys-muted'}`;
-                dot.className = `w-2 h-2 rounded-full ${isConflict?'bg-rose-500 shadow-[0_0_8px_#f43f5e]':isDone?'bg-emerald-500 shadow-[0_0_8px_#10b981]':''}`;
-                if (!isConflict && !isDone) dot.style.background = 'var(--dot-bg)';
-            });
-
-            const boardEl = document.getElementById('board-grid');
-            boardEl.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
-            boardEl.style.gridTemplateRows = `repeat(${N}, 1fr)`;
-            boardEl.innerHTML = '';
-            
-            for (let r=0; r<N; r++) for (let c=0; c<N; c++) {
-                const cell = boardGrid[r][c], div = document.createElement('div');
-                div.dataset.r = r; div.dataset.c = c;
-                const isSel = selectedSource?.type === 'grid' && selectedSource.r === r && selectedSource.c === c;
-                let classes = 'grid-cell rounded-xl flex items-center justify-center select-none ';
-
-                if (cell.tile) {
-                    const col = COLORS[cell.tile.color];
-                    div.style.backgroundColor = col.bg; div.style.borderColor = col.border; div.style.borderWidth = cell.locked?'2px':'1.5px';
-                    classes += `${!cell.locked?'tile-item':''} ${isSel?'tile-selected':''} ${st.conflictCells.has(`${r},${c}`)?'tile-conflict':''}`;
-                    div.innerHTML = getShapeSVG(cell.tile.shape, col.hex, N<=3?'w-11 h-11':N===4?'w-9 h-9':'w-6 h-6') + (cell.locked?`<span class="absolute top-1 left-1 w-3.5 h-3.5 rounded-full bg-black/60 text-white flex items-center justify-center"><svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></span>`:'');
+                progress.easyStreak = 0;
+                delta = perf >= 0.45 ? 0.2 : 0.08;
+                if (atCeiling) {
+                    delta *= 0.4; // the grind at the top
+                    tag = 'ceiling';
                 } else {
-                    classes += `bg-sys-highlight border border-sys-border/70 hover:border-sys-muted cursor-pointer ${selectedSource?'cell-highlight-target':''}`;
-                    if (cell.hintColor!==null) div.innerHTML = `<div class="flex flex-col items-center justify-center opacity-60"><span class="w-4 h-4 rounded-full" style="background:${COLORS[cell.hintColor].hex}"></span><span class="text-[9px] text-sys-muted mt-0.5 font-bold">צבע חובה</span></div>`;
-                    else if (cell.hintShape!==null) div.innerHTML = `<div class="flex flex-col items-center justify-center opacity-45">${getShapeSVG(cell.hintShape, '#94a3b8', 'w-5 h-5')}<span class="text-[9px] text-sys-muted mt-0.5 font-bold">צורה חובה</span></div>`;
+                    delta *= 1.5; // recovering ground you already proved
+                    // ...but only up to the peak; anything past it is damped like the grind
+                    const over = before + delta - progress.peak;
+                    if (over > 0) delta -= over * 0.6;
+                    tag = 'up';
                 }
-                div.className = classes;
-                div.onclick = (e) => { e.stopPropagation(); handleGridTap(r, c); };
-                if (cell.tile && !cell.locked) bindDrag(div, {type:'grid', r, c, tile:cell.tile});
-                boardEl.appendChild(div);
             }
+        } else {
+            progress.easyStreak = 0;
+            progress.failStreak++;
+            delta = -Math.min(1.0, 0.25 + 0.15 * (progress.failStreak - 1));
+            tag = 'drop';
+        }
 
-            const bankEl = document.getElementById('tile-bank');
-            bankEl.innerHTML = ''; document.getElementById('bank-count-badge').textContent = `${bankTiles.length} נותרו`;
-            bankTiles.forEach((tile, idx) => {
-                const col = COLORS[tile.color], btn = document.createElement('div');
-                btn.className = `tile-item ${N<=4?'w-14 h-14':'w-12 h-12'} rounded-xl flex items-center justify-center relative ${selectedSource?.type==='bank'&&selectedSource.index===idx?'tile-selected':''}`;
-                btn.style.backgroundColor = col.bg; btn.style.border = `2px solid ${col.border}`;
-                btn.innerHTML = getShapeSVG(tile.shape, col.hex, N<=4?'w-8 h-8':'w-7 h-7');
-                btn.onclick = (e) => { e.stopPropagation(); handleBankTap(idx); };
-                bindDrag(btn, {type:'bank', index:idx, tile});
-                bankEl.appendChild(btn);
+        level = Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, Math.round((before + delta) * 100) / 100));
+        progress.peak = Math.max(progress.peak, level);
+        progress.played++;
+        saveProgress();
+        return { before, after: level, delta: level - before, tag };
+    }
+
+    /* ============================
+       State
+       ============================ */
+    const colors = ['var(--color-red)', 'var(--color-blue)', 'var(--color-green)'];
+    const shapes = ['square', 'circle', 'triangle'];
+
+    let boardState = Array(9).fill(null); // null or {color, shape, locked, id}
+    let trayState = [];                   // [{color, shape, id}]
+    let params = levelParams(level);
+    let minSteps = 0;
+
+    let selectedSource = null; // 'board' | 'tray' | null
+    let selectedId = null;     // tray tile id
+    let selectedIndex = null;  // board index
+    let steps = 0;
+    let gameOver = false;
+    let validLines = new Set();
+    let popIndex = null;       // board index to animate on next render
+
+    /* ============================
+       Timer
+       ============================ */
+    let totalTime = params.time;
+    let timeLeft = totalTime;
+    let timerInterval = null;
+    let isPaused = false;
+
+    function formatTime(s) {
+        const m = Math.floor(s / 60).toString().padStart(2, '0');
+        const sc = (s % 60).toString().padStart(2, '0');
+        return `${m}:${sc}`;
+    }
+
+    function updateTimerUI() {
+        const el = document.getElementById('timerDisplay');
+        el.innerText = formatTime(timeLeft);
+        el.classList.toggle('danger', timeLeft <= Math.min(30, Math.floor(totalTime / 4)));
+    }
+
+    function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (isPaused || gameOver) return;
+            timeLeft--;
+            updateTimerUI();
+            if (timeLeft > 0 && timeLeft <= 10) Sound.tick();
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                endGame(false);
+            }
+        }, 1000);
+    }
+
+    function setPaused(p) {
+        isPaused = p;
+        document.getElementById('boardContainer').classList.toggle('paused', p);
+        document.getElementById('icon-pause').style.display = p ? 'none' : 'block';
+        document.getElementById('icon-play').style.display = p ? 'block' : 'none';
+        if (p) clearInterval(timerInterval);
+        else if (!gameOver) startTimer();
+    }
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+        if (gameOver) return;
+        cancelDrag();
+        setPaused(!isPaused);
+        Sound.select();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && !isPaused && !gameOver) { cancelDrag(); setPaused(true); }
+    });
+
+    /* ============================
+       Modal
+       ============================ */
+    // buttons: [{ label, cls, action }]
+    function showDialog(title, msg, buttons, levelHtml = null) {
+        document.getElementById('dialogTitle').innerText = title;
+        document.getElementById('dialogMessage').innerText = msg;
+        const lv = document.getElementById('dialogLevel');
+        lv.style.display = levelHtml ? 'flex' : 'none';
+        lv.innerHTML = levelHtml || '';
+
+        const modal = document.getElementById('dialogModal');
+        const box = document.getElementById('dialogButtons');
+        box.innerHTML = '';
+        buttons.forEach(b => {
+            const el = document.createElement('button');
+            el.className = 'btn ' + (b.cls || 'btn-primary');
+            el.innerText = b.label;
+            el.onclick = () => { modal.style.display = 'none'; Sound.select(); if (b.action) b.action(); };
+            box.appendChild(el);
+        });
+        modal.style.display = 'flex';
+    }
+
+    document.getElementById('settingsBtn').addEventListener('click', () => {
+        if (gameOver) return;
+        cancelDrag();
+        const wasPaused = isPaused;
+        if (!isPaused) setPaused(true);
+        showDialog('הגדרות', `רמה ${level.toFixed(1)} · שיא ${progress.peak.toFixed(1)} · ${progress.played} לוחות`, [
+            { label: 'המשך לשחק', cls: 'btn-primary', action: () => { if (!wasPaused) setPaused(false); } },
+            { label: 'קשה מדי — דלג (נחשב הפסד)', cls: 'btn-secondary', action: () => endGame(false, true) },
+            { label: 'איפוס התקדמות', cls: 'btn-danger', action: () => {
+                showDialog('לאפס הכול?', 'הרמה והשיא יחזרו ל־1.0.', [
+                    { label: 'כן, לאפס', cls: 'btn-danger', action: () => {
+                        level = 1.0;
+                        progress = { peak: 1.0, easyStreak: 0, failStreak: 0, played: 0 };
+                        saveProgress();
+                        initLevel();
+                    } },
+                    { label: 'ביטול', cls: 'btn-secondary', action: () => { if (!wasPaused) setPaused(false); } },
+                ]);
+            } },
+        ]);
+    });
+
+    /* ============================
+       Puzzle generation
+       ============================ */
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    // A random pair of orthogonal 3x3 Latin squares. Permuting rows, columns and
+    // symbols (and transposing) keeps every row, column and pair distinct, so each
+    // board has a fresh solution instead of the same one every time.
+    function generateValidBoard() {
+        const rows = shuffle([0, 1, 2]);
+        const cols = shuffle([0, 1, 2]);
+        const colorMap = shuffle([...colors]);
+        const shapeMap = shuffle([...shapes]);
+        const transpose = Math.random() < 0.5;
+        const flip = Math.random() < 0.5;
+
+        const solution = [];
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                let rr = rows[r], cc = cols[c];
+                if (transpose) [rr, cc] = [cc, rr];
+                const a = (rr + cc) % 3;
+                const b = (rr + 2 * cc) % 3;
+                solution.push({
+                    color: colorMap[flip ? b : a],
+                    shape: shapeMap[flip ? a : b],
+                });
+            }
+        }
+        return solution;
+    }
+
+    function initLevel() {
+        selectedSource = null;
+        selectedId = null;
+        selectedIndex = null;
+        steps = 0;
+        gameOver = false;
+        popIndex = null;
+
+        params = levelParams(level);
+        totalTime = params.time;
+        timeLeft = totalTime;
+        updateTimerUI();
+
+        document.getElementById('levelDisplay').innerText = level.toFixed(1);
+        document.getElementById('peakDisplay').innerText = progress.peak.toFixed(1);
+        document.getElementById('rankTitle').innerText = rankFor(level);
+        document.getElementById('stepsDisplay').innerText = steps;
+        document.getElementById('boardGrid').classList.toggle('no-guides', !params.guides);
+
+        const solution = generateValidBoard();
+        const order = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+        const missingPos = order.slice(0, params.missing);
+
+        boardState = Array(9).fill(null);
+        trayState = [];
+        let idCounter = 1;
+
+        order.forEach((pos, i) => {
+            const item = { ...solution[pos], id: 't_' + idCounter++ };
+            if (i < params.missing) {
+                trayState.push(item);
+            } else {
+                item.locked = true;
+                boardState[pos] = item;
+            }
+        });
+
+        // Scrambled: some of the missing tiles start on the board, in a wrong slot.
+        const s = Math.min(params.scrambled, missingPos.length - 1);
+        if (s > 0) {
+            const from = missingPos.slice(0, s);
+            // Rotate them among their own slots, or (one tile) put it in another empty slot
+            const to = s >= 2 ? [...from.slice(1), from[0]] : [missingPos[1]];
+            from.forEach((p, k) => {
+                const want = solution[p];
+                const idx = trayState.findIndex(t => t.color === want.color && t.shape === want.shape);
+                boardState[to[k]] = trayState.splice(idx, 1)[0];
             });
-            bankEl.onclick = () => { if(selectedSource?.type==='grid') moveGridToBank(selectedSource.r, selectedSource.c); };
-
-            document.getElementById('btn-undo').disabled = currentGame.undoStack.length === 0;
-            document.getElementById('moves-counter').textContent = currentGame.movesCount;
-
-            const banner = document.getElementById('feedback-banner');
-            if (st.conflictCells.size > 0) banner.innerHTML = `<span class="text-rose-500 font-bold">⚠️ שים לב להתנגשויות מסומנות</span>`;
-            else if (selectedSource) banner.innerHTML = `<span class="text-cyan-500 font-semibold">בחר משבצת בלוח כדי להניח</span>`;
-            else banner.innerHTML = `<span>גרור אריח או הקש לבחירה</span>`;
-
-            if (st.isSolved) setTimeout(handleVictory, 200);
         }
 
-        function saveUndo() {
-            currentGame.undoStack.push({ boardGrid: JSON.parse(JSON.stringify(currentGame.boardGrid)), bankTiles: JSON.parse(JSON.stringify(currentGame.bankTiles)) });
+        // Roughly the fewest moves a perfect player needs
+        minSteps = params.missing;
+
+        shuffle(trayState);
+        validLines = new Set();
+        render(true);
+        setPaused(false);
+    }
+
+    /* ============================
+       Rendering
+       ============================ */
+    function createTileElement(data, isSelected) {
+        const tile = document.createElement('div');
+        tile.className = 'tile' + (isSelected ? ' selected' : '') + (data.locked ? ' locked-tile' : '');
+
+        const shape = document.createElement('div');
+        shape.className = 'shape ' + data.shape;
+        shape.style.backgroundColor = data.color; // inline so clip-path shapes are coloured
+        tile.appendChild(shape);
+
+        if (data.locked) {
+            const lock = document.createElement('div');
+            lock.innerHTML = `<svg class="lock-svg" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
+            tile.appendChild(lock.firstChild);
+        }
+        return tile;
+    }
+
+    function render(silent = false) {
+        // 1. Tray
+        const trayEl = document.getElementById('traySlots');
+        trayEl.innerHTML = '';
+        trayState.forEach((item) => {
+            const slot = document.createElement('div');
+            slot.className = 'tray-slot';
+            const isSel = selectedSource === 'tray' && selectedId === item.id;
+            const tile = createTileElement(item, isSel);
+            tile.dataset.src = 'tray';
+            tile.dataset.id = item.id;
+            tile.addEventListener('click', (e) => { e.stopPropagation(); handleTrayClick(item.id); });
+            slot.appendChild(tile);
+            trayEl.appendChild(slot);
+        });
+        if (trayState.length === 0) {
+            const empty = document.createElement('span');
+            empty.className = 'tray-empty';
+            empty.innerText = 'המגש ריק — גרור לכאן אריח כדי להחזיר אותו';
+            trayEl.appendChild(empty);
+        }
+        document.getElementById('trayCountDisplay').innerText = `${trayState.length} נותרו`;
+
+        // 2. Board
+        const grid = document.getElementById('boardGrid');
+        grid.innerHTML = '';
+
+        for (let c = 0; c < 3; c++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.id = `dot-col-${c}`;
+            dot.style.gridRow = '1';
+            dot.style.gridColumn = `${c + 1}`;
+            grid.appendChild(dot);
         }
 
-        function handleBankTap(idx) {
-            const sel = currentGame.selectedSource;
-            if (sel?.type === 'bank' && sel.index === idx) { currentGame.selectedSource = null; }
-            else if (sel?.type === 'grid') { saveUndo(); sfx.drop(); const tmp=currentGame.boardGrid[sel.r][sel.c].tile; currentGame.boardGrid[sel.r][sel.c].tile=currentGame.bankTiles[idx]; currentGame.bankTiles[idx]=tmp; currentGame.movesCount++; currentGame.selectedSource=null; }
-            else { sfx.pickup(); currentGame.selectedSource = {type:'bank', index:idx}; }
-            renderAll();
-        }
+        boardState.forEach((item, index) => {
+            const r = Math.floor(index / 3);
+            const c = index % 3;
 
-        function handleGridTap(r, c) {
-            const cell = currentGame.boardGrid[r][c], sel = currentGame.selectedSource;
-            if (cell.locked) { currentGame.selectedSource=null; renderAll(); return; }
-            if (!sel) { if(cell.tile){ sfx.pickup(); currentGame.selectedSource={type:'grid', r, c}; renderAll(); } return; }
-            if (sel.type==='grid' && sel.r===r && sel.c===c) { currentGame.selectedSource=null; renderAll(); return; }
-
-            saveUndo(); sfx.drop();
-            if (sel.type==='bank') {
-                const t = currentGame.bankTiles.splice(sel.index, 1)[0];
-                if (cell.tile) currentGame.bankTiles.push(cell.tile);
-                cell.tile = t;
-            } else if (sel.type==='grid') {
-                const tmp = cell.tile; cell.tile = currentGame.boardGrid[sel.r][sel.c].tile; currentGame.boardGrid[sel.r][sel.c].tile = tmp;
-            }
-            currentGame.movesCount++; currentGame.selectedSource=null; renderAll();
-        }
-
-        function moveGridToBank(r, c) {
-            saveUndo(); sfx.drop();
-            currentGame.bankTiles.push(currentGame.boardGrid[r][c].tile);
-            currentGame.boardGrid[r][c].tile = null; currentGame.movesCount++; currentGame.selectedSource=null; renderAll();
-        }
-
-        function bindDrag(el, src) {
-            const ghost = document.getElementById('drag-ghost');
-            el.onpointerdown = (e) => {
-                if (e.button!==undefined && e.button!==0) return;
-                sfx.pickup();
-                let isDrag = false, startX = e.clientX, startY = e.clientY;
-                const onMove = (me) => {
-                    if (!isDrag && Math.hypot(me.clientX-startX, me.clientY-startY)>8) {
-                        isDrag = true; currentGame.selectedSource = src;
-                        const col = COLORS[src.tile.color];
-                        ghost.style.display='flex'; ghost.style.width='58px'; ghost.style.height='58px';
-                        ghost.style.alignItems='center'; ghost.style.justifyContent='center';
-                        ghost.style.backgroundColor=col.bg; ghost.style.border=`2px solid ${col.border}`;
-                        ghost.innerHTML = getShapeSVG(src.tile.shape, col.hex, 'w-9 h-9');
-                        el.style.opacity='0.35';
-                    }
-                    if (isDrag) { ghost.style.left=`${me.clientX}px`; ghost.style.top=`${me.clientY}px`; }
-                };
-                const onUp = (ue) => {
-                    window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp);
-                    if (isDrag) {
-                        ghost.style.display='none'; el.style.opacity='1';
-                        const dropTarget = document.elementFromPoint(ue.clientX, ue.clientY);
-                        const cellEl = dropTarget?.closest('[data-r]'), bankEl = dropTarget?.closest('#tile-bank');
-                        if (cellEl) {
-                            const tr=parseInt(cellEl.dataset.r), tc=parseInt(cellEl.dataset.c);
-                            if(!currentGame.boardGrid[tr][tc].locked){
-                                saveUndo(); sfx.drop();
-                                if(src.type==='bank'){ const t=currentGame.bankTiles.splice(src.index,1)[0]; if(currentGame.boardGrid[tr][tc].tile)currentGame.bankTiles.push(currentGame.boardGrid[tr][tc].tile); currentGame.boardGrid[tr][tc].tile=t; }
-                                else { const tmp=currentGame.boardGrid[tr][tc].tile; currentGame.boardGrid[tr][tc].tile=currentGame.boardGrid[src.r][src.c].tile; currentGame.boardGrid[src.r][src.c].tile=tmp; }
-                                currentGame.movesCount++; currentGame.selectedSource=null;
-                            } else sfx.error();
-                        } else if (bankEl && src.type==='grid') { moveGridToBank(src.r, src.c); }
-                        else { sfx.error(); }
-                        renderAll();
-                    }
-                };
-                window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp);
-            };
-        }
-
-        function undoMove() { if(currentGame.undoStack.length>0){ const p=currentGame.undoStack.pop(); currentGame.boardGrid=p.boardGrid; currentGame.bankTiles=p.bankTiles; currentGame.selectedSource=null; renderAll(); } }
-        function resetCurrentBoard() { saveUndo(); currentGame.boardGrid=JSON.parse(JSON.stringify(currentGame.initialBoardSnap)); currentGame.bankTiles=JSON.parse(JSON.stringify(currentGame.initialBankSnap)); currentGame.selectedSource=null; renderAll(); }
-        function useSmartHint() { /* Simple auto-place */ resetCurrentBoard(); /* Just visual placeholder for this implementation */ }
-        function handleTooHardSkip() {
-            if(!currentGame.isPractice){ playerState.rating=Math.max(1.0, playerState.rating-0.3); savePlayerState(); generatePuzzle(playerState.rating); }
-            else generatePuzzle(Math.max(1.0, currentGame.activeRating-0.5), true);
-        }
-
-        function handleVictory() {
-            clearInterval(currentGame.timerInterval);
-            sfx.win();
-            const ratio = currentGame.optimalMoves / Math.max(currentGame.optimalMoves, currentGame.movesCount);
-            const acc = Math.round(Math.min(100, ratio*100));
-            const isFast = currentGame.elapsedSeconds < (currentGame.N*15);
-            let diff = (ratio > 0.8 && isFast) ? 0.6 : (ratio > 0.5 ? 0.3 : 0.1);
-            
-            if (!currentGame.isPractice) {
-                playerState.rating = Math.min(10.0, playerState.rating + diff);
-                playerState.peakRating = Math.max(playerState.peakRating, playerState.rating);
-                playerState.gamesPlayed++;
-                playerState.history.push({ game: playerState.gamesPlayed, rating: playerState.rating, accuracy: acc });
-                savePlayerState();
+            if (c === 0) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.id = `dot-row-${r}`;
+                dot.style.gridRow = `${r + 2}`;
+                dot.style.gridColumn = '4';
+                grid.appendChild(dot);
             }
 
-            document.getElementById('fast-track-badge').classList.toggle('hidden', diff < 0.6);
-            document.getElementById('vic-accuracy').textContent = acc + '%';
-            document.getElementById('vic-time').textContent = document.getElementById('timer-display').textContent;
-            document.getElementById('vic-new-rating').textContent = (currentGame.isPractice ? currentGame.activeRating : playerState.rating).toFixed(1);
-            document.getElementById('vic-rating-diff').textContent = `(+${diff.toFixed(1)})`;
-            document.getElementById('adaptive-explanation').textContent = diff>=0.6?'פתרון מבריק! הרמה הוקפצה משמעותית.':'פתרון יפה. הרמה הותאמה בהדרגה.';
-            document.getElementById('victory-modal').classList.remove('hidden');
+            const slot = document.createElement('div');
+            slot.className = 'slot' + (item?.locked ? ' locked' : '');
+            slot.style.gridRow = `${r + 2}`;
+            slot.style.gridColumn = `${c + 1}`;
+            slot.dataset.drop = 'board';
+            slot.dataset.index = index;
+
+            if (item) {
+                const isSel = selectedSource === 'board' && selectedIndex === index;
+                const tile = createTileElement(item, isSel);
+                if (popIndex === index) tile.classList.add('pop');
+                if (!item.locked) {
+                    tile.dataset.src = 'board';
+                    tile.dataset.index = index;
+                }
+                tile.addEventListener('click', (e) => { e.stopPropagation(); handleBoardClick(index, tile); });
+                slot.appendChild(tile);
+            } else {
+                slot.addEventListener('click', () => handleBoardClick(index, slot));
+            }
+            grid.appendChild(slot);
+        });
+        popIndex = null;
+
+        validateState(silent);
+    }
+
+    /* ============================
+       Moves (shared by tap and drag)
+       ============================ */
+    function placeFromTray(id, index) {
+        const tIdx = trayState.findIndex(t => t.id === id);
+        if (tIdx < 0 || boardState[index]?.locked) return false;
+        const item = trayState.splice(tIdx, 1)[0];
+        if (boardState[index]) trayState.push(boardState[index]); // occupant goes back
+        boardState[index] = item;
+        steps++;
+        popIndex = index;
+        Sound.drop();
+        buzz(8);
+        return true;
+    }
+
+    function moveOnBoard(from, to) {
+        if (from === to) return false;
+        if (boardState[to]?.locked || boardState[from]?.locked) return false;
+        const hadOccupant = !!boardState[to];
+        [boardState[from], boardState[to]] = [boardState[to], boardState[from]];
+        steps++;
+        popIndex = to;
+        hadOccupant ? Sound.swap() : Sound.drop();
+        buzz(8);
+        return true;
+    }
+
+    function returnToTray(index) {
+        const item = boardState[index];
+        if (!item || item.locked) return false;
+        boardState[index] = null;
+        trayState.push(item);
+        steps++;
+        Sound.back();
+        return true;
+    }
+
+    function rejectMove(el) {
+        Sound.nope();
+        buzz([20, 40, 20]);
+        if (el) {
+            el.classList.remove('shake');
+            void el.offsetWidth;
+            el.classList.add('shake');
+        }
+    }
+
+    function clearSelection() {
+        selectedSource = null;
+        selectedId = null;
+        selectedIndex = null;
+    }
+
+    function afterMove() {
+        document.getElementById('stepsDisplay').innerText = steps;
+        render();
+    }
+
+    /* ============================
+       Tap interactions
+       ============================ */
+    function handleTrayClick(id) {
+        if (isPaused || gameOver) return;
+        if (selectedSource === 'tray' && selectedId === id) {
+            clearSelection();
+        } else {
+            selectedSource = 'tray';
+            selectedId = id;
+            selectedIndex = null;
+            Sound.select();
+        }
+        render();
+    }
+
+    function handleBoardClick(index, el) {
+        if (isPaused || gameOver) return;
+        const item = boardState[index];
+
+        if (item?.locked) {
+            if (selectedSource) rejectMove(el);
+            return;
         }
 
-        function closeVictoryModal() { document.getElementById('victory-modal').classList.add('hidden'); }
-        function startNextLevel() { generatePuzzle(currentGame.isPractice?currentGame.activeRating:playerState.rating, currentGame.isPractice); }
-
-        function openStatsModal() {
-            document.getElementById('stat-curr-rating').textContent = playerState.rating.toFixed(1);
-            document.getElementById('stat-peak-rating').textContent = playerState.peakRating.toFixed(1);
-            document.getElementById('stat-total-solved').textContent = playerState.gamesPlayed;
-            document.getElementById('stats-modal').classList.remove('hidden'); renderRatingChart();
+        if (selectedSource === 'tray') {
+            placeFromTray(selectedId, index);
+            clearSelection();
+        } else if (selectedSource === 'board') {
+            if (selectedIndex === index) {
+                // Second tap on the same tile sends it back to the tray
+                returnToTray(index);
+            } else {
+                moveOnBoard(selectedIndex, index);
+            }
+            clearSelection();
+        } else if (item) {
+            // Select a placed tile: next tap moves/swaps it, or tap it again to return it
+            selectedSource = 'board';
+            selectedIndex = index;
+            Sound.select();
+            render();
+            return;
+        } else {
+            return;
         }
-        function closeStatsModal() { document.getElementById('stats-modal').classList.add('hidden'); }
-        function resetAllStats() { playerState={ rating:1.0, peakRating:1.0, gamesPlayed:0, streak:0, history:[{game:0,rating:1.0,accuracy:100}] }; savePlayerState(); closeStatsModal(); generatePuzzle(1.0); }
+        afterMove();
+    }
 
-        function renderRatingChart() {
-            const ctx = document.getElementById('ratingChart').getContext('2d');
-            if(chartInstance) chartInstance.destroy();
-            const isDark = globalSettings.theme === 'dark';
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: { labels: playerState.history.map((h,i)=>i===0?'התחלה':`#${i}`), datasets: [{ label: 'רמה', data: playerState.history.map(h=>h.rating), borderColor: '#38bdf8', borderWidth: 3, pointBackgroundColor: '#fff', fill: false, tension: 0.3 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} }, scales: { y: { min:1, max:10, grid:{color:isDark?'#334155':'#cbd5e1'}, ticks:{color:isDark?'#94a3b8':'#475569'} }, x: { grid:{display:false}, ticks:{color:isDark?'#94a3b8':'#475569'} } } }
-            });
-        }
+    // Tapping the tray while a board tile is selected sends that tile back
+    document.getElementById('trayContainer').addEventListener('click', () => {
+        if (isPaused || gameOver || selectedSource !== 'board') return;
+        returnToTray(selectedIndex);
+        clearSelection();
+        afterMove();
+    });
 
-        function openSettingsModal() { document.getElementById('sim-level-slider').value = currentGame.activeRating; document.getElementById('settings-modal').classList.remove('hidden'); }
-        function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
-        function launchSimulatedLevel() { closeSettingsModal(); generatePuzzle(parseFloat(document.getElementById('sim-level-slider').value), true); }
-        function returnToRealRating() { closeSettingsModal(); generatePuzzle(playerState.rating); }
+    /* ============================
+       Drag & drop (pointer events: mouse, touch and pen alike)
+       ============================ */
+    const DRAG_THRESHOLD = 6; // px before a press becomes a drag rather than a tap
+    let drag = null;
+    let suppressClickUntil = 0;
 
-        document.addEventListener('click', (e) => { if(!e.target.closest('#board-grid') && !e.target.closest('#tile-bank') && currentGame.selectedSource) { currentGame.selectedSource=null; renderAll(); } });
-
-        window.onload = function() {
-            loadSettings();
-            loadPlayerState();
-            generatePuzzle(playerState.rating);
+    document.addEventListener('pointerdown', (e) => {
+        if (isPaused || gameOver || e.button > 0 || drag) return;
+        const tile = e.target.closest('.tile[data-src]');
+        if (!tile) return;
+        drag = {
+            src: tile.dataset.src,
+            id: tile.dataset.id,
+            index: tile.dataset.index !== undefined ? +tile.dataset.index : null,
+            el: tile,
+            pointerId: e.pointerId,
+            startX: e.clientX,
+            startY: e.clientY,
+            ghost: null,
+            target: null,
         };
-    </script>
+    });
+
+    document.addEventListener('pointermove', (e) => {
+        if (!drag || e.pointerId !== drag.pointerId) return;
+        if (!drag.ghost) {
+            if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < DRAG_THRESHOLD) return;
+            startDragVisual();
+        }
+        e.preventDefault();
+        drag.ghost.style.left = e.clientX + 'px';
+        drag.ghost.style.top = e.clientY + 'px';
+        updateDropTarget(e.clientX, e.clientY);
+    }, { passive: false });
+
+    document.addEventListener('pointerup', (e) => {
+        if (!drag || e.pointerId !== drag.pointerId) return;
+        if (!drag.ghost) { drag = null; return; } // a tap — the click handler takes it
+        const target = drag.target;
+        const d = drag;
+        cancelDrag();
+        suppressClickUntil = performance.now() + 400;
+        performDrop(d, target);
+    });
+
+    document.addEventListener('pointercancel', (e) => {
+        if (drag && e.pointerId === drag.pointerId) cancelDrag();
+    });
+
+    // A drag ends with a click on whatever was under the finger; swallow it.
+    document.addEventListener('click', (e) => {
+        if (performance.now() < suppressClickUntil) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+    }, true);
+
+    function startDragVisual() {
+        const rect = drag.el.getBoundingClientRect();
+        const ghost = document.createElement('div');
+        ghost.className = 'drag-ghost';
+        ghost.style.width = rect.width + 'px';
+        ghost.style.height = rect.height + 'px';
+        const shape = drag.el.querySelector('.shape').cloneNode(true);
+        ghost.appendChild(shape);
+        document.body.appendChild(ghost);
+        drag.ghost = ghost;
+        drag.el.classList.add('drag-origin');
+        clearSelection();
+        document.querySelectorAll('.tile.selected').forEach(t => t.classList.remove('selected'));
+        Sound.pick();
+        buzz(5);
+    }
+
+    function clearDropHighlights() {
+        document.querySelectorAll('.drop-ok, .drop-bad').forEach(el => el.classList.remove('drop-ok', 'drop-bad'));
+    }
+
+    function updateDropTarget(x, y) {
+        clearDropHighlights();
+        const el = document.elementFromPoint(x, y);
+        const zone = el && el.closest('[data-drop]');
+        drag.target = null;
+        if (!zone) return;
+
+        if (zone.dataset.drop === 'board') {
+            const idx = +zone.dataset.index;
+            const ok = !boardState[idx]?.locked && !(drag.src === 'board' && drag.index === idx);
+            zone.classList.add(ok ? 'drop-ok' : 'drop-bad');
+            drag.target = { kind: 'board', index: idx, ok, el: zone };
+        } else if (zone.dataset.drop === 'tray' && drag.src === 'board') {
+            zone.classList.add('drop-ok');
+            drag.target = { kind: 'tray', ok: true, el: zone };
+        }
+    }
+
+    function performDrop(d, target) {
+        if (!target) { render(); return; } // dropped nowhere: snap back
+        if (!target.ok) { render(); rejectMove(document.querySelector(`.slot[data-index="${target.index}"]`)); return; }
+
+        let moved = false;
+        if (target.kind === 'board') {
+            moved = d.src === 'tray' ? placeFromTray(d.id, target.index) : moveOnBoard(d.index, target.index);
+        } else if (target.kind === 'tray') {
+            moved = returnToTray(d.index);
+        }
+        if (moved) afterMove(); else render();
+    }
+
+    function cancelDrag() {
+        if (!drag) return;
+        if (drag.ghost) drag.ghost.remove();
+        drag.el.classList.remove('drag-origin');
+        clearDropHighlights();
+        drag = null;
+    }
+
+    /* ============================
+       Validation
+       ============================ */
+    function validateState(silent = false) {
+        let rowsV = true, colsV = true;
+        const uniquePairs = new Set();
+        const nowValid = new Set();
+
+        for (let i = 0; i < 3; i++) {
+            const rColors = new Set(), rShapes = new Set();
+            let rCount = 0;
+            for (let c = 0; c < 3; c++) {
+                const item = boardState[i * 3 + c];
+                if (item) {
+                    rColors.add(item.color); rShapes.add(item.shape); rCount++;
+                    uniquePairs.add(item.color + item.shape);
+                }
+            }
+            const rv = (rCount === 3 && rColors.size === 3 && rShapes.size === 3);
+            document.getElementById(`dot-row-${i}`).className = 'dot' + (rv ? ' valid' : '');
+            if (rv) nowValid.add('r' + i); else rowsV = false;
+
+            const cColors = new Set(), cShapes = new Set();
+            let cCount = 0;
+            for (let r = 0; r < 3; r++) {
+                const item = boardState[r * 3 + i];
+                if (item) { cColors.add(item.color); cShapes.add(item.shape); cCount++; }
+            }
+            const cv = (cCount === 3 && cColors.size === 3 && cShapes.size === 3);
+            document.getElementById(`dot-col-${i}`).className = 'dot' + (cv ? ' valid' : '');
+            if (cv) nowValid.add('c' + i); else colsV = false;
+        }
+
+        const uniqV = (uniquePairs.size === 9);
+
+        document.getElementById('chipRows').className = 'chip' + (rowsV ? ' valid' : '');
+        document.getElementById('chipCols').className = 'chip' + (colsV ? ' valid' : '');
+        document.getElementById('chipUnique').className = 'chip' + (uniqV ? ' valid' : '');
+
+        const won = rowsV && colsV && uniqV && trayState.length === 0;
+
+        // A little chime when a line newly completes — only where the guides are shown,
+        // or it would give away what the hidden dots hide.
+        if (!silent && !won && params.guides && [...nowValid].some(k => !validLines.has(k))) {
+            setTimeout(() => Sound.line(), 90);
+        }
+        validLines = nowValid;
+
+        if (won && !gameOver) endGame(true);
+    }
+
+    /* ============================
+       End of a board
+       ============================ */
+    function confetti() {
+        const palette = ['var(--color-red)', 'var(--color-blue)', 'var(--color-green)', 'var(--warning)', 'var(--accent)'];
+        for (let i = 0; i < 36; i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 120 + Math.random() * 160;
+            c.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+            c.style.setProperty('--dy', Math.sin(angle) * dist + 120 + 'px');
+            c.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+            c.style.background = palette[i % palette.length];
+            c.style.borderRadius = i % 3 === 0 ? '50%' : '3px';
+            document.body.appendChild(c);
+            setTimeout(() => c.remove(), 1300);
+        }
+    }
+
+    function showLevelChange(res) {
+        const badge = document.getElementById('levelBadge');
+        badge.classList.remove('up', 'down');
+        void badge.offsetWidth;
+        if (Math.abs(res.delta) < 0.005) return;
+        badge.classList.add(res.delta > 0 ? 'up' : 'down');
+        const d = document.createElement('span');
+        d.className = 'level-delta ' + (res.delta > 0 ? 'pos' : 'neg');
+        d.dir = 'ltr';
+        d.innerText = (res.delta > 0 ? '+' : '−') + Math.abs(res.delta).toFixed(2);
+        badge.appendChild(d);
+        setTimeout(() => d.remove(), 1500);
+        document.getElementById('levelDisplay').innerText = res.after.toFixed(1);
+        document.getElementById('peakDisplay').innerText = progress.peak.toFixed(1);
+    }
+
+    function levelChangeHtml(res) {
+        const tags = {
+            fast: '⚡ קל לך מדי — קפיצה',
+            up: '↗ חוזר לשיא',
+            ceiling: '⛰ ליד השיא — כל צעד קשה',
+            drop: '↘ יורדים קצת',
+        };
+        const sign = res.delta >= 0 ? '+' : '−';
+        return `<span class="nums">${res.before.toFixed(1)} ← ${res.after.toFixed(1)}</span>`
+            + `<span class="tag ${res.tag}"><bdi dir="ltr">${sign}${Math.abs(res.delta).toFixed(2)}</bdi> · ${tags[res.tag]}</span>`;
+    }
+
+    // won: solved the board. skipped: gave up from settings.
+    function endGame(won, skipped = false) {
+        if (gameOver) return;
+        gameOver = true;
+        cancelDrag();
+        clearInterval(timerInterval);
+
+        const stats = {
+            timeFrac: (totalTime - timeLeft) / totalTime,
+            efficiency: steps > 0 ? Math.min(1, minSteps / steps) : 1,
+        };
+        const res = applyResult(won, stats);
+        const newRecord = won && res.after > res.before && res.after >= progress.peak && res.before < progress.peak;
+
+        setTimeout(() => {
+            if (won) {
+                Sound.win();
+                confetti();
+                buzz([30, 50, 30]);
+            } else {
+                Sound.lose();
+            }
+            setTimeout(() => {
+                showLevelChange(res);
+                if (res.delta > 0.005) Sound.levelUp(); else if (res.delta < -0.005) Sound.levelDown();
+            }, 450);
+
+            const usedSec = totalTime - timeLeft;
+            let title, msg;
+            if (won) {
+                title = newRecord ? 'שיא חדש! 🏆' : 'אלופה! 🧩';
+                msg = `פתרת את הלוח תוך ${steps} צעדים ו־${usedSec} שניות.`;
+            } else if (skipped) {
+                title = 'דילגת על הלוח';
+                msg = 'נוריד קצת את הרמה ונמשיך.';
+            } else {
+                title = 'הזמן נגמר! ⏰';
+                msg = 'לא הספקת לפתור את הלוח בזמן. הלוח הבא יהיה קצת יותר קל.';
+            }
+            showDialog(title, msg, [{ label: 'ללוח הבא', cls: 'btn-primary', action: initLevel }], levelChangeHtml(res));
+        }, won ? 300 : 0);
+    }
+
+    // Startup
+    applyThemeUI();
+    applySoundUI();
+    initLevel();
+</script>
 </body>
 </html>

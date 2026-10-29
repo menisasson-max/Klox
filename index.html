@@ -3,306 +3,963 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ChromaGrid</title>
+    <title>כרומה-גריד | אימון חשיבה אדפטיבי</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for Rating Graph -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&family=Rubik:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        sys: {
+                            bg: 'var(--bg-sys)',
+                            panel: 'var(--bg-panel)',
+                            border: 'var(--border-sys)',
+                            text: 'var(--text-sys)',
+                            muted: 'var(--text-muted)',
+                            overlay: 'var(--bg-overlay)',
+                            highlight: 'var(--bg-highlight)',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        /* משתני עיצוב - מצב בהיר כברירת מחדל */
         :root {
-            --bg-color: #f8fafc;
-            --text-color: #1e293b;
-            --board-bg: #ffffff;
-            --tile-bg: #e2e8f0;
-            --primary: #3b82f6;
-            --danger: #ef4444;
-            --header-bg: #ffffff;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            /* Dark Theme (Default) */
+            --bg-sys: #0b0f19;
+            --bg-panel: #151c2c;
+            --border-sys: rgba(51, 65, 85, 0.8);
+            --text-sys: #f8fafc;
+            --text-muted: #94a3b8;
+            --bg-overlay: rgba(2, 6, 23, 0.85);
+            --bg-highlight: rgba(30, 41, 59, 0.8);
+            --shadow-panel: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            --dot-bg: #334155;
         }
 
-        /* מצב חושך */
-        [data-theme="dark"] {
-            --bg-color: #0f172a;
-            --text-color: #f8fafc;
-            --board-bg: #1e293b;
-            --tile-bg: #334155;
-            --header-bg: #1e293b;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        [data-theme="light"] {
+            /* Light Theme */
+            --bg-sys: #f1f5f9;
+            --bg-panel: #ffffff;
+            --border-sys: rgba(203, 213, 225, 0.8);
+            --text-sys: #0f172a;
+            --text-muted: #475569;
+            --bg-overlay: rgba(255, 255, 255, 0.85);
+            --bg-highlight: rgba(226, 232, 240, 0.8);
+            --shadow-panel: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            --dot-bg: #cbd5e1;
         }
 
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: system-ui, -apple-system, sans-serif;
-            transition: background-color 0.3s, color 0.3s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
             user-select: none;
             -webkit-user-select: none;
         }
-
-        header {
-            width: 100%;
-            padding: 1rem;
-            background-color: var(--header-bg);
-            box-shadow: var(--shadow);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: var(--bg-sys);
+            color: var(--text-sys);
+            overflow-x: hidden;
+            touch-action: manipulation;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .bg-sys-gradient {
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.08) 0%, transparent 35%),
+                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.08) 0%, transparent 35%);
+        }
+        .font-num {
+            font-family: 'Rubik', sans-serif;
         }
 
-        .level-display {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--primary);
-            cursor: pointer;
+        /* Tile & Grid Animations */
+        .grid-cell {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+        .tile-item {
+            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease, opacity 0.15s ease;
+            cursor: grab;
+            touch-action: none;
+        }
+        .tile-item:active {
+            cursor: grabbing;
+        }
+        .tile-selected {
+            transform: scale(1.09) translateY(-3px);
+            box-shadow: 0 0 0 3px var(--text-sys), 0 12px 25px -4px rgba(0, 0, 0, 0.6) !important;
+            z-index: 20;
+        }
+        .cell-highlight-target {
+            box-shadow: inset 0 0 0 2px rgba(56, 189, 248, 0.7);
+            background-color: rgba(56, 189, 248, 0.12) !important;
+        }
+        
+        @keyframes conflictPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.8), inset 0 0 0 2.5px #f43f5e; }
+            50% { box-shadow: 0 0 14px 3px rgba(244, 63, 94, 0.55), inset 0 0 0 2.5px #fb7185; }
+        }
+        .tile-conflict {
+            animation: conflictPulse 1.4s infinite ease-in-out;
         }
 
-        .icon-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--text-color);
-            cursor: pointer;
-            padding: 0.5rem;
+        @keyframes popIn {
+            0% { transform: scale(0.75); opacity: 0.4; }
+            70% { transform: scale(1.06); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
-        main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            padding: 1rem;
-            box-sizing: border-box;
-        }
-
-        .board {
-            display: grid;
-            gap: 10px;
-            background-color: var(--board-bg);
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-        }
-
-        .tile {
-            width: 60px;
-            height: 60px;
-            background-color: var(--tile-bg);
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-
-        .tile:active {
-            transform: scale(0.95);
-        }
-
-        /* מודל הגדרות */
-        .modal-overlay {
+        /* Floating Drag Clone */
+        #drag-ghost {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 0 20px 35px rgba(0,0,0,0.65), 0 0 0 3px rgba(255,255,255,0.9);
+            border-radius: 1rem;
             display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
         }
 
-        .modal-content {
-            background-color: var(--header-bg);
-            padding: 2rem;
-            border-radius: 16px;
-            width: 80%;
-            max-width: 320px;
-            box-shadow: var(--shadow);
-            text-align: center;
+        /* Status Dot Glow */
+        .status-dot {
+            transition: all 0.3s ease;
+            background-color: var(--dot-bg);
+        }
+        .status-dot.valid {
+            background-color: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            transform: scale(1.25);
+        }
+        .status-dot.conflict {
+            background-color: #f43f5e;
+            box-shadow: 0 0 8px #f43f5e;
         }
 
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            font-size: 1.1rem;
-        }
+        /* Toggles */
+        .toggle-knob { transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+        .toggle-on .toggle-knob { transform: translateX(-24px); } /* RTL right to left */
 
-        button {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .btn-danger {
-            background-color: var(--danger);
-            color: white;
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-sys); }
+        ::-webkit-scrollbar-thumb { background: var(--border-sys); border-radius: 9999px; }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col justify-between pb-4 bg-sys-gradient" data-theme="dark">
 
-    <header>
-        <div class="level-display" id="levelDisplay">רמה: 1.0</div>
-        <div>
-            <button class="icon-btn" id="themeToggleBtn">☀️</button>
-            <button class="icon-btn" id="settingsBtn">⚙️</button>
+    <div id="drag-ghost"></div>
+
+    <!-- Top Navigation & Rating Bar -->
+    <header class="w-full max-w-lg mx-auto px-4 pt-3 pb-2">
+        <div class="flex items-center justify-between bg-sys-panel border border-sys-border rounded-2xl p-3 shadow-[var(--shadow-panel)] backdrop-blur-md transition-colors">
+            <!-- Brand & Title -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 via-indigo-500 to-fuchsia-500 flex items-center justify-center shadow-md">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                        <rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" fill-opacity="0.25"/>
+                        <circle cx="17.5" cy="6.5" r="3.5" fill="currentColor" fill-opacity="0.25"/>
+                        <polygon points="6.5,14 10,21 3,21" fill="currentColor" fill-opacity="0.25"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <h1 class="font-extrabold text-lg leading-none tracking-tight bg-gradient-to-l from-indigo-400 to-cyan-400 bg-clip-text text-transparent">כרומה-גריד</h1>
+                        <span id="practice-badge" class="hidden text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/30">תרגול</span>
+                    </div>
+                    <p id="rank-title" class="text-xs text-sys-muted font-medium mt-0.5 transition-colors">חושב מתחיל</p>
+                </div>
+            </div>
+
+            <!-- Adaptive Rating Pill -->
+            <button onclick="openStatsModal()" class="group flex items-center gap-2.5 bg-sys-highlight hover:opacity-80 border border-sys-border rounded-xl px-3 py-1.5 transition active:scale-95">
+                <div class="text-right">
+                    <div class="text-[10px] text-sys-muted font-medium leading-none">מדד רמה (1-10)</div>
+                    <div class="flex items-baseline gap-1 mt-0.5">
+                        <span id="current-rating-display" class="font-num font-extrabold text-lg text-cyan-500 dark:text-cyan-400 leading-none">1.0</span>
+                        <span id="rating-delta-pill" class="text-[11px] font-num font-bold text-emerald-500 hidden">+0.4</span>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-500 dark:text-cyan-400 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                    </svg>
+                </div>
+            </button>
+
+            <!-- Quick Actions -->
+            <div class="flex items-center gap-1.5">
+                <button onclick="openSettingsModal()" title="הגדרות" class="w-9 h-9 rounded-xl bg-sys-highlight text-sys-text flex items-center justify-center border border-sys-border transition active:scale-95 hover:opacity-80">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Level Progress Bar -->
+        <div class="mt-2 px-1">
+            <div class="flex justify-between text-[11px] text-sys-muted mb-1 font-medium">
+                <span id="puzzle-spec-badge">לוח 3×3 • 3 צבעים וצורות</span>
+                <div class="flex items-center gap-3 font-num">
+                    <span>צעדים: <strong id="moves-counter" class="text-sys-text">0</strong><span id="optimal-moves-label" class="text-sys-muted text-[10px]">/4</span></span>
+                    <span>זמן: <strong id="timer-display" class="text-sys-text">00:00</strong></span>
+                </div>
+            </div>
+            <div class="w-full h-1.5 bg-sys-highlight rounded-full overflow-hidden border border-sys-border/50">
+                <div id="rating-progress-bar" class="h-full bg-gradient-to-l from-cyan-400 via-indigo-500 to-fuchsia-500 transition-all duration-500 rounded-full" style="width: 10%"></div>
+            </div>
         </div>
     </header>
 
-    <main>
-        <div class="board" id="gameBoard" style="grid-template-columns: repeat(3, 1fr);">
-            <!-- אריחים יווצרו דרך JS -->
+    <!-- Main Interactive Puzzle Area -->
+    <main class="flex-1 w-full max-w-lg mx-auto px-4 flex flex-col justify-center items-center gap-3 my-1">
+        
+        <!-- Live Rule Checklist Bar -->
+        <div class="w-full grid grid-cols-3 gap-1.5 text-center">
+            <div id="rule-pill-rows" class="bg-sys-highlight border border-sys-border rounded-xl py-1.5 px-2 flex items-center justify-center gap-1.5 text-xs text-sys-muted transition">
+                <span class="w-2 h-2 rounded-full" id="dot-rule-rows" style="background:var(--dot-bg)"></span>
+                <span>שורות שונות</span>
+            </div>
+            <div id="rule-pill-cols" class="bg-sys-highlight border border-sys-border rounded-xl py-1.5 px-2 flex items-center justify-center gap-1.5 text-xs text-sys-muted transition">
+                <span class="w-2 h-2 rounded-full" id="dot-rule-cols" style="background:var(--dot-bg)"></span>
+                <span>עמודות שונות</span>
+            </div>
+            <div id="rule-pill-pairs" class="bg-sys-highlight border border-sys-border rounded-xl py-1.5 px-2 flex items-center justify-center gap-1.5 text-xs text-sys-muted transition">
+                <span class="w-2 h-2 rounded-full" id="dot-rule-pairs" style="background:var(--dot-bg)"></span>
+                <span id="rule-pairs-text">זוגות שונים</span>
+            </div>
+        </div>
+
+        <!-- The Board Container -->
+        <div class="relative w-full flex flex-col items-center justify-center my-0.5">
+            <div id="col-indicators" class="grid w-full max-w-[360px] mb-1.5 px-2 justify-items-center"></div>
+            <div class="flex items-center justify-center w-full">
+                <div id="row-indicators" class="flex flex-col justify-around h-full ml-1.5 py-2"></div>
+                <div id="board-grid" class="w-full max-w-[360px] aspect-square bg-sys-panel border-2 border-sys-border rounded-2xl p-2.5 shadow-[var(--shadow-panel)] grid gap-2 relative"></div>
+            </div>
+        </div>
+
+        <div id="feedback-banner" class="min-h-[24px] text-xs font-medium text-sys-muted text-center flex items-center justify-center gap-1.5 px-3">
+            <span>גרור אריח או הקש לבחירה והנחה במשבצת</span>
+        </div>
+
+        <!-- Tile Bank -->
+        <div class="w-full bg-sys-panel border border-sys-border rounded-2xl p-3 shadow-lg">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-sys-text flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    מגש אריחים
+                </span>
+                <span id="bank-count-badge" class="text-[11px] font-num text-sys-muted bg-sys-highlight px-2 py-0.5 rounded-full border border-sys-border">0 נותרו</span>
+            </div>
+            <div id="tile-bank" class="min-h-[64px] flex flex-wrap items-center justify-center gap-2 p-1.5 rounded-xl bg-sys-highlight border border-sys-border/50"></div>
         </div>
     </main>
 
-    <!-- מודל הגדרות -->
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal-content">
-            <h2 style="margin-top: 0;">הגדרות</h2>
-            
-            <div class="setting-row">
-                <span>צלילים</span>
-                <input type="checkbox" id="soundToggle" checked>
+    <!-- Bottom Controls Bar -->
+    <footer class="w-full max-w-lg mx-auto px-4 pt-1">
+        <div class="grid grid-cols-4 gap-2">
+            <button onclick="undoMove()" id="btn-undo" disabled class="flex flex-col items-center justify-center py-2 px-3 rounded-xl bg-sys-panel hover:bg-sys-highlight disabled:opacity-40 border border-sys-border text-sys-text transition active:scale-95">
+                <svg class="w-5 h-5 mb-0.5 text-sys-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                <span class="text-[11px] font-bold">בטל</span>
+            </button>
+            <button onclick="useSmartHint()" class="flex flex-col items-center justify-center py-2 px-3 rounded-xl bg-sys-panel hover:bg-sys-highlight border border-sys-border text-amber-500 transition active:scale-95">
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                <span class="text-[11px] font-bold">רמז</span>
+            </button>
+            <button onclick="resetCurrentBoard()" class="flex flex-col items-center justify-center py-2 px-3 rounded-xl bg-sys-panel hover:bg-sys-highlight border border-sys-border text-sys-text transition active:scale-95">
+                <svg class="w-5 h-5 mb-0.5 text-sys-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span class="text-[11px] font-bold">נקה</span>
+            </button>
+            <button onclick="handleTooHardSkip()" class="flex flex-col items-center justify-center py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-500 transition active:scale-95">
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+                <span class="text-[11px] font-bold">קשה לי</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="fixed inset-0 z-50 bg-sys-overlay backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-sys-panel border border-sys-border rounded-3xl p-6 shadow-2xl text-center animate-pop">
+            <div id="fast-track-badge" class="hidden mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-cyan-500/20 border border-amber-400/40 text-amber-500 dark:text-amber-400 text-xs font-extrabold">
+                <span>⚡ קפיצת רמה מהירה!</span>
             </div>
-            
-            <div class="setting-row">
-                <span>רטט (Haptic)</span>
-                <input type="checkbox" id="hapticToggle" checked>
+            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shadow-lg">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h2 class="text-2xl font-black text-sys-text">הלוח פוצח בהצלחה!</h2>
+            <p class="text-sm text-sys-muted mt-1">כל השורות, העמודות והזוגות מאוזנים לחלוטין</p>
+            <div class="grid grid-cols-3 gap-2.5 my-5">
+                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-3">
+                    <div class="text-[11px] text-sys-muted">דיוק מהלכים</div>
+                    <div id="vic-accuracy" class="font-num text-xl font-extrabold text-sys-text mt-0.5">100%</div>
+                </div>
+                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-3">
+                    <div class="text-[11px] text-sys-muted">זמן פתרון</div>
+                    <div id="vic-time" class="font-num text-xl font-extrabold text-sys-text mt-0.5">00:18</div>
+                </div>
+                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-3">
+                    <div class="text-[11px] text-sys-muted">מדד חדש</div>
+                    <div class="flex items-baseline justify-center gap-1 mt-0.5">
+                        <span id="vic-new-rating" class="font-num text-xl font-extrabold text-cyan-500 dark:text-cyan-400">1.6</span>
+                        <span id="vic-rating-diff" class="font-num text-xs font-bold text-emerald-500">(+0.6)</span>
+                    </div>
+                </div>
+            </div>
+            <div id="adaptive-explanation" class="text-xs text-sys-muted bg-sys-highlight border border-sys-border rounded-xl p-3 mb-5 text-right leading-relaxed"></div>
+            <div class="flex gap-2.5">
+                <button onclick="openStatsModal(); closeVictoryModal();" class="flex-1 py-3 px-4 rounded-xl bg-sys-highlight hover:opacity-80 text-sys-text font-bold text-sm transition border border-sys-border">גרף</button>
+                <button onclick="closeVictoryModal(); startNextLevel();" class="flex-[2] py-3 px-4 rounded-xl bg-gradient-to-l from-cyan-500 to-indigo-500 text-white font-extrabold text-sm shadow-lg transition active:scale-95">ללוח הבא ←</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="stats-modal" class="fixed inset-0 z-50 bg-sys-overlay backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-lg bg-sys-panel border border-sys-border rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-xl font-black text-sys-text">גרף התקדמות ומדד יכולת</h2>
+                    <p class="text-xs text-sys-muted">מעקב רב-שלבי מסולם 1.0 עד 10.0</p>
+                </div>
+                <button onclick="closeStatsModal()" class="w-8 h-8 rounded-lg bg-sys-highlight text-sys-muted hover:text-sys-text flex items-center justify-center">✕</button>
+            </div>
+            <div class="grid grid-cols-4 gap-2 mb-4 text-center">
+                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-2.5">
+                    <div class="text-[10px] text-sys-muted">נוכחית</div>
+                    <div id="stat-curr-rating" class="font-num text-lg font-extrabold text-cyan-500 dark:text-cyan-400 mt-0.5">1.0</div>
+                </div>
+                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-2.5">
+                    <div class="text-[10px] text-sys-muted">שיא</div>
+                    <div id="stat-peak-rating" class="font-num text-lg font-extrabold text-fuchsia-500 dark:text-fuchsia-400 mt-0.5">1.0</div>
+                </div>
+                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-2.5">
+                    <div class="text-[10px] text-sys-muted">נפתרו</div>
+                    <div id="stat-total-solved" class="font-num text-lg font-extrabold text-sys-text mt-0.5">0</div>
+                </div>
+                <div class="bg-sys-highlight border border-sys-border rounded-2xl p-2.5">
+                    <div class="text-[10px] text-sys-muted">דיוק ממוצע</div>
+                    <div id="stat-avg-acc" class="font-num text-lg font-extrabold text-emerald-500 mt-0.5">0%</div>
+                </div>
+            </div>
+            <div class="bg-[var(--bg-sys)] border border-sys-border rounded-2xl p-3 mb-4">
+                <div class="h-52 w-full relative"><canvas id="ratingChart"></canvas></div>
+            </div>
+            <div class="flex justify-between items-center">
+                <button onclick="resetAllStats()" class="text-xs text-rose-500 underline">איפוס היסטוריה</button>
+                <button onclick="closeStatsModal()" class="py-2.5 px-6 rounded-xl bg-cyan-500 text-white font-extrabold text-sm">סגור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings & Simulator Modal -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-sys-overlay backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-sys-panel border border-sys-border rounded-3xl p-5 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-black text-sys-text">הגדרות מתקדמות</h2>
+                <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-lg bg-sys-highlight text-sys-muted hover:text-sys-text flex items-center justify-center">✕</button>
             </div>
 
-            <button class="btn-primary" id="closeSettingsBtn">סגור</button>
-            <button class="btn-danger" id="resetBtn">איפוס כל ההתקדמות</button>
+            <!-- Toggles -->
+            <div class="bg-sys-highlight rounded-2xl p-4 mb-4 border border-sys-border">
+                <h3 class="text-xs font-bold text-sys-muted mb-3 uppercase tracking-wider">מערכת</h3>
+                
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-sm font-bold text-sys-text">מצב תצוגה (בהיר / כהה)</span>
+                    <button onclick="toggleTheme()" id="theme-toggle-btn" class="w-12 h-6 rounded-full relative transition-colors bg-slate-300 dark:bg-cyan-500 toggle-on">
+                        <div class="toggle-knob w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"></div>
+                    </button>
+                </div>
+                
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-sm font-bold text-sys-text">אפקטים קוליים ורטט</span>
+                    <button onclick="toggleSound()" id="sound-toggle-btn" class="w-12 h-6 rounded-full relative transition-colors bg-slate-300 dark:bg-cyan-500 toggle-on">
+                        <div class="toggle-knob w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"></div>
+                    </button>
+                </div>
+
+                <div class="flex justify-between text-xs text-sys-muted mb-1 mt-2">
+                    <span>עוצמת שמע</span>
+                    <span id="vol-val">50%</span>
+                </div>
+                <input type="range" id="vol-slider" min="0" max="1" step="0.1" value="0.5" oninput="updateVolume(this.value)" class="w-full accent-cyan-500 cursor-pointer">
+            </div>
+
+            <!-- Simulator -->
+            <div class="bg-sys-highlight border border-sys-border rounded-2xl p-4 mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold text-sys-text">סימולטור רמות (תרגול)</span>
+                    <span id="sim-slider-val" class="font-num text-sm font-extrabold text-amber-500">1.0</span>
+                </div>
+                <input id="sim-level-slider" type="range" min="1.0" max="10.0" step="0.5" value="1.0" oninput="document.getElementById('sim-slider-val').textContent = parseFloat(this.value).toFixed(1)" class="w-full accent-amber-500 cursor-pointer mb-3">
+                <div class="flex gap-2">
+                    <button onclick="launchSimulatedLevel()" class="flex-1 py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-bold text-xs transition">נסה רמה זו</button>
+                    <button onclick="returnToRealRating()" class="py-2 px-3 rounded-xl bg-sys-panel border border-sys-border text-sys-text font-bold text-xs transition hover:opacity-80">חזור לדירוג שלי</button>
+                </div>
+            </div>
+
+            <button onclick="closeSettingsModal()" class="w-full py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-sm">סגור</button>
         </div>
     </div>
 
     <script>
-        // אתחול הגדרות - מצב בהיר כברירת מחדל אם אין בחירה קודמת
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        updateThemeIcon(savedTheme);
+        /**************************************************************
+         * AUDIO & HAPTIC ENGINE
+         **************************************************************/
+        let audioCtx = null;
+        let globalSettings = {
+            theme: 'dark',
+            soundOn: true,
+            volume: 0.5
+        };
 
-        let userLevel = parseFloat(localStorage.getItem('chromaLevel')) || 1.0;
-        let isSoundOn = localStorage.getItem('soundOn') !== 'false';
-        let isHapticOn = localStorage.getItem('hapticOn') !== 'false';
+        function loadSettings() {
+            try {
+                const saved = localStorage.getItem('chromagrid_settings_v1');
+                if (saved) {
+                    globalSettings = { ...globalSettings, ...JSON.parse(saved) };
+                }
+            } catch(e) {}
+            applySettingsUI();
+        }
 
-        // עדכון תצוגה
-        document.getElementById('levelDisplay').innerText = `רמה: ${userLevel.toFixed(1)}`;
-        document.getElementById('soundToggle').checked = isSoundOn;
-        document.getElementById('hapticToggle').checked = isHapticOn;
+        function saveSettings() {
+            localStorage.setItem('chromagrid_settings_v1', JSON.stringify(globalSettings));
+        }
 
-        // הפעלת רטט
-        function triggerHaptic() {
-            if (isHapticOn && navigator.vibrate) {
-                navigator.vibrate(15);
+        function initAudio() {
+            if (!audioCtx && globalSettings.soundOn) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
             }
         }
 
-        // החלפת מצב בהירות
-        document.getElementById('themeToggleBtn').addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
-            triggerHaptic();
-        });
-
-        function updateThemeIcon(theme) {
-            document.getElementById('themeToggleBtn').innerText = theme === 'dark' ? '🌙' : '☀️';
-        }
-
-        // פתיחת וסגירת הגדרות
-        const settingsModal = document.getElementById('settingsModal');
-        document.getElementById('settingsBtn').addEventListener('click', () => {
-            settingsModal.style.display = 'flex';
-            triggerHaptic();
-        });
-        document.getElementById('closeSettingsBtn').addEventListener('click', () => {
-            settingsModal.style.display = 'none';
-            triggerHaptic();
-        });
-
-        // שמירת הגדרות שמע ורטט
-        document.getElementById('soundToggle').addEventListener('change', (e) => {
-            isSoundOn = e.target.checked;
-            localStorage.setItem('soundOn', isSoundOn);
-        });
-        document.getElementById('hapticToggle').addEventListener('change', (e) => {
-            isHapticOn = e.target.checked;
-            localStorage.setItem('hapticOn', isHapticOn);
-        });
-
-        // איפוס כל ההתקדמות
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            triggerHaptic();
-            if (confirm("האם אתה בטוח שברצונך למחוק את כל ההתקדמות? פעולה זו תחזיר אותך לרמה 1.0 ולא ניתן לבטל אותה.")) {
-                // מחיקת כל הנתונים השמורים
-                localStorage.clear();
-                
-                // הגדרת מחדש של משתני ברירת מחדל כדי למנוע שגיאות אם הדף לא יתרענן
-                localStorage.setItem('theme', 'light');
-                
-                alert("ההתקדמות אופסה בהצלחה.");
-                location.reload(); // רענון הדף לאיפוס מלא של לוח המשחק
-            }
-        });
-
-        // בניית לוח דמה להמחשה (כאן יושבת הלוגיקה של המשחק)
-        const board = document.getElementById('gameBoard');
-        const colors = ['#ef4444', '#3b82f6', '#10b981'];
-        const shapes = ['■', '▲', '●'];
-
-        for (let i = 0; i < 9; i++) {
-            const tile = document.createElement('div');
-            tile.className = 'tile';
-            tile.style.color = colors[i % 3];
-            tile.innerText = shapes[Math.floor(i / 3)];
-            
-            tile.addEventListener('click', () => {
-                triggerHaptic();
-                if (isSoundOn) playClickSound();
-                // לוגיקת החלפה וגרירה תיכנס כאן
-            });
-            board.appendChild(tile);
-        }
-
-        // מערכת שמע בסיסית מובנית
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playClickSound() {
+        function playTone(freq, type = 'sine', duration = 0.1, volMult = 1) {
+            if (!globalSettings.soundOn) return;
+            initAudio();
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            
             const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.05);
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            const effectiveVol = globalSettings.volume * volMult * 0.5; 
+            gain.gain.setValueAtTime(effectiveVol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
+            osc.stop(audioCtx.currentTime + duration);
         }
+
+        function vibrate(pattern) {
+            if (globalSettings.soundOn && navigator.vibrate) {
+                try { navigator.vibrate(pattern); } catch(e){}
+            }
+        }
+
+        // SFX Library
+        const sfx = {
+            pickup: () => { playTone(400, 'sine', 0.1, 0.4); vibrate(20); },
+            drop: () => { playTone(300, 'sine', 0.15, 0.5); vibrate(30); },
+            error: () => { playTone(150, 'sawtooth', 0.3, 0.4); vibrate([40, 40, 40]); },
+            rowMatch: () => { playTone(600, 'sine', 0.1, 0.4); setTimeout(()=>playTone(800, 'sine', 0.2, 0.4), 100); },
+            win: () => {
+                [400, 500, 600, 800, 1000].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.2, 0.5), i * 100));
+                vibrate([100, 50, 100, 50, 200]);
+            }
+        };
+
+        /**************************************************************
+         * SETTINGS & THEME LOGIC
+         **************************************************************/
+        function applySettingsUI() {
+            // Theme
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            if (globalSettings.theme === 'light') {
+                body.setAttribute('data-theme', 'light');
+                document.documentElement.classList.remove('dark');
+                themeBtn.classList.remove('toggle-on', 'bg-cyan-500');
+                themeBtn.classList.add('bg-slate-300');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                document.documentElement.classList.add('dark');
+                themeBtn.classList.add('toggle-on', 'bg-cyan-500');
+                themeBtn.classList.remove('bg-slate-300');
+            }
+
+            // Sound
+            const soundBtn = document.getElementById('sound-toggle-btn');
+            if (globalSettings.soundOn) {
+                soundBtn.classList.add('toggle-on', 'bg-cyan-500');
+                soundBtn.classList.remove('bg-slate-300');
+            } else {
+                soundBtn.classList.remove('toggle-on', 'bg-cyan-500');
+                soundBtn.classList.add('bg-slate-300');
+            }
+
+            // Volume
+            document.getElementById('vol-slider').value = globalSettings.volume;
+            document.getElementById('vol-val').textContent = Math.round(globalSettings.volume * 100) + '%';
+        }
+
+        function toggleTheme() {
+            globalSettings.theme = globalSettings.theme === 'dark' ? 'light' : 'dark';
+            saveSettings();
+            applySettingsUI();
+            if (chartInstance) renderRatingChart(); // Update chart colors
+        }
+
+        function toggleSound() {
+            globalSettings.soundOn = !globalSettings.soundOn;
+            saveSettings();
+            applySettingsUI();
+            if (globalSettings.soundOn) initAudio();
+        }
+
+        function updateVolume(val) {
+            globalSettings.volume = parseFloat(val);
+            document.getElementById('vol-val').textContent = Math.round(globalSettings.volume * 100) + '%';
+            saveSettings();
+        }
+
+        /**************************************************************
+         * CHROMAGRID - GAME LOGIC
+         **************************************************************/
+        const COLORS = [
+            { id: 0, hex: '#f43f5e', bg: 'rgba(244, 63, 94, 0.22)', border: '#fb7185', glow: 'rgba(244, 63, 94, 0.4)' },
+            { id: 1, hex: '#38bdf8', bg: 'rgba(56, 189, 248, 0.22)', border: '#7dd3fc', glow: 'rgba(56, 189, 248, 0.4)' },
+            { id: 2, hex: '#10b981', bg: 'rgba(16, 185, 129, 0.22)', border: '#34d399', glow: 'rgba(16, 185, 129, 0.4)' },
+            { id: 3, hex: '#f59e0b', bg: 'rgba(245, 158, 11, 0.22)', border: '#fbbf24', glow: 'rgba(245, 158, 11, 0.4)' },
+            { id: 4, hex: '#a855f7', bg: 'rgba(168, 85, 247, 0.22)', border: '#c084fc', glow: 'rgba(168, 85, 247, 0.4)' },
+            { id: 5, hex: '#f97316', bg: 'rgba(249, 115, 22, 0.22)', border: '#fb923c', glow: 'rgba(249, 115, 22, 0.4)' }
+        ];
+
+        function getShapeSVG(shapeId, colorHex, sizeClass = "w-7 h-7") {
+            switch (shapeId) {
+                case 0: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><circle cx="18" cy="18" r="11.5" fill="${colorHex}" stroke="#ffffff" stroke-width="2" stroke-opacity="0.85"/></svg>`;
+                case 1: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><rect x="7.5" y="7.5" width="21" height="21" rx="4" fill="${colorHex}" stroke="#ffffff" stroke-width="2" stroke-opacity="0.85"/></svg>`;
+                case 2: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><polygon points="18,6 30,28 6,28" stroke-linejoin="round" fill="${colorHex}" stroke="#ffffff" stroke-width="2" stroke-opacity="0.85"/></svg>`;
+                case 3: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><polygon points="18,5 31,18 18,31 5,18" stroke-linejoin="round" fill="${colorHex}" stroke="#ffffff" stroke-width="2" stroke-opacity="0.85"/></svg>`;
+                case 4: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><polygon points="18,4.5 21.9,13 31.2,14.1 24.3,20.4 26.2,29.6 18,25 9.8,29.6 11.7,20.4 4.8,14.1 14.1,13" stroke-linejoin="round" fill="${colorHex}" stroke="#ffffff" stroke-width="1.8" stroke-opacity="0.85"/></svg>`;
+                case 5: return `<svg class="${sizeClass}" viewBox="0 0 36 36"><polygon points="18,5 29.5,11.5 29.5,24.5 18,31 6.5,24.5 6.5,11.5" stroke-linejoin="round" fill="${colorHex}" stroke="#ffffff" stroke-width="2" stroke-opacity="0.85"/></svg>`;
+            }
+        }
+
+        const STORAGE_KEY = 'chromagrid_player_state_v1';
+        let playerState = { rating: 1.0, peakRating: 1.0, gamesPlayed: 0, streak: 0, history: [{ game: 0, rating: 1.0, accuracy: 100, timeSec: 0, gridSize: 3 }] };
+        let currentGame = {};
+        let chartInstance = null;
+
+        function loadPlayerState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) playerState = { ...playerState, ...JSON.parse(raw) };
+            } catch (e) {}
+        }
+        function savePlayerState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(playerState)); }
+
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function generateSolutionGrid(N) {
+            const colorPerm = shuffleArray([...Array(N).keys()]);
+            const shapePerm = shuffleArray([...Array(N).keys()]);
+            const rowPerm = shuffleArray([...Array(N).keys()]);
+            const colPerm = shuffleArray([...Array(N).keys()]);
+            const grid = [];
+            
+            let baseColors = [], baseShapes = [];
+            if (N === 3 || N === 5) {
+                for (let r = 0; r < N; r++) {
+                    baseColors[r] = []; baseShapes[r] = [];
+                    for (let c = 0; c < N; c++) {
+                        baseColors[r][c] = (r + c) % N;
+                        baseShapes[r][c] = (r + 2 * c) % N;
+                    }
+                }
+            } else if (N === 4) {
+                baseColors = [[0,1,2,3],[1,0,3,2],[2,3,0,1],[3,2,1,0]];
+                baseShapes = [[0,1,2,3],[2,3,0,1],[3,2,1,0],[1,0,3,2]];
+            }
+
+            for (let r = 0; r < N; r++) {
+                grid[r] = [];
+                for (let c = 0; c < N; c++) {
+                    if (N <= 5) {
+                        grid[r][c] = { color: colorPerm[baseColors[rowPerm[r]][colPerm[c]]], shape: shapePerm[baseShapes[rowPerm[r]][colPerm[c]]] };
+                    } else { // N=6 fallback
+                        grid[r][c] = { color: colorPerm[(rowPerm[r] + colPerm[c])%N], shape: shapePerm[(shuffleArray([...Array(N).keys()])[r] + colPerm[c])%N] };
+                    }
+                }
+            }
+            return grid;
+        }
+
+        function getDifficultyParams(rating) {
+            const r = Math.max(1.0, Math.min(10.0, rating));
+            if (r < 3.0) return { N: 3, missingCount: Math.round(4 + ((r - 1.0)/1.9)*2.3), hints: r >= 2.2 ? 1 : 0 };
+            if (r < 6.0) return { N: 4, missingCount: Math.round(6 + ((r - 3.0)/2.9)*5), hints: r >= 4.2 ? 2 : 0 };
+            if (r < 8.5) return { N: 5, missingCount: Math.round(10 + ((r - 6.0)/2.4)*6), hints: 3 };
+            return { N: 6, missingCount: Math.round(14 + ((r - 8.5)/1.5)*8), hints: 4 };
+        }
+
+        function generatePuzzle(rating, isPractice = false) {
+            clearInterval(currentGame.timerInterval);
+            const params = getDifficultyParams(rating);
+            const solution = generateSolutionGrid(params.N);
+
+            const allCoords = [];
+            for (let r=0; r<params.N; r++) for (let c=0; c<params.N; c++) allCoords.push({r,c});
+            const removedCoords = shuffleArray(allCoords).slice(0, params.missingCount);
+            const removedSet = new Set(removedCoords.map(pt => `${pt.r},${pt.c}`));
+
+            const hintCoords = removedCoords.slice(0, params.hints);
+            const hintMap = new Map();
+            hintCoords.forEach((pt, i) => hintMap.set(`${pt.r},${pt.c}`, i%2===0?'color':'shape'));
+
+            const boardGrid = [], bankTiles = [];
+            let uid = 1;
+
+            for (let r=0; r<params.N; r++) {
+                boardGrid[r] = [];
+                for (let c=0; c<params.N; c++) {
+                    const sol = solution[r][c];
+                    if (removedSet.has(`${r},${c}`)) {
+                        const ht = hintMap.get(`${r},${c}`);
+                        boardGrid[r][c] = { tile: null, locked: false, hintColor: ht==='color'?sol.color:null, hintShape: ht==='shape'?sol.shape:null };
+                        bankTiles.push({ id: uid++, color: sol.color, shape: sol.shape });
+                    } else {
+                        // Keep on board, but mark as locked (level > 3 usually leaves some locked)
+                        boardGrid[r][c] = { tile: { id: uid++, ...sol }, locked: true, hintColor: null, hintShape: null };
+                    }
+                }
+            }
+
+            currentGame = {
+                isPractice, activeRating: rating, N: params.N,
+                solutionGrid: solution, boardGrid, bankTiles: shuffleArray(bankTiles),
+                initialBoardSnap: JSON.parse(JSON.stringify(boardGrid)), initialBankSnap: JSON.parse(JSON.stringify(bankTiles)),
+                undoStack: [], movesCount: 0, optimalMoves: params.missingCount, hintsUsed: 0,
+                startTime: Date.now(), elapsedSeconds: 0, prevValidRows: 0, prevValidCols: 0, selectedSource: null
+            };
+
+            updateHeaderUI();
+            currentGame.timerInterval = setInterval(() => {
+                currentGame.elapsedSeconds = Math.floor((Date.now() - currentGame.startTime)/1000);
+                document.getElementById('timer-display').textContent = String(Math.floor(currentGame.elapsedSeconds/60)).padStart(2,'0') + ':' + String(currentGame.elapsedSeconds%60).padStart(2,'0');
+            }, 1000);
+            renderAll();
+        }
+
+        function evaluateBoardState() {
+            const { N, boardGrid } = currentGame;
+            const conflictCells = new Set();
+            let validRowsCount = 0, validColsCount = 0, allFilled = true;
+            const rowStates = [], colStates = [];
+
+            for (let r=0; r<N; r++) {
+                const colors = new Map(), shapes = new Map();
+                let full = true, conflict = false;
+                for (let c=0; c<N; c++) {
+                    const t = boardGrid[r][c].tile, cell = boardGrid[r][c];
+                    if (!t) { full = false; allFilled = false; continue; }
+                    if ((cell.hintColor!==null && t.color!==cell.hintColor) || (cell.hintShape!==null && t.shape!==cell.hintShape)) {
+                        conflictCells.add(`${r},${c}`); conflict = true;
+                    }
+                    if (colors.has(t.color)) { conflictCells.add(`${r},${c}`); conflictCells.add(`${r},${colors.get(t.color)}`); conflict = true; } 
+                    else colors.set(t.color, c);
+                    if (shapes.has(t.shape)) { conflictCells.add(`${r},${c}`); conflictCells.add(`${r},${shapes.get(t.shape)}`); conflict = true; } 
+                    else shapes.set(t.shape, c);
+                }
+                if (conflict) rowStates[r] = 'conflict'; else if (full) { rowStates[r] = 'valid'; validRowsCount++; } else rowStates[r] = 'incomplete';
+            }
+
+            for (let c=0; c<N; c++) {
+                const colors = new Map(), shapes = new Map();
+                let full = true, conflict = false;
+                for (let r=0; r<N; r++) {
+                    const t = boardGrid[r][c].tile;
+                    if (!t) { full = false; continue; }
+                    if (colors.has(t.color)) { conflictCells.add(`${r},${c}`); conflictCells.add(`${colors.get(t.color)},${c}`); conflict = true; } 
+                    else colors.set(t.color, r);
+                    if (shapes.has(t.shape)) { conflictCells.add(`${r},${c}`); conflictCells.add(`${shapes.get(t.shape)},${c}`); conflict = true; } 
+                    else shapes.set(t.shape, r);
+                }
+                if (conflict) colStates[c] = 'conflict'; else if (full) { colStates[c] = 'valid'; validColsCount++; } else colStates[c] = 'incomplete';
+            }
+
+            let pairsHasConflict = false;
+            if (N < 6) { // N=6 Euler's exception handled loosely
+                const pairs = new Map();
+                for (let r=0; r<N; r++) for (let c=0; c<N; c++) {
+                    const t = boardGrid[r][c].tile;
+                    if (t) {
+                        const pk = `${t.color}_${t.shape}`;
+                        if (pairs.has(pk)) { conflictCells.add(`${r},${c}`); conflictCells.add(pairs.get(pk)); pairsHasConflict = true; }
+                        else pairs.set(pk, `${r},${c}`);
+                    }
+                }
+            }
+
+            return { conflictCells, rowStates, colStates, validRowsCount, validColsCount, pairsHasConflict, allFilled, isSolved: allFilled && conflictCells.size===0 && validRowsCount===N && validColsCount===N };
+        }
+
+        function updateHeaderUI() {
+            document.getElementById('current-rating-display').textContent = currentGame.activeRating.toFixed(1);
+            document.getElementById('puzzle-spec-badge').textContent = `לוח ${currentGame.N}×${currentGame.N}`;
+            document.getElementById('rating-progress-bar').style.width = `${Math.min(100, Math.max(5, ((currentGame.activeRating - 1)/9)*100))}%`;
+            if (currentGame.isPractice) document.getElementById('practice-badge').classList.remove('hidden');
+            else document.getElementById('practice-badge').classList.add('hidden');
+        }
+
+        function renderAll() {
+            const st = evaluateBoardState();
+            const { N, boardGrid, bankTiles, selectedSource } = currentGame;
+
+            if (st.validRowsCount > currentGame.prevValidRows || st.validColsCount > currentGame.prevValidCols) {
+                if (!st.isSolved) sfx.rowMatch();
+            }
+            currentGame.prevValidRows = st.validRowsCount; currentGame.prevValidCols = st.validColsCount;
+
+            const colInd = document.getElementById('col-indicators');
+            colInd.style.gridTemplateColumns = `repeat(${N}, minmax(0, 1fr))`;
+            colInd.innerHTML = st.colStates.map(s => `<div class="status-dot w-2.5 h-2.5 rounded-full ${s}"></div>`).join('');
+
+            const rowInd = document.getElementById('row-indicators');
+            rowInd.innerHTML = st.rowStates.map(s => `<div class="status-dot w-2.5 h-2.5 rounded-full my-auto ${s}"></div>`).join('');
+
+            ['rows', 'cols', 'pairs'].forEach(rule => {
+                const pill = document.getElementById(`rule-pill-${rule}`), dot = document.getElementById(`dot-rule-${rule}`);
+                const isConflict = rule==='rows'?st.rowStates.includes('conflict'):rule==='cols'?st.colStates.includes('conflict'):st.pairsHasConflict;
+                const isDone = rule==='rows'?st.validRowsCount===N:rule==='cols'?st.validColsCount===N:(st.allFilled && !isConflict);
+                
+                pill.className = `rounded-xl py-1.5 px-2 flex items-center justify-center gap-1.5 text-xs transition border ${isConflict?'bg-rose-500/10 border-rose-500/50 text-rose-500 font-bold':isDone?'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 font-bold':'bg-sys-highlight border-sys-border text-sys-muted'}`;
+                dot.className = `w-2 h-2 rounded-full ${isConflict?'bg-rose-500 shadow-[0_0_8px_#f43f5e]':isDone?'bg-emerald-500 shadow-[0_0_8px_#10b981]':''}`;
+                if (!isConflict && !isDone) dot.style.background = 'var(--dot-bg)';
+            });
+
+            const boardEl = document.getElementById('board-grid');
+            boardEl.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+            boardEl.style.gridTemplateRows = `repeat(${N}, 1fr)`;
+            boardEl.innerHTML = '';
+            
+            for (let r=0; r<N; r++) for (let c=0; c<N; c++) {
+                const cell = boardGrid[r][c], div = document.createElement('div');
+                div.dataset.r = r; div.dataset.c = c;
+                const isSel = selectedSource?.type === 'grid' && selectedSource.r === r && selectedSource.c === c;
+                let classes = 'grid-cell rounded-xl flex items-center justify-center select-none ';
+
+                if (cell.tile) {
+                    const col = COLORS[cell.tile.color];
+                    div.style.backgroundColor = col.bg; div.style.borderColor = col.border; div.style.borderWidth = cell.locked?'2px':'1.5px';
+                    classes += `${!cell.locked?'tile-item':''} ${isSel?'tile-selected':''} ${st.conflictCells.has(`${r},${c}`)?'tile-conflict':''}`;
+                    div.innerHTML = getShapeSVG(cell.tile.shape, col.hex, N<=3?'w-11 h-11':N===4?'w-9 h-9':'w-6 h-6') + (cell.locked?`<span class="absolute top-1 left-1 w-3.5 h-3.5 rounded-full bg-black/60 text-white flex items-center justify-center"><svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></span>`:'');
+                } else {
+                    classes += `bg-sys-highlight border border-sys-border/70 hover:border-sys-muted cursor-pointer ${selectedSource?'cell-highlight-target':''}`;
+                    if (cell.hintColor!==null) div.innerHTML = `<div class="flex flex-col items-center justify-center opacity-60"><span class="w-4 h-4 rounded-full" style="background:${COLORS[cell.hintColor].hex}"></span><span class="text-[9px] text-sys-muted mt-0.5 font-bold">צבע חובה</span></div>`;
+                    else if (cell.hintShape!==null) div.innerHTML = `<div class="flex flex-col items-center justify-center opacity-45">${getShapeSVG(cell.hintShape, '#94a3b8', 'w-5 h-5')}<span class="text-[9px] text-sys-muted mt-0.5 font-bold">צורה חובה</span></div>`;
+                }
+                div.className = classes;
+                div.onclick = (e) => { e.stopPropagation(); handleGridTap(r, c); };
+                if (cell.tile && !cell.locked) bindDrag(div, {type:'grid', r, c, tile:cell.tile});
+                boardEl.appendChild(div);
+            }
+
+            const bankEl = document.getElementById('tile-bank');
+            bankEl.innerHTML = ''; document.getElementById('bank-count-badge').textContent = `${bankTiles.length} נותרו`;
+            bankTiles.forEach((tile, idx) => {
+                const col = COLORS[tile.color], btn = document.createElement('div');
+                btn.className = `tile-item ${N<=4?'w-14 h-14':'w-12 h-12'} rounded-xl flex items-center justify-center relative ${selectedSource?.type==='bank'&&selectedSource.index===idx?'tile-selected':''}`;
+                btn.style.backgroundColor = col.bg; btn.style.border = `2px solid ${col.border}`;
+                btn.innerHTML = getShapeSVG(tile.shape, col.hex, N<=4?'w-8 h-8':'w-7 h-7');
+                btn.onclick = (e) => { e.stopPropagation(); handleBankTap(idx); };
+                bindDrag(btn, {type:'bank', index:idx, tile});
+                bankEl.appendChild(btn);
+            });
+            bankEl.onclick = () => { if(selectedSource?.type==='grid') moveGridToBank(selectedSource.r, selectedSource.c); };
+
+            document.getElementById('btn-undo').disabled = currentGame.undoStack.length === 0;
+            document.getElementById('moves-counter').textContent = currentGame.movesCount;
+
+            const banner = document.getElementById('feedback-banner');
+            if (st.conflictCells.size > 0) banner.innerHTML = `<span class="text-rose-500 font-bold">⚠️ שים לב להתנגשויות מסומנות</span>`;
+            else if (selectedSource) banner.innerHTML = `<span class="text-cyan-500 font-semibold">בחר משבצת בלוח כדי להניח</span>`;
+            else banner.innerHTML = `<span>גרור אריח או הקש לבחירה</span>`;
+
+            if (st.isSolved) setTimeout(handleVictory, 200);
+        }
+
+        function saveUndo() {
+            currentGame.undoStack.push({ boardGrid: JSON.parse(JSON.stringify(currentGame.boardGrid)), bankTiles: JSON.parse(JSON.stringify(currentGame.bankTiles)) });
+        }
+
+        function handleBankTap(idx) {
+            const sel = currentGame.selectedSource;
+            if (sel?.type === 'bank' && sel.index === idx) { currentGame.selectedSource = null; }
+            else if (sel?.type === 'grid') { saveUndo(); sfx.drop(); const tmp=currentGame.boardGrid[sel.r][sel.c].tile; currentGame.boardGrid[sel.r][sel.c].tile=currentGame.bankTiles[idx]; currentGame.bankTiles[idx]=tmp; currentGame.movesCount++; currentGame.selectedSource=null; }
+            else { sfx.pickup(); currentGame.selectedSource = {type:'bank', index:idx}; }
+            renderAll();
+        }
+
+        function handleGridTap(r, c) {
+            const cell = currentGame.boardGrid[r][c], sel = currentGame.selectedSource;
+            if (cell.locked) { currentGame.selectedSource=null; renderAll(); return; }
+            if (!sel) { if(cell.tile){ sfx.pickup(); currentGame.selectedSource={type:'grid', r, c}; renderAll(); } return; }
+            if (sel.type==='grid' && sel.r===r && sel.c===c) { currentGame.selectedSource=null; renderAll(); return; }
+
+            saveUndo(); sfx.drop();
+            if (sel.type==='bank') {
+                const t = currentGame.bankTiles.splice(sel.index, 1)[0];
+                if (cell.tile) currentGame.bankTiles.push(cell.tile);
+                cell.tile = t;
+            } else if (sel.type==='grid') {
+                const tmp = cell.tile; cell.tile = currentGame.boardGrid[sel.r][sel.c].tile; currentGame.boardGrid[sel.r][sel.c].tile = tmp;
+            }
+            currentGame.movesCount++; currentGame.selectedSource=null; renderAll();
+        }
+
+        function moveGridToBank(r, c) {
+            saveUndo(); sfx.drop();
+            currentGame.bankTiles.push(currentGame.boardGrid[r][c].tile);
+            currentGame.boardGrid[r][c].tile = null; currentGame.movesCount++; currentGame.selectedSource=null; renderAll();
+        }
+
+        function bindDrag(el, src) {
+            const ghost = document.getElementById('drag-ghost');
+            el.onpointerdown = (e) => {
+                if (e.button!==undefined && e.button!==0) return;
+                sfx.pickup();
+                let isDrag = false, startX = e.clientX, startY = e.clientY;
+                const onMove = (me) => {
+                    if (!isDrag && Math.hypot(me.clientX-startX, me.clientY-startY)>8) {
+                        isDrag = true; currentGame.selectedSource = src;
+                        const col = COLORS[src.tile.color];
+                        ghost.style.display='flex'; ghost.style.width='58px'; ghost.style.height='58px';
+                        ghost.style.alignItems='center'; ghost.style.justifyContent='center';
+                        ghost.style.backgroundColor=col.bg; ghost.style.border=`2px solid ${col.border}`;
+                        ghost.innerHTML = getShapeSVG(src.tile.shape, col.hex, 'w-9 h-9');
+                        el.style.opacity='0.35';
+                    }
+                    if (isDrag) { ghost.style.left=`${me.clientX}px`; ghost.style.top=`${me.clientY}px`; }
+                };
+                const onUp = (ue) => {
+                    window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp);
+                    if (isDrag) {
+                        ghost.style.display='none'; el.style.opacity='1';
+                        const dropTarget = document.elementFromPoint(ue.clientX, ue.clientY);
+                        const cellEl = dropTarget?.closest('[data-r]'), bankEl = dropTarget?.closest('#tile-bank');
+                        if (cellEl) {
+                            const tr=parseInt(cellEl.dataset.r), tc=parseInt(cellEl.dataset.c);
+                            if(!currentGame.boardGrid[tr][tc].locked){
+                                saveUndo(); sfx.drop();
+                                if(src.type==='bank'){ const t=currentGame.bankTiles.splice(src.index,1)[0]; if(currentGame.boardGrid[tr][tc].tile)currentGame.bankTiles.push(currentGame.boardGrid[tr][tc].tile); currentGame.boardGrid[tr][tc].tile=t; }
+                                else { const tmp=currentGame.boardGrid[tr][tc].tile; currentGame.boardGrid[tr][tc].tile=currentGame.boardGrid[src.r][src.c].tile; currentGame.boardGrid[src.r][src.c].tile=tmp; }
+                                currentGame.movesCount++; currentGame.selectedSource=null;
+                            } else sfx.error();
+                        } else if (bankEl && src.type==='grid') { moveGridToBank(src.r, src.c); }
+                        else { sfx.error(); }
+                        renderAll();
+                    }
+                };
+                window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp);
+            };
+        }
+
+        function undoMove() { if(currentGame.undoStack.length>0){ const p=currentGame.undoStack.pop(); currentGame.boardGrid=p.boardGrid; currentGame.bankTiles=p.bankTiles; currentGame.selectedSource=null; renderAll(); } }
+        function resetCurrentBoard() { saveUndo(); currentGame.boardGrid=JSON.parse(JSON.stringify(currentGame.initialBoardSnap)); currentGame.bankTiles=JSON.parse(JSON.stringify(currentGame.initialBankSnap)); currentGame.selectedSource=null; renderAll(); }
+        function useSmartHint() { /* Simple auto-place */ resetCurrentBoard(); /* Just visual placeholder for this implementation */ }
+        function handleTooHardSkip() {
+            if(!currentGame.isPractice){ playerState.rating=Math.max(1.0, playerState.rating-0.3); savePlayerState(); generatePuzzle(playerState.rating); }
+            else generatePuzzle(Math.max(1.0, currentGame.activeRating-0.5), true);
+        }
+
+        function handleVictory() {
+            clearInterval(currentGame.timerInterval);
+            sfx.win();
+            const ratio = currentGame.optimalMoves / Math.max(currentGame.optimalMoves, currentGame.movesCount);
+            const acc = Math.round(Math.min(100, ratio*100));
+            const isFast = currentGame.elapsedSeconds < (currentGame.N*15);
+            let diff = (ratio > 0.8 && isFast) ? 0.6 : (ratio > 0.5 ? 0.3 : 0.1);
+            
+            if (!currentGame.isPractice) {
+                playerState.rating = Math.min(10.0, playerState.rating + diff);
+                playerState.peakRating = Math.max(playerState.peakRating, playerState.rating);
+                playerState.gamesPlayed++;
+                playerState.history.push({ game: playerState.gamesPlayed, rating: playerState.rating, accuracy: acc });
+                savePlayerState();
+            }
+
+            document.getElementById('fast-track-badge').classList.toggle('hidden', diff < 0.6);
+            document.getElementById('vic-accuracy').textContent = acc + '%';
+            document.getElementById('vic-time').textContent = document.getElementById('timer-display').textContent;
+            document.getElementById('vic-new-rating').textContent = (currentGame.isPractice ? currentGame.activeRating : playerState.rating).toFixed(1);
+            document.getElementById('vic-rating-diff').textContent = `(+${diff.toFixed(1)})`;
+            document.getElementById('adaptive-explanation').textContent = diff>=0.6?'פתרון מבריק! הרמה הוקפצה משמעותית.':'פתרון יפה. הרמה הותאמה בהדרגה.';
+            document.getElementById('victory-modal').classList.remove('hidden');
+        }
+
+        function closeVictoryModal() { document.getElementById('victory-modal').classList.add('hidden'); }
+        function startNextLevel() { generatePuzzle(currentGame.isPractice?currentGame.activeRating:playerState.rating, currentGame.isPractice); }
+
+        function openStatsModal() {
+            document.getElementById('stat-curr-rating').textContent = playerState.rating.toFixed(1);
+            document.getElementById('stat-peak-rating').textContent = playerState.peakRating.toFixed(1);
+            document.getElementById('stat-total-solved').textContent = playerState.gamesPlayed;
+            document.getElementById('stats-modal').classList.remove('hidden'); renderRatingChart();
+        }
+        function closeStatsModal() { document.getElementById('stats-modal').classList.add('hidden'); }
+        function resetAllStats() { playerState={ rating:1.0, peakRating:1.0, gamesPlayed:0, streak:0, history:[{game:0,rating:1.0,accuracy:100}] }; savePlayerState(); closeStatsModal(); generatePuzzle(1.0); }
+
+        function renderRatingChart() {
+            const ctx = document.getElementById('ratingChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy();
+            const isDark = globalSettings.theme === 'dark';
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels: playerState.history.map((h,i)=>i===0?'התחלה':`#${i}`), datasets: [{ label: 'רמה', data: playerState.history.map(h=>h.rating), borderColor: '#38bdf8', borderWidth: 3, pointBackgroundColor: '#fff', fill: false, tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} }, scales: { y: { min:1, max:10, grid:{color:isDark?'#334155':'#cbd5e1'}, ticks:{color:isDark?'#94a3b8':'#475569'} }, x: { grid:{display:false}, ticks:{color:isDark?'#94a3b8':'#475569'} } } }
+            });
+        }
+
+        function openSettingsModal() { document.getElementById('sim-level-slider').value = currentGame.activeRating; document.getElementById('settings-modal').classList.remove('hidden'); }
+        function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
+        function launchSimulatedLevel() { closeSettingsModal(); generatePuzzle(parseFloat(document.getElementById('sim-level-slider').value), true); }
+        function returnToRealRating() { closeSettingsModal(); generatePuzzle(playerState.rating); }
+
+        document.addEventListener('click', (e) => { if(!e.target.closest('#board-grid') && !e.target.closest('#tile-bank') && currentGame.selectedSource) { currentGame.selectedSource=null; renderAll(); } });
+
+        window.onload = function() {
+            loadSettings();
+            loadPlayerState();
+            generatePuzzle(playerState.rating);
+        };
     </script>
 </body>
 </html>

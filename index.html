@@ -236,6 +236,7 @@
             font-size: 1.05rem;
         }
         .timer.danger { color: var(--danger); animation: pulse 1s infinite; }
+        .timer.extended::after { content: ' ⏳'; font-size: 0.8em; }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -716,6 +717,7 @@
         .level-change .tag.fast { color: var(--warning); }
         .level-change .tag.ceiling { color: var(--accent); }
         .level-change .tag.drop { color: var(--danger); }
+        .level-change .tag.extended { color: var(--warning); }
 
         .ach-list {
             display: grid;
@@ -798,6 +800,41 @@
             0% { opacity: 0; transform: translateY(-16px) scale(0.9); }
             10%, 85% { opacity: 1; transform: translateY(0) scale(1); }
             100% { opacity: 0; transform: translateY(-10px); }
+        }
+
+        .tile.burst { animation: tileBurst 0.42s cubic-bezier(.3,1.4,.6,1) forwards; }
+        @keyframes tileBurst {
+            0% { transform: scale(1); opacity: 1; }
+            35% { transform: scale(1.22); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        .burst-ring {
+            position: fixed;
+            border: 3px solid;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 150;
+            transform: translate(-50%, -50%) scale(0.3);
+            animation: ringOut 0.55s ease-out forwards;
+        }
+        @keyframes ringOut {
+            to { transform: translate(-50%, -50%) scale(1.5); opacity: 0; border-width: 1px; }
+        }
+        .spark {
+            position: fixed;
+            width: 5px;
+            height: 5px;
+            margin: -2.5px 0 0 -2.5px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 151;
+            box-shadow: 0 0 6px currentColor;
+            animation: sparkOut 0.7s cubic-bezier(.15,.7,.4,1) forwards;
+        }
+        @keyframes sparkOut {
+            0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
+            70% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 1; }
+            100% { transform: translate(var(--dx), calc(var(--dy) + 14px)) scale(0.3); opacity: 0; }
         }
 
         .confetti {
@@ -996,6 +1033,11 @@
         select(){ this.tone(1040, { dur: 0.05, vol: 0.08 }); },
         nope()  { this.tone(220, { type: 'square', dur: 0.09, vol: 0.05 }); this.tone(185, { type: 'square', dur: 0.12, vol: 0.05, delay: 0.09 }); },
         clash() { this.tone(330, { type: 'triangle', dur: 0.14, slideTo: 247, vol: 0.09 }); },
+        pop(k = 0, count = 9) {
+            const f = 440 * Math.pow(2, (k / Math.max(1, count - 1)) * 14 / 12) * (0.97 + Math.random() * 0.06);
+            this.tone(f, { dur: 0.07, slideTo: f * 1.6, vol: 0.07 });
+            this.tone(f * 3, { dur: 0.05, vol: 0.025, delay: 0.03 });
+        },
         click() { this.tone(2400, { type: 'triangle', dur: 0.025, vol: 0.035 }); },
         tick()  { this.tone(1500, { dur: 0.03, vol: 0.04 }); },
         // Each line completed in quick succession chimes a step higher
@@ -1192,13 +1234,19 @@
     }
 
     // Returns { before, after, delta, tag } and updates level/progress.
-    function applyResult(won, perf) {
+    function applyResult(won, perf, extendedSolve = false) {
         const before = level;
         const atCeiling = before >= progress.peak - 0.05;
         let delta;
         let tag;
 
-        if (won) {
+        if (won && extendedSolve) {
+            // solved on bought time: no penalty, no progress
+            progress.failStreak = 0;
+            progress.easyStreak = 0;
+            delta = 0;
+            tag = 'extended';
+        } else if (won) {
             progress.failStreak = 0;
             if (perf >= 0.72) {
                 progress.easyStreak++;
@@ -1327,8 +1375,9 @@
     let lastLineAt = 0;
     let autoTimer = null;
     let undoStack = [];        // snapshots before each move
-    let initialSnap = null;
-    let spentBeforeReset = 0;  // seconds used before the board was reset; still counts for stars    // the board as dealt, for "reset board"
+    let initialSnap = null;    // the board as dealt, for "reset board"
+    let spentBeforeReset = 0;  // seconds used before the board was reset; still counts for stars
+    let extended = false;      // the player bought extra time: solving still counts, but no level gain
 
     /* ============================
        Timer
@@ -1360,9 +1409,38 @@
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                endGame(false);
+                // extra time is offered once per board
+                if (extended) endGame(false); else offerExtraTime();
             }
         }, 1000);
+    }
+
+    const EXTRA_SECONDS = 30;
+
+    // Out of time: offer 30 more seconds, once per board. Solving after that still
+    // counts as a solve (stars, streaks, daily goal) but never raises the level.
+    function offerExtraTime() {
+        cancelDrag();
+        setPaused(true);
+        Sound.lose();
+        const left = trayState.length;
+        showDialog('הזמן נגמר! ⏰', `להוסיף עוד ${EXTRA_SECONDS} שניות? (פעם אחת בלוח)\nאם תפתור עכשיו — הלוח ייחשב, אבל הרמה לא תעלה.`
+            + (left ? `\nנשארו ${left} אריחים במגש.` : ''), [
+            { label: `⏳ עוד ${EXTRA_SECONDS} שניות`, cls: 'btn-primary', action: () => {
+                extended = true;
+                // the whole original clock is spent; keep "seconds used" honest across the extension
+                spentBeforeReset += EXTRA_SECONDS;
+                timeLeft = EXTRA_SECONDS;
+                updateTimerUI();
+                document.getElementById('timerDisplay').classList.add('extended');
+                setPaused(false);
+                Sound.coin();
+            } },
+            { label: 'לא, סיים את הלוח', cls: 'btn-secondary', action: () => {
+                endGame(false);   // sets gameOver first, so un-pausing below does not restart the clock
+                setPaused(false);
+            } },
+        ]);
     }
 
     function setPaused(p) {
@@ -1574,7 +1652,9 @@
         shapes = ALL_SHAPES.slice(0, N);
         totalTime = params.time;
         timeLeft = totalTime;
+        document.getElementById('timerDisplay').classList.remove('extended');
         spentBeforeReset = 0;
+        extended = false;
         updateTimerUI();
 
         // Variable reward: one board in eight is golden and pays double
@@ -2298,6 +2378,7 @@
             up: '↗ חוזר לשיא',
             ceiling: '⛰ על השיא — כל צעד קשה',
             drop: '↘ יורדים קצת',
+            extended: '⏳ עם זמן נוסף — הרמה נשארת',
         };
         const sign = res.delta >= 0 ? '+' : '−';
         return `<div class="level-change"><span class="nums">${res.before.toFixed(1)} ← ${res.after.toFixed(1)}</span>`
@@ -2327,9 +2408,9 @@
             efficiency: steps > 0 ? Math.min(1, minSteps / steps) : 1,
         };
         const perf = performance01(stats);
-        const stars = won ? starsFor(perf) : 0;
+        const stars = won ? (extended ? 1 : starsFor(perf)) : 0;
         const prevPeak = progress.peak;
-        const res = applyResult(won, perf);
+        const res = applyResult(won, perf, extended);
         const reward = won ? grantRewards(stars, stats) : null;
         if (!won) progress.winStreak = 0;
 
@@ -2347,6 +2428,7 @@
         const newRecord = won && res.after > prevPeak + 0.005;
         const usedSec = spentBeforeReset + totalTime - timeLeft;
         const placed = N * N - boardState.filter(Boolean).length;
+        const burstMs = won ? burstBoard() : 0;
 
         setTimeout(() => {
             if (won) {
@@ -2369,7 +2451,8 @@
             } else if (won) {
                 title = newRecord ? 'שיא חדש! 🏆' : (stars === 3 ? 'מושלם! 🧩' : 'פתרת! 🧩');
                 msg = `${steps} צעדים · ${usedSec} שניות`;
-                if (stars < 3) msg += `\nעוד קצת יותר מהר — ושלושה כוכבים שלך`;
+                if (extended) msg += `\nפתרת עם זמן נוסף — בפעם הבאה בלי, והרמה תעלה`;
+                else if (stars < 3) msg += `\nעוד קצת יותר מהר — ושלושה כוכבים שלך`;
             } else if (skipped) {
                 title = 'דילגת על הלוח';
                 msg = 'נוריד קצת את הרמה ונמשיך.';
@@ -2395,7 +2478,57 @@
                 reward.newAch.forEach((a, i) => setTimeout(() => { toast('🏅 ' + a.name, a.desc); Sound.coin(); }, 1300 + i * 700));
                 if (reward.dailyJustDone) setTimeout(() => toast('🎯 יעד יומי הושלם!', 'נתראה מחר — אל תשבור את הרצף 🔥'), 1000);
             }
-        }, won ? 300 : 0);
+        }, won ? burstMs + 150 : 0);
+    }
+
+    /* ============================
+       Win: the tiles pop one by one, in random order, each with a little firework
+       ============================ */
+    function burstBoard() {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return 300;
+        const tiles = shuffle([...document.querySelectorAll('#boardGrid .slot .tile')]);
+        // the whole show takes about 1.3s whatever the board size
+        const gap = Math.max(26, Math.min(110, 1300 / tiles.length));
+        tiles.forEach((tile, k) => setTimeout(() => burstTile(tile, k, tiles.length), 250 + k * gap));
+        return 250 + tiles.length * gap + 450;
+    }
+
+    function burstTile(tile, k, count) {
+        const r = tile.getBoundingClientRect();
+        const shape = tile.querySelector('.shape');
+        const color = shape ? shape.style.backgroundColor : 'var(--accent)';
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+
+        tile.classList.add('burst');
+
+        // a ring, then sparks flying out and falling a little
+        const ring = document.createElement('div');
+        ring.className = 'burst-ring';
+        ring.style.left = cx + 'px';
+        ring.style.top = cy + 'px';
+        ring.style.width = ring.style.height = r.width + 'px';
+        ring.style.borderColor = color;
+        document.body.appendChild(ring);
+        setTimeout(() => ring.remove(), 600);
+
+        const sparks = 9;
+        const reach = Math.max(26, r.width * 0.75);
+        for (let i = 0; i < sparks; i++) {
+            const a = (i / sparks) * Math.PI * 2 + Math.random() * 0.5;
+            const d = reach * (0.7 + Math.random() * 0.6);
+            const sp = document.createElement('div');
+            sp.className = 'spark';
+            sp.style.left = cx + 'px';
+            sp.style.top = cy + 'px';
+            sp.style.background = i % 3 === 0 ? 'var(--gold)' : color;
+            sp.style.setProperty('--dx', (Math.cos(a) * d).toFixed(1) + 'px');
+            sp.style.setProperty('--dy', (Math.sin(a) * d).toFixed(1) + 'px');
+            document.body.appendChild(sp);
+            setTimeout(() => sp.remove(), 750);
+        }
+
+        Sound.pop(k, count);
+        if (k % 4 === 0) buzz(4);
     }
 
     // Startup

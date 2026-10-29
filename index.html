@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ChromaGrid</title>
+    <style>
+        /* משתני עיצוב - מצב בהיר כברירת מחדל */
+        :root {
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --board-bg: #ffffff;
+            --tile-bg: #e2e8f0;
+            --primary: #3b82f6;
+            --danger: #ef4444;
+            --header-bg: #ffffff;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* מצב חושך */
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --board-bg: #1e293b;
+            --tile-bg: #334155;
+            --header-bg: #1e293b;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: system-ui, -apple-system, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        header {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--header-bg);
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .level-display {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .board {
+            display: grid;
+            gap: 10px;
+            background-color: var(--board-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .tile {
+            width: 60px;
+            height: 60px;
+            background-color: var(--tile-bg);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .tile:active {
+            transform: scale(0.95);
+        }
+
+        /* מודל הגדרות */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background-color: var(--header-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            width: 80%;
+            max-width: 320px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="level-display" id="levelDisplay">רמה: 1.0</div>
+        <div>
+            <button class="icon-btn" id="themeToggleBtn">☀️</button>
+            <button class="icon-btn" id="settingsBtn">⚙️</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="board" id="gameBoard" style="grid-template-columns: repeat(3, 1fr);">
+            <!-- אריחים יווצרו דרך JS -->
+        </div>
+    </main>
+
+    <!-- מודל הגדרות -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <h2 style="margin-top: 0;">הגדרות</h2>
+            
+            <div class="setting-row">
+                <span>צלילים</span>
+                <input type="checkbox" id="soundToggle" checked>
+            </div>
+            
+            <div class="setting-row">
+                <span>רטט (Haptic)</span>
+                <input type="checkbox" id="hapticToggle" checked>
+            </div>
+
+            <button class="btn-primary" id="closeSettingsBtn">סגור</button>
+            <button class="btn-danger" id="resetBtn">איפוס כל ההתקדמות</button>
+        </div>
+    </div>
+
+    <script>
+        // אתחול הגדרות - מצב בהיר כברירת מחדל אם אין בחירה קודמת
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+
+        let userLevel = parseFloat(localStorage.getItem('chromaLevel')) || 1.0;
+        let isSoundOn = localStorage.getItem('soundOn') !== 'false';
+        let isHapticOn = localStorage.getItem('hapticOn') !== 'false';
+
+        // עדכון תצוגה
+        document.getElementById('levelDisplay').innerText = `רמה: ${userLevel.toFixed(1)}`;
+        document.getElementById('soundToggle').checked = isSoundOn;
+        document.getElementById('hapticToggle').checked = isHapticOn;
+
+        // הפעלת רטט
+        function triggerHaptic() {
+            if (isHapticOn && navigator.vibrate) {
+                navigator.vibrate(15);
+            }
+        }
+
+        // החלפת מצב בהירות
+        document.getElementById('themeToggleBtn').addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            triggerHaptic();
+        });
+
+        function updateThemeIcon(theme) {
+            document.getElementById('themeToggleBtn').innerText = theme === 'dark' ? '🌙' : '☀️';
+        }
+
+        // פתיחת וסגירת הגדרות
+        const settingsModal = document.getElementById('settingsModal');
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            settingsModal.style.display = 'flex';
+            triggerHaptic();
+        });
+        document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+            settingsModal.style.display = 'none';
+            triggerHaptic();
+        });
+
+        // שמירת הגדרות שמע ורטט
+        document.getElementById('soundToggle').addEventListener('change', (e) => {
+            isSoundOn = e.target.checked;
+            localStorage.setItem('soundOn', isSoundOn);
+        });
+        document.getElementById('hapticToggle').addEventListener('change', (e) => {
+            isHapticOn = e.target.checked;
+            localStorage.setItem('hapticOn', isHapticOn);
+        });
+
+        // איפוס כל ההתקדמות
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            triggerHaptic();
+            if (confirm("האם אתה בטוח שברצונך למחוק את כל ההתקדמות? פעולה זו תחזיר אותך לרמה 1.0 ולא ניתן לבטל אותה.")) {
+                // מחיקת כל הנתונים השמורים
+                localStorage.clear();
+                
+                // הגדרת מחדש של משתני ברירת מחדל כדי למנוע שגיאות אם הדף לא יתרענן
+                localStorage.setItem('theme', 'light');
+                
+                alert("ההתקדמות אופסה בהצלחה.");
+                location.reload(); // רענון הדף לאיפוס מלא של לוח המשחק
+            }
+        });
+
+        // בניית לוח דמה להמחשה (כאן יושבת הלוגיקה של המשחק)
+        const board = document.getElementById('gameBoard');
+        const colors = ['#ef4444', '#3b82f6', '#10b981'];
+        const shapes = ['■', '▲', '●'];
+
+        for (let i = 0; i < 9; i++) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.style.color = colors[i % 3];
+            tile.innerText = shapes[Math.floor(i / 3)];
+            
+            tile.addEventListener('click', () => {
+                triggerHaptic();
+                if (isSoundOn) playClickSound();
+                // לוגיקת החלפה וגרירה תיכנס כאן
+            });
+            board.appendChild(tile);
+        }
+
+        // מערכת שמע בסיסית מובנית
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playClickSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.05);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+    </script>
+</body>
+</html>

@@ -12,7 +12,7 @@
             let t = null, st = null;
             try { t = localStorage.getItem('klox_theme'); st = localStorage.getItem('klox_style'); } catch (e) {}
             if (!t) t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-            if (st === 'animals') t = 'light';
+            if (st !== 'shapes') t = 'light'; // pictures, the default, are light-only
             document.documentElement.dataset.theme = t;
         })();
     </script>
@@ -651,6 +651,11 @@
         }
 
         .tray-slot .tile { --radius: 14px; --s: 50%; }
+        .tray-slot.center {
+            border: 2px solid var(--accent);
+            box-shadow: 0 6px 16px var(--shadow);
+            background: var(--bg-surface);
+        }
 
         /* Short screens: every pixel goes to the board */
         @media (max-height: 760px) {
@@ -1425,7 +1430,8 @@
     const ANIMAL_FOR = { square: 'house', circle: 'cat', triangle: 'fish', diamond: 'tree', hexagon: 'umbrella', star: 'kid', cross: 'car' };
     const ANIMAL_NAME = { house: 'בית', cat: 'חתול', fish: 'דג', tree: 'עץ', umbrella: 'מטרייה', kid: 'ילד', car: 'מכונית' };
     const SHAPE_NAME = { square: 'ריבוע', circle: 'עיגול', triangle: 'משולש', diamond: 'מעוין', hexagon: 'משושה', star: 'כוכב', cross: 'פלוס' };
-    let style = store.get('klox_style') === 'animals' ? 'animals' : 'shapes';
+    // Pictures are the default; only a player who chose shapes gets shapes.
+    let style = store.get('klox_style') === 'shapes' ? 'shapes' : 'animals';
 
     function applyStyleUI() {
         document.documentElement.dataset.style = style;
@@ -2308,9 +2314,12 @@
             slot.style.visibility = '';
             const x = wheel.cx - wheel.R * Math.sin(th);
             const y = wheel.cy - wheel.R * Math.cos(th);
-            // tiles near the top are a touch bigger, so the "current" one stands out
-            const sc = 1.08 - 0.22 * Math.min(1, Math.abs(th) / (wheel.step * 3));
+            // the tile on top is clearly bigger and framed; its neighbours shrink away
+            const near = Math.max(0, 1 - Math.abs(th) / wheel.step); // 1 on top, 0 one tile away
+            const sc = 0.84 + 0.46 * near;
             slot.style.transform = `translate(${x}px, ${y}px) scale(${sc.toFixed(3)})`;
+            slot.style.zIndex = String(Math.round(near * 10));
+            slot.classList.toggle('center', near > 0.5);
         });
         document.getElementById('wheelDisc').style.setProperty('--spin', (-wheelAngle) + 'rad');
     }
@@ -2320,24 +2329,22 @@
         wheelAnim = null;
     }
 
-    // Coast with the release velocity (rad/ms), then settle with a tile on top.
+    // Release: pick the tile the fling is heading for - at most three tiles
+    // away - and glide straight into it, so the wheel always locks on a tile
+    // instead of coasting and then hunting for one.
     function spinWheel(v) {
         stopWheelMotion();
+        const coast = Math.max(-3 * wheel.step, Math.min(3 * wheel.step, v * 100));
+        const target = Math.max(wheelMinAngle(), Math.min(0,
+            Math.round((wheelAngle + coast) / wheel.step) * wheel.step));
         let last = performance.now();
         const frame = (now) => {
             const dt = Math.min(32, now - last);
             last = now;
-            if (Math.abs(v) > 0.00004) {
-                const before = wheelAngle;
-                setWheelAngle(wheelAngle + v * dt);
-                if (wheelAngle === before) v = 0; // hit an end
-                v *= Math.pow(0.93, dt / 16);
-            } else {
-                const target = Math.round(wheelAngle / wheel.step) * wheel.step;
-                const d = target - wheelAngle;
-                if (Math.abs(d) < 0.0006) { setWheelAngle(target); wheelAnim = null; return; }
-                setWheelAngle(wheelAngle + d * 0.25);
-            }
+            const d = target - wheelAngle;
+            if (Math.abs(d) < 0.0008) { setWheelAngle(target); wheelAnim = null; return; }
+            // ease out: covers ~22% of what is left every 16ms
+            setWheelAngle(wheelAngle + d * (1 - Math.pow(0.78, dt / 16)));
             wheelAnim = requestAnimationFrame(frame);
         };
         wheelAnim = requestAnimationFrame(frame);

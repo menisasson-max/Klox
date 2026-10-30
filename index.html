@@ -523,6 +523,26 @@
             75% { transform: translateX(-3px); }
         }
 
+        /* The board turn: a rumble first, then the grid turns a quarter left while
+           every tile turns back the other way, so the pictures stay upright */
+        .board-container.rumble { animation: rumble 1.3s linear; }
+        @keyframes rumble {
+            0%, 100% { transform: translate(0, 0) rotate(0); }
+            10% { transform: translate(-1px, 1px) rotate(-0.3deg); }
+            20% { transform: translate(1px, -1px) rotate(0.3deg); }
+            30% { transform: translate(-2px, 0) rotate(-0.5deg); }
+            40% { transform: translate(2px, 1px) rotate(0.5deg); }
+            50% { transform: translate(-2px, -1px) rotate(-0.7deg); }
+            60% { transform: translate(2px, 0) rotate(0.7deg); }
+            70% { transform: translate(-3px, 1px) rotate(-0.9deg); }
+            80% { transform: translate(3px, -1px) rotate(0.9deg); }
+            90% { transform: translate(-1px, 0) rotate(-0.4deg); }
+        }
+        .board-grid.turning { transition: transform 0.7s cubic-bezier(0.5, 0, 0.25, 1); }
+        .board-grid.turning .tile { transition: transform 0.7s cubic-bezier(0.5, 0, 0.25, 1); }
+        .board-grid.turned { transform: rotate(-90deg); }
+        .board-grid.turned .tile { transform: rotate(90deg); }
+
         .drag-ghost {
             --s: 50%;
             position: fixed;
@@ -1486,6 +1506,30 @@
         lose()  { [523, 440, 349].forEach((f, i) => this.tone(f, { type: 'triangle', dur: 0.25, vol: 0.12, delay: i * 0.14 })); },
         levelUp()   { this.tone(440, { dur: 0.35, slideTo: 1320, vol: 0.1 }); this.tone(1760, { dur: 0.15, vol: 0.05, delay: 0.3 }); },
         levelDown() { this.tone(520, { type: 'triangle', dur: 0.4, slideTo: 260, vol: 0.1 }); },
+        // A low, soft rumble that swells and fades: something is about to move
+        rumble(dur = 1.3) {
+            const ctx = this.ensure();
+            if (!ctx) return;
+            const t0 = ctx.currentTime;
+            const lp = ctx.createBiquadFilter();
+            lp.type = 'lowpass';
+            lp.frequency.value = 160;
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0.0001, t0);
+            gain.gain.exponentialRampToValueAtTime(0.16, t0 + dur * 0.55);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+            lp.connect(gain).connect(ctx.destination);
+            [46, 49.5, 61].forEach(f => {
+                const osc = ctx.createOscillator();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(f, t0);
+                osc.frequency.linearRampToValueAtTime(f * 0.9, t0 + dur);
+                osc.connect(lp);
+                osc.start(t0);
+                osc.stop(t0 + dur + 0.05);
+            });
+        },
+        turn() { this.tone(330, { type: 'triangle', dur: 0.6, slideTo: 165, vol: 0.08 }); this.tone(660, { dur: 0.4, slideTo: 440, vol: 0.03, delay: 0.1 }); },
     };
 
     const Vibe = { enabled: store.get('klox_vibrate') !== 'off' };
@@ -1526,6 +1570,7 @@
             wizFoundT: '🧙 מצאת גמדון!', wizFoundS: 'הוא מחכה לך למעלה. כשהזמן נגמר — גמדון נותן עוד דקה',
             wizStashT: '🧙 גמדונים: {n}', wizStashS: 'כשהזמן נגמר, כל גמדון נותן עוד דקה',
             goldenT: '✨ לוח זהב!', goldenS: 'הנקודות על הלוח הזה כפולות',
+            turnT: '🔄 הלוח הסתובב!', turnS: 'מרמה 10 הלוח יכול להסתובב באמצע. הצורות נשארות ישרות, אבל המקומות שלהן זזים',
             extendedNote: '⏳ נפתר עם זמן נוסף — 0 נקודות', tiles: '🧩 אריחים', timeLeft: '⏱ זמן שנותר',
             goldenX2: '✨ לוח זהב ×2', dailyRow: '🎯 יעד יומי', total: 'סה״כ', zeroPts: '0 נקודות',
             boardOpened: 'לוח {n}×{n} נפתח!', newLevel: 'רמה חדשה!',
@@ -1575,6 +1620,7 @@
             wizFoundT: '🧙 You found a wizard!', wizFoundS: 'He’s waiting up top. When time runs out, a wizard gives you another minute',
             wizStashT: '🧙 Wizards: {n}', wizStashS: 'When time runs out, each wizard gives another minute',
             goldenT: '✨ Golden board!', goldenS: 'Points on this board are doubled',
+            turnT: '🔄 The board turned!', turnS: 'From level 10 the board can turn mid-game. The pictures stay upright, but their places move',
             extendedNote: '⏳ Solved on extra time — 0 points', tiles: '🧩 Tiles', timeLeft: '⏱ Time left',
             goldenX2: '✨ Golden board ×2', dailyRow: '🎯 Daily goal', total: 'Total', zeroPts: '0 points',
             boardOpened: '{n}×{n} board unlocked!', newLevel: 'New level!',
@@ -1983,6 +2029,10 @@
     let wizardUsed = false;    // a wizard's minute was spent on this board: no time bonus
     let wiz = null;            // {pos, color, shape, found}: a wizard hiding under one empty slot's right tile
     let wizInFlight = 0;       // found wizards still flying to the stash
+    let turnAt = [];           // board seconds at which the board turns, soonest first
+    let boardSecs = 0;         // seconds ticked on this board, across resets and extra time
+    let turnStage = null;      // null | 'rumble' | 'turning'
+    let turnToken = 0;         // bumps on every new board, so a stale turn never lands
 
     /* ============================
        Timer
@@ -2009,8 +2059,10 @@
         timerInterval = setInterval(() => {
             if (isPaused || gameOver) return;
             timeLeft--;
+            boardSecs++;
             updateTimerUI();
             if (timeLeft > 0 && timeLeft <= 10) Sound.tick();
+            if (timeLeft > 0) maybeTurnBoard();
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
@@ -2324,6 +2376,7 @@
     }
 
     function initLevel() {
+        endTurn();
         clearSelection();
         steps = 0;
         gameOver = false;
@@ -2407,6 +2460,8 @@
             }
             saveProgress();
         }
+
+        planTurns();
 
         shuffle(trayState);
         initialSnap = snapshot();
@@ -2766,6 +2821,110 @@
     }, { passive: false });
 
     /* ============================
+       Board turn (level 10 and up)
+
+       On about two boards in five the whole board turns a quarter left once
+       or more mid-game: up to once a board on levels 10–19, twice on 20–29,
+       three times from 30. A rumble and a shake come first. Every tile turns
+       back as the board turns, so the pictures stay upright while their
+       places change. Rows become columns, so a right board stays right.
+       ============================ */
+    const TURN_FROM_LEVEL = 10;
+    const TURN_CHANCE = 0.4;    // one board in 2.5
+    const RUMBLE_MS = 1300;
+    const TURN_MS = 700;
+
+    function maxTurns(L) {
+        if (L < TURN_FROM_LEVEL) return 0;
+        return L < 20 ? 1 : L < 30 ? 2 : 3;
+    }
+
+    // The turns land somewhere in the middle of the clock, spread apart
+    function planTurns() {
+        turnAt = [];
+        boardSecs = 0;
+        const max = maxTurns(level);
+        if (!max || Math.random() >= TURN_CHANCE) return;
+        const count = 1 + Math.floor(Math.random() * max);
+        const from = Math.max(8, totalTime * 0.15), to = totalTime * 0.8;
+        const span = (to - from) / count;
+        for (let k = 0; k < count; k++) turnAt.push(Math.round(from + span * (k + 0.2 + Math.random() * 0.6)));
+    }
+
+    function maybeTurnBoard() {
+        if (turnStage || !turnAt.length || boardSecs < turnAt[0]) return;
+        if (isPaused || gameOver || (drag && drag.mode === 'tile')) return; // try again next second
+        turnAt.shift();
+        const token = turnToken;
+        turnStage = 'rumble';
+        const bc = document.getElementById('boardContainer');
+        bc.classList.remove('rumble');
+        void bc.offsetWidth;
+        bc.classList.add('rumble');
+        Sound.rumble(RUMBLE_MS / 1000);
+        buzz([30, 60, 30, 60, 40]);
+        setTimeout(() => {
+            if (token !== turnToken) return;
+            bc.classList.remove('rumble');
+            // Paused or finished during the rumble: the turn waits for the next tick
+            if (isPaused || gameOver) { turnStage = null; if (!gameOver) turnAt.unshift(boardSecs); return; }
+            startTurn(token);
+        }, RUMBLE_MS);
+    }
+
+    function startTurn(token) {
+        turnStage = 'turning';
+        cancelDrag();
+        clearSelection();
+        document.querySelectorAll('.tile.selected').forEach(t => t.classList.remove('selected'));
+        const grid = document.getElementById('boardGrid');
+        grid.classList.add('turning');
+        void grid.offsetWidth;
+        grid.classList.add('turned');
+        Sound.turn();
+        setTimeout(() => {
+            if (token !== turnToken) return;
+            rotateBoardLeft();
+            grid.classList.remove('turning', 'turned'); // no transition: the new layout looks the same
+            turnStage = null;
+            render(true);
+            if (!progress.turnSeen) {
+                progress.turnSeen = true;
+                saveProgress();
+                toast(t('turnT'), t('turnS'));
+            }
+        }, TURN_MS + 30);
+    }
+
+    // A quarter turn left on screen: the top-right corner becomes the top-left.
+    // In Hebrew the grid runs right to left, so in index terms that is a turn right.
+    function rotateBoardLeft() {
+        const rtl = getComputedStyle(document.getElementById('boardGrid')).direction === 'rtl';
+        const turnIdx = rtl
+            ? i => (i % N) * N + (N - 1 - Math.floor(i / N))
+            : i => (N - 1 - (i % N)) * N + Math.floor(i / N);
+        const turn = board => {
+            const out = Array(board.length).fill(null);
+            board.forEach((x, i) => { out[turnIdx(i)] = x; });
+            return out;
+        };
+        boardState = turn(boardState);
+        // Undo and reset go back to the same layout, turned
+        undoStack.forEach(s => { s.board = turn(s.board); });
+        if (initialSnap) initialSnap.board = turn(initialSnap.board);
+        if (wiz) wiz.pos = turnIdx(wiz.pos);
+        popIndex = null;
+    }
+
+    function endTurn() {
+        turnToken++;
+        turnStage = null;
+        turnAt = [];
+        document.getElementById('boardContainer').classList.remove('rumble');
+        document.getElementById('boardGrid').classList.remove('turning', 'turned');
+    }
+
+    /* ============================
        Undo & reset
        ============================ */
     function snapshot() {
@@ -2792,7 +2951,7 @@
     }
 
     document.getElementById('undoBtn').addEventListener('click', () => {
-        if (isPaused || gameOver || !undoStack.length) return;
+        if (isPaused || gameOver || !undoStack.length || turnStage === 'turning') return;
         cancelDrag();
         restore(undoStack.pop());
         steps++; // an undo is still a move, so it costs a little on stars
@@ -2801,7 +2960,7 @@
     });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
-        if (isPaused || gameOver || !undoStack.length) return;
+        if (isPaused || gameOver || !undoStack.length || turnStage === 'turning') return;
         cancelDrag();
         setPaused(true);
         showDialog(t('resetBoardQ'), t('resetBoardM'), [
@@ -2893,7 +3052,7 @@
     }
 
     function handleBoardClick(index, el) {
-        if (isPaused || gameOver) return;
+        if (isPaused || gameOver || turnStage === 'turning') return;
         const item = boardState[index];
 
         if (item?.locked) {
@@ -2942,7 +3101,7 @@
     let suppressClickUntil = 0;
 
     document.addEventListener('pointerdown', (e) => {
-        if (isPaused || gameOver || e.button > 0 || drag) return;
+        if (isPaused || gameOver || e.button > 0 || drag || turnStage === 'turning') return;
         let tile = e.target.closest('.tile[data-src]');
         const inWheel = !!e.target.closest('#trayContainer');
         // a wheel tile that is not on top cannot be picked up; touching it only turns the wheel

@@ -3047,10 +3047,14 @@
             $('scNums').innerText = `${fmtPts(li.into)} / ${fmtPts(li.need)}`;
             $('scTotal').innerText = '+' + fmtPts(total);
         };
+        // Each row's running total is kept here, never read back from the
+        // screen: parsing "106.5" as digits gave 1065, and the golden row grew
+        // tenfold a step into tens of billions.
+        const rowTotals = {};
         const add = async (rowId, n) => {
             pts += n; total += n;
-            const el = $(rowId + 'Pts');
-            el.innerText = fmtPts(+el.innerText.replace(/\D/g, '') + n);
+            rowTotals[rowId] = (rowTotals[rowId] || 0) + n;
+            $(rowId + 'Pts').innerText = fmtPts(rowTotals[rowId]);
             await bar();
         };
 
@@ -3087,7 +3091,8 @@
             await sleep(200);
             $(rowId).classList.add('on');
             for (let k = 0; k < 10; k++) {
-                await add(rowId, amount / 10);
+                // whole-number tenths that add up exactly to the amount
+                await add(rowId, Math.round(amount * (k + 1) / 10) - Math.round(amount * k / 10));
                 if (!alive()) return;
                 await sleep(40);
             }

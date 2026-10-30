@@ -389,6 +389,14 @@
             filter: drop-shadow(0 4px 6px var(--shadow));
         }
         .wiz-fly svg { display: block; width: 100%; height: 100%; }
+        .wiz-fly .tile { width: 100%; height: 100%; }
+        /* A wheel tile the wand has zapped, waiting to be thrown */
+        .tile.zapped { animation: zap 0.45s ease-in-out infinite; }
+        @keyframes zap {
+            0%, 100% { filter: brightness(1); box-shadow: 0 0 0 0 #fde047; }
+            50% { filter: brightness(1.5); box-shadow: 0 0 14px 4px #fde047; }
+        }
+        .tile.fx-gone { visibility: hidden; }
 
         .board-container {
             --gap: 10px; --pad: 16px; --radius: 14px; --s: 45%; --lock: 14px; --tile-border: 3px;
@@ -1242,6 +1250,30 @@
             <path d="M50 19 L52 24 L57 24 L53 27.5 L55 33 L50 30 L45 33 L47 27.5 L43 24 L48 24 Z" fill="#fde047"/>
             <path d="M84 8 L86 13 L91 15 L86 17 L84 22 L82 17 L77 15 L82 13 Z" fill="#fde047"/>
         </symbol>
+        <!-- the helper's magic wand: a dark stick with a gold star on the tip -->
+        <symbol id="p-wand" viewBox="0 0 100 100">
+            <path d="M22 88 L60 42" stroke="#3b2a5c" stroke-width="9" stroke-linecap="round"/>
+            <path d="M22 88 L30 78" stroke="#f8fafc" stroke-width="9" stroke-linecap="round"/>
+            <path d="M68 6 L74 24 L93 25 L78 36 L84 54 L68 43 L52 54 L58 36 L43 25 L62 24 Z" fill="#fde047" stroke="#f59e0b" stroke-width="3" stroke-linejoin="round"/>
+            <circle cx="90" cy="60" r="3" fill="#fde047"/><circle cx="40" cy="12" r="2.5" fill="#fde047"/>
+        </symbol>
+        <!-- the wrecker goblin: big ears, a cheeky grin, a red cap and one kicking boot -->
+        <symbol id="p-goblin" viewBox="0 0 100 100">
+            <path d="M22 34 L2 22 L20 46 Z" fill="#65a30d"/><path d="M78 34 L98 22 L80 46 Z" fill="#65a30d"/>
+            <path d="M36 66 L32 92 L44 92 L46 70 Z" fill="#4d7c0f"/>
+            <path d="M58 68 L76 82 L82 76 L64 64 Z" fill="#4d7c0f"/>
+            <path d="M28 92 L48 92 L48 98 L24 98 Q22 94 28 92 Z" fill="#78350f"/>
+            <path d="M76 74 L90 66 L94 72 L82 84 Z" fill="#78350f"/>
+            <path d="M30 52 Q50 46 70 52 L68 76 Q50 82 32 76 Z" fill="#7c2d12"/>
+            <ellipse cx="50" cy="38" rx="27" ry="22" fill="#84cc16"/>
+            <path d="M24 26 Q50 -4 76 26 Q50 18 24 26 Z" fill="#dc2626"/>
+            <circle cx="50" cy="4" r="5" fill="#f8fafc"/>
+            <ellipse cx="40" cy="34" rx="6" ry="7" fill="#fff"/><ellipse cx="60" cy="34" rx="6" ry="7" fill="#fff"/>
+            <circle cx="42" cy="35" r="3.2" fill="#1e293b"/><circle cx="62" cy="35" r="3.2" fill="#1e293b"/>
+            <path d="M33 26 L46 30" stroke="#365314" stroke-width="3" stroke-linecap="round"/><path d="M67 26 L54 30" stroke="#365314" stroke-width="3" stroke-linecap="round"/>
+            <path d="M36 46 Q50 58 64 46 Q50 51 36 46 Z" fill="#1e293b"/>
+            <path d="M42 48 L44 52 L46 49 Z M54 49 L56 52 L58 48 Z" fill="#fff"/>
+        </symbol>
     </defs>
 </svg>
 
@@ -1413,6 +1445,16 @@
 
         <div class="set-section" data-i18n="game">משחק</div>
         <div class="set-group">
+            <div class="set-row">
+                <span><span data-i18n="difficulty">רמת קושי</span><small data-i18n="difficultyNote">כמה הורסים מגיעים, מרמה 10</small></span>
+                <div class="seg" id="segDiff">
+                    <button data-v="easy" data-i18n="easy">קל</button>
+                    <button data-v="medium" data-i18n="medium">בינוני</button>
+                    <button data-v="hard" data-i18n="hard">קשה</button>
+                </div>
+            </div>
+        </div>
+        <div class="set-group" style="margin-top: 8px;">
             <button class="set-action" id="setSkip"><span data-i18n="skipBoard">⏭ דלג על הלוח הזה</span><small data-i18n="countsAsLoss">נחשב הפסד</small></button>
             <button class="set-action danger" id="setReset"><span data-i18n="resetAll">🗑 איפוס כל ההתקדמות</span></button>
         </div>
@@ -1529,6 +1571,11 @@
                 osc.stop(t0 + dur + 0.05);
             });
         },
+        // the goblin: a cheeky up-and-down cackle
+        goblin() { [392, 330, 440, 330, 494].forEach((f, i) => this.tone(f, { type: 'square', dur: 0.08, vol: 0.035, delay: i * 0.09 })); },
+        kick() { this.tone(140, { type: 'triangle', dur: 0.18, slideTo: 60, vol: 0.16 }); this.tone(900, { dur: 0.25, slideTo: 300, vol: 0.04, delay: 0.05 }); },
+        wand() { [1319, 1568, 1976].forEach((f, i) => this.tone(f, { dur: 0.14, vol: 0.05, delay: i * 0.07 })); },
+        zap() { this.tone(1800, { type: 'sawtooth', dur: 0.2, slideTo: 600, vol: 0.04 }); this.tone(2400, { dur: 0.3, vol: 0.03, delay: 0.08 }); },
         turn() { this.tone(330, { type: 'triangle', dur: 0.6, slideTo: 165, vol: 0.08 }); this.tone(660, { dur: 0.4, slideTo: 440, vol: 0.03, delay: 0.1 }); },
     };
 
@@ -1571,6 +1618,9 @@
             wizStashT: '🧙 גמדונים: {n}', wizStashS: 'כשהזמן נגמר, כל גמדון נותן עוד דקה',
             goldenT: '✨ לוח זהב!', goldenS: 'הנקודות על הלוח הזה כפולות',
             turnT: '🔄 הלוח הסתובב!', turnS: 'מרמה 10 הלוח יכול להסתובב באמצע. הצורות נשארות ישרות, אבל המקומות שלהן זזים',
+            wandT: '🪄 מטה קסם!', wandS: 'סיימת שורה ועמודה נכונות במהלך אחד, אז אריח מהגלגל עף למקום הנכון שלו',
+            goblinT: '👺 שדון!', goblinS: 'מרמה 10 שדונים יכולים לבעוט אריח שהנחת בחזרה לגלגל. ברמת קושי גבוהה הם באים יותר',
+            difficulty: 'רמת קושי', difficultyNote: 'כמה הורסים מגיעים, מרמה 10', easy: 'קל', medium: 'בינוני', hard: 'קשה',
             extendedNote: '⏳ נפתר עם זמן נוסף — 0 נקודות', tiles: '🧩 אריחים', timeLeft: '⏱ זמן שנותר',
             goldenX2: '✨ לוח זהב ×2', dailyRow: '🎯 יעד יומי', total: 'סה״כ', zeroPts: '0 נקודות',
             boardOpened: 'לוח {n}×{n} נפתח!', newLevel: 'רמה חדשה!',
@@ -1621,6 +1671,9 @@
             wizStashT: '🧙 Wizards: {n}', wizStashS: 'When time runs out, each wizard gives another minute',
             goldenT: '✨ Golden board!', goldenS: 'Points on this board are doubled',
             turnT: '🔄 The board turned!', turnS: 'From level 10 the board can turn mid-game. The pictures stay upright, but their places move',
+            wandT: '🪄 Magic wand!', wandS: 'You finished a right row and column in one move, so a wheel tile flew to its right place',
+            goblinT: '👺 A goblin!', goblinS: 'From level 10 goblins can kick a tile you placed back to the wheel. Harder settings bring more of them',
+            difficulty: 'Difficulty', difficultyNote: 'How often wreckers come, from level 10', easy: 'Easy', medium: 'Medium', hard: 'Hard',
             extendedNote: '⏳ Solved on extra time — 0 points', tiles: '🧩 Tiles', timeLeft: '⏱ Time left',
             goldenX2: '✨ Golden board ×2', dailyRow: '🎯 Daily goal', total: 'Total', zeroPts: '0 points',
             boardOpened: '{n}×{n} board unlocked!', newLevel: 'New level!',
@@ -1710,6 +1763,8 @@
     const ANIMAL_FOR = { square: 'house', circle: 'cat', triangle: 'fish', diamond: 'tree', hexagon: 'umbrella', star: 'kid', cross: 'car' };
     // Pictures are the default; only a player who chose shapes gets shapes.
     let style = store.get('klox_style') === 'shapes' ? 'shapes' : 'animals';
+    // How often wreckers come from level 10 (Settings → Difficulty)
+    let difficulty = ['easy', 'hard'].includes(store.get('klox_difficulty')) ? store.get('klox_difficulty') : 'medium';
 
     function applyStyleUI() {
         document.documentElement.dataset.style = style;
@@ -2029,10 +2084,14 @@
     let wizardUsed = false;    // a wizard's minute was spent on this board: no time bonus
     let wiz = null;            // {pos, color, shape, found}: a wizard hiding under one empty slot's right tile
     let wizInFlight = 0;       // found wizards still flying to the stash
-    let turnAt = [];           // board seconds at which the board turns, soonest first
+    let wrecks = [];           // [{at, kind}]: board seconds at which a wrecker comes, soonest first
     let boardSecs = 0;         // seconds ticked on this board, across resets and extra time
     let turnStage = null;      // null | 'rumble' | 'turning'
-    let turnToken = 0;         // bumps on every new board, so a stale turn never lands
+    let turnToken = 0;         // bumps on every new board, so a stale turn, goblin or wand never lands
+    let goblinBusy = false;    // a goblin is on screen
+    let wandBusy = false;      // a wand is throwing a tile
+    let wandLines = new Set(); // row+column crossings that already brought a wand on this board
+    let solution = [];         // the dealt board's answer, turned along with the board
 
     /* ============================
        Timer
@@ -2062,7 +2121,7 @@
             boardSecs++;
             updateTimerUI();
             if (timeLeft > 0 && timeLeft <= 10) Sound.tick();
-            if (timeLeft > 0) maybeTurnBoard();
+            if (timeLeft > 0) maybeWreck();
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
@@ -2212,6 +2271,7 @@
         const theme = document.documentElement.dataset.theme;
         $id('segTheme').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === theme));
         $id('segTheme').classList.toggle('disabled', style === 'animals');
+        $id('segDiff').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === difficulty));
         $id('themeNote').style.display = style === 'animals' ? '' : 'none';
 
         $id('swSound').setAttribute('aria-checked', String(Sound.enabled));
@@ -2258,6 +2318,14 @@
         const b = e.target.closest('button');
         if (!b || style === 'animals') return;
         setTheme(b.dataset.v);
+        Sound.select();
+        refreshSettings();
+    });
+    $id('segDiff').addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b || !WRECK_RATE[b.dataset.v]) return;
+        difficulty = b.dataset.v;
+        store.set('klox_difficulty', difficulty);
         Sound.select();
         refreshSettings();
     });
@@ -2411,7 +2479,8 @@
         updateHud();
 
         const cells = N * N;
-        const solution = generateValidBoard(N);
+        solution = generateValidBoard(N);
+        wandLines = new Set();
         const order = shuffle([...Array(cells).keys()]);
         const missingPos = order.slice(0, params.missing);
 
@@ -2461,7 +2530,7 @@
             saveProgress();
         }
 
-        planTurns();
+        planWrecks();
 
         shuffle(trayState);
         initialSnap = snapshot();
@@ -2821,40 +2890,58 @@
     }, { passive: false });
 
     /* ============================
-       Board turn (level 10 and up)
+       Wreckers (level 10 and up)
 
-       On about two boards in five the whole board turns a quarter left once
-       or more mid-game: up to once a board on levels 10–19, twice on 20–29,
-       three times from 30. A rumble and a shake come first. Every tile turns
-       back as the board turns, so the pictures stay upright while their
-       places change. Rows become columns, so a right board stays right.
+       Two kinds of trouble can come mid-game, somewhere in the middle of the
+       clock. Board turn: a rumble and a shake, then the whole board turns a
+       quarter left. Every tile turns back as the board turns, so the
+       pictures stay upright while their places change; rows become columns,
+       so a right board stays right. Goblin: a big goblin runs in, kicks one
+       tile the player placed back to the wheel, and runs off.
+
+       How many come per board grows with the level and with the Difficulty
+       setting: on medium about one board in two at level 10, one a board at
+       20, nearly two at 30. Easy brings well under half as many, hard almost
+       twice as many.
        ============================ */
-    const TURN_FROM_LEVEL = 10;
-    const TURN_CHANCE = 0.4;    // one board in 2.5
+    const WRECK_FROM_LEVEL = 10;
+    const WRECK_RATE = { easy: 0.4, medium: 1, hard: 1.8 };
+    const WRECK_MAX = 5;        // never more than this on one board
     const RUMBLE_MS = 1300;
     const TURN_MS = 700;
 
-    function maxTurns(L) {
-        if (L < TURN_FROM_LEVEL) return 0;
-        return L < 20 ? 1 : L < 30 ? 2 : 3;
+    // Expected wreckers on one board
+    function wreckersFor(L) {
+        if (L < WRECK_FROM_LEVEL) return 0;
+        return Math.min(WRECK_MAX, WRECK_RATE[difficulty] * (0.5 + 0.06 * (L - WRECK_FROM_LEVEL)));
     }
 
-    // The turns land somewhere in the middle of the clock, spread apart
-    function planTurns() {
-        turnAt = [];
+    // They land somewhere in the middle of the clock, spread apart; each is a turn or a goblin
+    function planWrecks() {
+        wrecks = [];
         boardSecs = 0;
-        const max = maxTurns(level);
-        if (!max || Math.random() >= TURN_CHANCE) return;
-        const count = 1 + Math.floor(Math.random() * max);
+        const mean = wreckersFor(level);
+        const count = Math.floor(mean) + (Math.random() < mean % 1 ? 1 : 0);
+        if (!count) return;
         const from = Math.max(8, totalTime * 0.15), to = totalTime * 0.8;
         const span = (to - from) / count;
-        for (let k = 0; k < count; k++) turnAt.push(Math.round(from + span * (k + 0.2 + Math.random() * 0.6)));
+        for (let k = 0; k < count; k++) {
+            wrecks.push({
+                at: Math.round(from + span * (k + 0.2 + Math.random() * 0.6)),
+                kind: Math.random() < 0.5 ? 'turn' : 'goblin',
+            });
+        }
     }
 
-    function maybeTurnBoard() {
-        if (turnStage || !turnAt.length || boardSecs < turnAt[0]) return;
+    function maybeWreck() {
+        if (turnStage || goblinBusy || !wrecks.length || boardSecs < wrecks[0].at) return;
         if (isPaused || gameOver || (drag && drag.mode === 'tile')) return; // try again next second
-        turnAt.shift();
+        const w = wrecks.shift();
+        if (w.kind === 'goblin') {
+            // Nothing placed to kick yet: he comes back a little later
+            if (!goblinKick()) wrecks.unshift({ at: boardSecs + 4, kind: 'goblin' });
+            return;
+        }
         const token = turnToken;
         turnStage = 'rumble';
         const bc = document.getElementById('boardContainer');
@@ -2867,7 +2954,7 @@
             if (token !== turnToken) return;
             bc.classList.remove('rumble');
             // Paused or finished during the rumble: the turn waits for the next tick
-            if (isPaused || gameOver) { turnStage = null; if (!gameOver) turnAt.unshift(boardSecs); return; }
+            if (isPaused || gameOver) { turnStage = null; if (!gameOver) wrecks.unshift({ at: boardSecs, kind: 'turn' }); return; }
             startTurn(token);
         }, RUMBLE_MS);
     }
@@ -2912,6 +2999,7 @@
         // Undo and reset go back to the same layout, turned
         undoStack.forEach(s => { s.board = turn(s.board); });
         if (initialSnap) initialSnap.board = turn(initialSnap.board);
+        solution = turn(solution);
         if (wiz) wiz.pos = turnIdx(wiz.pos);
         popIndex = null;
     }
@@ -2925,18 +3013,273 @@
         lockTaps = { index, count: same ? lockTaps.count + 1 : 1, at: now };
         if (lockTaps.count < 5 || turnStage) return false;
         lockTaps = { index: null, count: 0, at: 0 };
-        turnAt.unshift(boardSecs);
-        maybeTurnBoard();
+        wrecks.unshift({ at: boardSecs, kind: 'turn' });
+        maybeWreck();
         return true;
     }
+
+    // Hidden too: five quick taps on the clock send a goblin now, on any level
+    let clockTaps = { count: 0, at: 0 };
+    document.getElementById('timerDisplay').addEventListener('click', () => {
+        const now = performance.now();
+        clockTaps = { count: now - clockTaps.at < 800 ? clockTaps.count + 1 : 1, at: now };
+        if (clockTaps.count < 5) return;
+        clockTaps = { count: 0, at: 0 };
+        wrecks.unshift({ at: boardSecs, kind: 'goblin' });
+        maybeWreck();
+    });
 
     function endTurn() {
         turnToken++;
         turnStage = null;
-        turnAt = [];
+        goblinBusy = false;
+        wandBusy = false;
+        wrecks = [];
+        document.querySelectorAll('.wiz-fly.fx').forEach(el => el.remove());
         document.getElementById('boardContainer').classList.remove('rumble');
         document.getElementById('boardGrid').classList.remove('turning', 'turned');
     }
+
+    /* ============================
+       Goblin and wand: shared bits
+       ============================ */
+    // A fixed-position sprite above everything, for a goblin, a wand or a flying tile
+    function fxSprite(html, size, cx, cy) {
+        const el = document.createElement('div');
+        el.className = 'wiz-fly fx';
+        el.style.width = el.style.height = size + 'px';
+        el.style.left = (cx - size / 2) + 'px';
+        el.style.top = (cy - size / 2) + 'px';
+        if (typeof html === 'string') el.innerHTML = html; else el.appendChild(html);
+        document.body.appendChild(el);
+        return el;
+    }
+
+    // Runs frames on el and resolves when done (at once without animation support)
+    function fxAnimate(el, frames, dur) {
+        return new Promise(res => {
+            if (!el.animate) { res(); return; }
+            const a = el.animate(frames, { duration: dur, fill: 'forwards' });
+            let done = false;
+            const end = () => { if (!done) { done = true; res(); } };
+            a.onfinish = end;
+            setTimeout(end, dur + 300);
+        });
+    }
+
+    // Waits until the board can take a change: not paused, not mid-turn, no tile in hand
+    function whenFree(token) {
+        return new Promise(res => {
+            const check = () => {
+                if (token !== turnToken || gameOver) { res(false); return; }
+                if (isPaused || turnStage === 'turning' || (drag && drag.mode === 'tile')) { setTimeout(check, 250); return; }
+                res(true);
+            };
+            check();
+        });
+    }
+
+    function centreOf(el) {
+        const r = el.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width };
+    }
+
+    /* ============================
+       Goblin (a wrecker)
+
+       He runs in from the side, kicks one tile the player placed (never a
+       locked one) back to the wheel, and runs off laughing. The kick can't
+       be undone: it is taken out of every undo step too, like a board turn.
+       ============================ */
+    function goblinKick() {
+        const choices = boardState
+            .map((x, i) => (x && !x.locked && !(drag && drag.src === 'board' && drag.index === i)) ? i : -1)
+            .filter(i => i >= 0);
+        if (!choices.length) return false;
+        const index = choices[Math.floor(Math.random() * choices.length)];
+        const id = boardState[index].id;
+        const slot = document.querySelector(`.slot[data-index="${index}"]`);
+        if (!slot) return false;
+
+        goblinBusy = true;
+        const token = turnToken;
+        const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const c = centreOf(slot);
+        const size = Math.max(80, Math.min(130, c.w * 1.7));
+        // He comes from the nearer side and stands just beside the tile
+        const fromLeft = c.x < innerWidth / 2;
+        const side = fromLeft ? -1 : 1;
+        const standX = c.x + side * (c.w * 0.5 + size * 0.3);
+        const standY = c.y - size * 0.15;
+        const g = fxSprite('<svg viewBox="0 0 100 100"><use href="#p-goblin"/></svg>', size, standX, standY);
+        g.style.zIndex = 185;
+        // the kicking boot is drawn on his right: face the tile
+        const face = fromLeft ? 1 : -1;
+        const offX = (fromLeft ? -1 : 1) * (Math.abs(standX - (fromLeft ? -size : innerWidth + size)));
+
+        Sound.goblin();
+        const runIn = calm ? 250 : 700;
+        const steps = [];
+        for (let k = 0; k <= 6; k++) {
+            const f = k / 6;
+            steps.push({ transform: `translate(${(offX * (1 - f)).toFixed(1)}px, ${k % 2 ? -8 : 0}px) scaleX(${face})`, offset: f });
+        }
+        fxAnimate(g, steps, runIn).then(async () => {
+            const ok = await whenFree(token);
+            if (!ok) { g.remove(); return; }
+            // kick: lean back, swing
+            await fxAnimate(g, [
+                { transform: `translate(0, 0) scaleX(${face}) rotate(0deg)` },
+                { transform: `translate(${-side * 6}px, -4px) scaleX(${face}) rotate(${-face * 14}deg)`, offset: 0.5 },
+                { transform: `translate(${side * 4}px, 0) scaleX(${face}) rotate(${face * 10}deg)` },
+            ], calm ? 150 : 320);
+            if (token !== turnToken || gameOver) { g.remove(); return; }
+
+            const at = boardState.findIndex(x => x && x.id === id);
+            const kicked = at >= 0 && !boardState[at].locked;
+            if (kicked) {
+                const slotNow = document.querySelector(`.slot[data-index="${at}"]`);
+                const from = slotNow ? centreOf(slotNow) : c;
+                const item = boardState[at];
+                boardState[at] = null;
+                trayState.push(item);
+                // gone from every undo step as well, so undo can't put it back
+                undoStack.forEach(snap => {
+                    const j = snap.board.findIndex(x => x && x.id === id && !x.locked);
+                    if (j >= 0) {
+                        const it = snap.board[j];
+                        snap.board[j] = null;
+                        if (!snap.tray.some(x => x.id === id)) snap.tray.push(it);
+                    }
+                });
+                if (selectedSource === 'board' && selectedIndex === at) clearSelection();
+                Sound.kick();
+                buzz([40, 30, 20]);
+                // the tile flies off toward the wheel, spinning
+                const fly = fxSprite(createTileElement(item, false), from.w * 0.9, from.x, from.y);
+                const tr = centreOf(document.getElementById('trayContainer'));
+                render(true);
+                const dx = tr.x - from.x, dy = tr.y - from.y;
+                fxAnimate(fly, [
+                    { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
+                    { transform: `translate(${dx * 0.5 - side * 30}px, ${dy * 0.5 - 70}px) rotate(${face * 300}deg)`, opacity: 1, offset: 0.5 },
+                    { transform: `translate(${dx}px, ${dy}px) rotate(${face * 600}deg) scale(0.6)`, opacity: 0 },
+                ], calm ? 300 : 750).then(() => fly.remove());
+                if (!progress.goblinSeen) {
+                    progress.goblinSeen = true;
+                    saveProgress();
+                    toast(t('goblinT'), t('goblinS'));
+                }
+            }
+            // ...and off he runs, back the way he came
+            await fxAnimate(g, [
+                { transform: `translate(0, 0) scaleX(${-face})` },
+                { transform: `translate(${offX}px, -6px) scaleX(${-face})` },
+            ], calm ? 250 : 650);
+            g.remove();
+            if (token === turnToken) goblinBusy = false;
+        });
+        return true;
+    }
+
+    /* ============================
+       Magic wand (a helper)
+
+       One move that finishes a row and a column at once, both right, brings
+       a wand: it zaps the wheel's top tile and throws it to its right slot.
+       Each crossing brings it once per board, so undo and redo can't farm it.
+       ============================ */
+    // Where a tray tile belongs: a slot of the answer it fits that isn't already right
+    function wandTarget(item) {
+        const fits = [];
+        solution.forEach((want, i) => {
+            const b = boardState[i];
+            if (want.color === item.color && want.shape === item.shape && !b?.locked
+                && !(b && b.color === want.color && b.shape === want.shape)) fits.push(i);
+        });
+        // an empty slot first, so the wand doesn't push a tile out
+        return fits.find(i => !boardState[i]) ?? fits[0] ?? -1;
+    }
+
+    function castWand() {
+        if (wandBusy || !trayState.length) return;
+        // the wheel's top tile if it has somewhere to go, else any that does
+        const order = [centerTrayId(), ...trayState.map(x => x.id)];
+        const id = order.find(k => k && wandTarget(trayState.find(x => x.id === k)) >= 0);
+        if (!id) return;
+        const tileEl = document.querySelector(`#traySlots .tile[data-id="${id}"]`);
+        if (!tileEl) return;
+
+        wandBusy = true;
+        const token = turnToken;
+        const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const c = centreOf(tileEl);
+        const size = Math.max(48, Math.min(70, c.w * 1.1));
+        const w = fxSprite('<svg viewBox="0 0 100 100"><use href="#p-wand"/></svg>', size, c.x + size * 0.45, c.y - size * 0.75);
+        Sound.wand();
+        fxAnimate(w, [
+            { transform: 'scale(0.2) rotate(40deg)', opacity: 0 },
+            { transform: 'scale(1.1) rotate(-10deg)', opacity: 1, offset: 0.35 },
+            { transform: 'scale(1) rotate(25deg)', opacity: 1, offset: 0.7 },
+            { transform: 'scale(1) rotate(-30deg)', opacity: 1 },
+        ], calm ? 250 : 700).then(async () => {
+            // zap!
+            sparkle(c.x, c.y, 14, c.w * 0.9);
+            Sound.zap();
+            buzz([10, 20, 10]);
+            tileEl.classList.add('zapped');
+            fxAnimate(w, [{ opacity: 1 }, { opacity: 0, transform: 'scale(0.6) rotate(-30deg)' }], 400).then(() => w.remove());
+            await new Promise(r => setTimeout(r, calm ? 150 : 450));
+            const ok = await whenFree(token);
+            if (!ok) return;
+
+            const item = trayState.find(x => x.id === id);
+            const target = item ? wandTarget(item) : -1;
+            if (target < 0) { wandBusy = false; render(true); return; }
+            const slot = document.querySelector(`.slot[data-index="${target}"]`);
+            const live = document.querySelector(`#traySlots .tile[data-id="${id}"]`);
+            const from = live ? centreOf(live) : c;
+            const to = slot ? centreOf(slot) : from;
+            if (live) live.classList.add('fx-gone');
+            const fly = fxSprite(createTileElement(item, false), to.w * 0.9, from.x, from.y);
+            const dx = to.x - from.x, dy = to.y - from.y;
+            const trail = calm ? null : setInterval(() => {
+                const b = fly.getBoundingClientRect();
+                sparkle(b.left + b.width / 2, b.top + b.height / 2, 2, 12);
+            }, 70);
+            await fxAnimate(fly, [
+                { transform: 'translate(0, 0) scale(0.8)' },
+                { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 60}px) scale(1.15) rotate(180deg)`, offset: 0.55 },
+                { transform: `translate(${dx}px, ${dy}px) scale(1) rotate(360deg)` },
+            ], calm ? 300 : 800);
+            clearInterval(trail);
+            fly.remove();
+            wandBusy = false;
+            if (!(await whenFree(token))) return;
+
+            // Land it: the board may have turned meanwhile, so look the slot up again
+            const tIdx = trayState.findIndex(x => x.id === id);
+            const dest = tIdx >= 0 ? wandTarget(trayState[tIdx]) : -1;
+            if (dest < 0) { render(true); return; }
+            pushUndo();
+            const placed = trayState.splice(tIdx, 1)[0];
+            if (boardState[dest]) trayState.push(boardState[dest]);
+            boardState[dest] = placed;
+            popIndex = dest;
+            const at = slot ? centreOf(document.querySelector(`.slot[data-index="${dest}"]`) || slot) : to;
+            sparkle(at.x, at.y, 12, at.w * 0.8);
+            Sound.drop();
+            wandCasting = true; // what the throw itself completes brings no second wand
+            render();
+            wandCasting = false;
+            if (!progress.wandSeen) {
+                progress.wandSeen = true;
+                saveProgress();
+                toast(t('wandT'), t('wandS'));
+            }
+        });
+    }
+    let wandCasting = false;
 
     /* ============================
        Undo & reset
@@ -3351,6 +3694,16 @@
             lastLineAt = now;
             const combo = lineCombo;
             setTimeout(() => Sound.line(combo), 90);
+        }
+        // A row and a column finished by one move, both right: the wand comes
+        if (!silent && !won && !wandCasting) {
+            const newRows = [...nowValid].filter(k => k[0] === 'r' && !validLines.has(k));
+            const newCols = [...nowValid].filter(k => k[0] === 'c' && !validLines.has(k));
+            const key = newRows.length && newCols.length ? newRows[0] + newCols[0] : null;
+            if (key && !wandLines.has(key)) {
+                wandLines.add(key);
+                setTimeout(castWand, 250);
+            }
         }
         validLines = nowValid;
 

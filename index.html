@@ -354,19 +354,27 @@
             bottom: calc(var(--bw) + 4px);
             height: 30px;
             display: flex;
-            gap: 4px;
-            direction: ltr; /* fill from the left edge even in Hebrew */
+            gap: 5px;
+            align-items: center;
+            direction: ltr; /* icon first, then the number, even in Hebrew */
             pointer-events: none;
             cursor: pointer;
         }
         .wiz-stash.has { pointer-events: auto; }
+        .wiz-stash:not(.has) .wiz-ico { opacity: 0; } /* kept in place: it is where the first one flies to */
+        .wiz-count {
+            font-size: 1rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-main);
+        }
+        .wiz-stash:not(.has) .wiz-count { display: none; }
         .wiz-ico {
             width: 30px;
             height: 30px;
             flex: none;
             filter: drop-shadow(0 2px 2px var(--shadow));
             animation: wizBob 2.4s ease-in-out infinite;
-            animation-delay: calc(var(--i, 0) * -0.7s);
         }
         .wiz-ico.land { animation: wizLand 0.5s cubic-bezier(.3,1.6,.5,1), wizBob 2.4s 0.5s ease-in-out infinite; }
         @keyframes wizBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
@@ -2545,11 +2553,8 @@
     function renderStash(landed = false) {
         const box = document.getElementById('wizStash');
         const shown = Math.max(0, progress.wizards - wizInFlight);
-        let html = '';
-        for (let i = 0; i < shown; i++) {
-            html += `<svg class="wiz-ico${landed && i === shown - 1 ? ' land' : ''}" style="--i:${i}" viewBox="0 0 100 100"><use href="#p-wizard"/></svg>`;
-        }
-        box.innerHTML = html;
+        box.innerHTML = `<svg class="wiz-ico${landed ? ' land' : ''}" viewBox="0 0 100 100"><use href="#p-wizard"/></svg>`
+            + `<span class="wiz-count">×${shown}</span>`;
         box.classList.toggle('has', shown > 0);
     }
 
@@ -2563,11 +2568,10 @@
         if (!b || b.color !== wiz.color || b.shape !== wiz.shape) return;
         wiz.found = true;
         const slot = document.querySelector(`.slot[data-index="${wiz.pos}"]`);
-        const idx = progress.wizards;   // the stash place he will take
         progress.wizards++;
         wizInFlight++;
         saveProgress();
-        if (slot) flyWizard(slot, idx);
+        if (slot) flyWizard(slot);
         else { wizInFlight--; renderStash(true); }
         if (!progress.wizSeen) {
             progress.wizSeen = true;
@@ -2592,13 +2596,13 @@
         }
     }
 
-    // He pops out from under the tile, hangs there a moment, then flies to his place in the stash.
-    function flyWizard(slot, idx) {
+    // He pops out from under the tile, hangs there a moment, then flies to the icon in the stash.
+    function flyWizard(slot) {
         const r = slot.getBoundingClientRect();
         const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
         const size = Math.max(40, Math.min(64, r.width * 0.95));
         const sr = document.getElementById('wizStash').getBoundingClientRect();
-        const dx = sr.left + idx * 34 + 15 - cx, dy = sr.top + 15 - cy;
+        const dx = sr.left + 15 - cx, dy = sr.top + 15 - cy;
         const end = 30 / size;
         const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 

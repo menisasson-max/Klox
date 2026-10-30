@@ -391,7 +391,7 @@
         .wiz-fly svg { display: block; width: 100%; height: 100%; }
 
         .board-container {
-            --gap: 10px; --pad: 16px; --radius: 14px; --s: 45%; --dot-track: 22px; --lock: 14px; --tile-border: 3px;
+            --gap: 10px; --pad: 16px; --radius: 14px; --s: 45%; --lock: 14px; --tile-border: 3px;
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
             border-radius: 22px;
@@ -403,10 +403,10 @@
         }
 
         /* Bigger boards: tighter gaps, bigger shapes in smaller tiles */
-        .board-container.size-4 { --gap: 8px; --pad: 13px; --radius: 12px; --s: 50%; --dot-track: 18px; --lock: 12px; }
-        .board-container.size-5 { --gap: 6px; --pad: 11px; --radius: 10px; --s: 56%; --dot-track: 16px; --lock: 10px; --tile-border: 2px; }
-        .board-container.size-6 { --gap: 5px; --pad: 9px; --radius: 9px; --s: 60%; --dot-track: 14px; --lock: 9px; --tile-border: 2px; }
-        .board-container.size-7 { --gap: 4px; --pad: 8px; --radius: 8px; --s: 62%; --dot-track: 12px; --lock: 8px; --tile-border: 2px; }
+        .board-container.size-4 { --gap: 8px; --pad: 13px; --radius: 12px; --s: 50%; --lock: 12px; }
+        .board-container.size-5 { --gap: 6px; --pad: 11px; --radius: 10px; --s: 56%; --lock: 10px; --tile-border: 2px; }
+        .board-container.size-6 { --gap: 5px; --pad: 9px; --radius: 9px; --s: 60%; --lock: 9px; --tile-border: 2px; }
+        .board-container.size-7 { --gap: 4px; --pad: 8px; --radius: 8px; --s: 62%; --lock: 8px; --tile-border: 2px; }
 
         .board-container.golden {
             border: 2px solid var(--gold);
@@ -418,7 +418,7 @@
             pointer-events: none;
         }
 
-        /* N columns of slots plus a narrow track for the row dots (on the left in RTL) */
+        /* N×N slots, centred in the board's frame */
         .board-grid {
             display: grid;
             gap: var(--gap);
@@ -426,30 +426,29 @@
             height: 100%;
         }
 
-        .board-grid.no-guides .dot { visibility: hidden; }
+        .board-grid.no-guides .line { visibility: hidden; }
 
-        .dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: var(--border-color);
-            justify-self: center;
-            align-self: center;
-            transition: 0.3s ease;
+        /* A thin frame around each row and column: green when the line is
+           complete, red when it repeats a colour or a shape */
+        .line {
+            margin: calc(var(--gap) / -2);
+            border: 1.5px solid transparent;
+            border-radius: calc(var(--radius) + var(--gap) / 2);
+            pointer-events: none;
+            z-index: 1;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
-        .dot.clash {
-            background: var(--danger);
-            box-shadow: 0 0 10px var(--danger);
-            transform: scale(1.25);
+        .line.valid {
+            border-color: color-mix(in srgb, var(--success) 55%, transparent);
+            box-shadow: 0 0 8px color-mix(in srgb, var(--success) 22%, transparent);
+        }
+        .line.clash {
+            border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+            box-shadow: 0 0 8px color-mix(in srgb, var(--danger) 20%, transparent);
         }
         .slot.clash {
             border: 2px solid var(--danger);
             background: color-mix(in srgb, var(--danger) 10%, var(--bg-slot));
-        }
-        .dot.valid {
-            background: var(--success);
-            box-shadow: 0 0 10px var(--success);
-            transform: scale(1.25);
         }
 
         /* ============================
@@ -1768,7 +1767,7 @@
             scrambled: t >= 0.4 ? Math.min(missing - 1, Math.floor((t - 0.3) * N)) : 0,
             // Seconds per tile shrink as you climb within a size
             time: Math.round(25 + missing * (22 - 10 * t)),
-            // Late in each size (from 4×4 on) the per-line dots go away
+            // Late in each size (from 4×4 on) the row and column frames go away
             guides: N === 3 || t < 0.75,
             unique: N !== 6,
         };
@@ -1967,8 +1966,7 @@
     let minSteps = 0;
     let golden = false;
 
-    let selectedSource = null; // 'board' | 'tray' | null
-    let selectedId = null;     // tray tile id
+    let selectedSource = null; // 'board' | null — the wheel's top tile needs no selecting
     let selectedIndex = null;  // board index
     let steps = 0;
     let gameOver = false;
@@ -2353,8 +2351,8 @@
         const bc = document.getElementById('boardContainer');
         bc.className = 'board-container size-' + N + (golden ? ' golden' : '');
         const grid = document.getElementById('boardGrid');
-        grid.style.gridTemplateColumns = `repeat(${N}, minmax(0, 1fr)) var(--dot-track)`;
-        grid.style.gridTemplateRows = `var(--dot-track) repeat(${N}, minmax(0, 1fr))`;
+        grid.style.gridTemplateColumns = `repeat(${N}, minmax(0, 1fr))`;
+        grid.style.gridTemplateRows = `repeat(${N}, minmax(0, 1fr))`;
         grid.classList.toggle('no-guides', !params.guides);
         document.getElementById('chipUnique').style.display = params.unique ? '' : 'none';
         updateHud();
@@ -2460,14 +2458,15 @@
         trayState.forEach((item) => {
             const slot = document.createElement('div');
             slot.className = 'tray-slot';
-            const isSel = selectedSource === 'tray' && selectedId === item.id;
-            const tile = createTileElement(item, isSel);
+            const tile = createTileElement(item, false);
             tile.dataset.src = 'tray';
             tile.dataset.id = item.id;
+            // The tile on top is already the one a board tap places; a tap on
+            // another turns the wheel to it
             tile.addEventListener('click', (e) => {
+                if (slot.classList.contains('center')) return;
                 e.stopPropagation();
-                if (!slot.classList.contains('center')) { spinTo(trayState.findIndex(t => t.id === item.id)); return; }
-                handleTrayClick(item.id);
+                spinTo(trayState.findIndex(t => t.id === item.id));
             });
             slot.appendChild(tile);
             trayEl.appendChild(slot);
@@ -2486,31 +2485,13 @@
         const grid = document.getElementById('boardGrid');
         grid.innerHTML = '';
 
-        for (let c = 0; c < N; c++) {
-            const dot = document.createElement('div');
-            dot.className = 'dot';
-            dot.id = `dot-col-${c}`;
-            dot.style.gridRow = '1';
-            dot.style.gridColumn = `${c + 1}`;
-            grid.appendChild(dot);
-        }
-
         boardState.forEach((item, index) => {
             const r = Math.floor(index / N);
             const c = index % N;
 
-            if (c === 0) {
-                const dot = document.createElement('div');
-                dot.className = 'dot';
-                dot.id = `dot-row-${r}`;
-                dot.style.gridRow = `${r + 2}`;
-                dot.style.gridColumn = `${N + 1}`;
-                grid.appendChild(dot);
-            }
-
             const slot = document.createElement('div');
             slot.className = 'slot' + (item?.locked ? ' locked' : '');
-            slot.style.gridRow = `${r + 2}`;
+            slot.style.gridRow = `${r + 1}`;
             slot.style.gridColumn = `${c + 1}`;
             slot.dataset.drop = 'board';
             slot.dataset.index = index;
@@ -2530,6 +2511,20 @@
             }
             grid.appendChild(slot);
         });
+        // Row and column frames go on top of the slots, after them in the grid
+        for (let i = 0; i < N; i++) {
+            const row = document.createElement('div');
+            row.className = 'line';
+            row.id = `line-row-${i}`;
+            row.style.gridRow = `${i + 1}`;
+            row.style.gridColumn = '1 / -1';
+            const col = document.createElement('div');
+            col.className = 'line';
+            col.id = `line-col-${i}`;
+            col.style.gridRow = '1 / -1';
+            col.style.gridColumn = `${i + 1}`;
+            grid.append(row, col);
+        }
         popIndex = null;
 
         checkWizard(); // before validateState, so the winning move can reveal one too
@@ -2680,11 +2675,6 @@
         const nearest = Math.round(-wheelAngle / wheel.step);
         if (nearest !== wheelNearest) {
             if (wheelNearest !== -1 && (drag?.mode === 'spin' || wheelAnim)) { Sound.click(); buzz(2); }
-            // a picked tile that turns away from the top is no longer picked
-            if (wheelNearest !== -1 && selectedSource === 'tray') {
-                clearSelection();
-                document.querySelectorAll('.tray-slot .tile.selected').forEach(t => t.classList.remove('selected'));
-            }
             wheelNearest = nearest;
         }
     }
@@ -2885,7 +2875,6 @@
 
     function clearSelection() {
         selectedSource = null;
-        selectedId = null;
         selectedIndex = null;
     }
 
@@ -2896,17 +2885,11 @@
     /* ============================
        Tap interactions
        ============================ */
-    function handleTrayClick(id) {
-        if (isPaused || gameOver) return;
-        if (selectedSource === 'tray' && selectedId === id) {
-            clearSelection();
-        } else {
-            selectedSource = 'tray';
-            selectedId = id;
-            selectedIndex = null;
-            Sound.select();
-        }
-        render(true);
+    // The tray tile on top of the wheel, the one a tap on the board places
+    function centerTrayId() {
+        if (!trayState.length) return null;
+        const i = Math.max(0, Math.min(trayState.length - 1, Math.round(-wheelAngle / wheel.step)));
+        return trayState[i].id;
     }
 
     function handleBoardClick(index, el) {
@@ -2914,14 +2897,11 @@
         const item = boardState[index];
 
         if (item?.locked) {
-            if (selectedSource) rejectMove(el);
+            if (selectedSource || trayState.length) rejectMove(el);
             return;
         }
 
-        if (selectedSource === 'tray') {
-            placeFromTray(selectedId, index);
-            clearSelection();
-        } else if (selectedSource === 'board') {
+        if (selectedSource === 'board') {
             if (selectedIndex === index) {
                 // Second tap on the same tile sends it back to the tray
                 returnToTray(index);
@@ -2929,8 +2909,12 @@
                 moveOnBoard(selectedIndex, index);
             }
             clearSelection();
+        } else if (trayState.length) {
+            // The wheel's top tile goes here; a tile already here goes back to the wheel
+            stopWheelMotion();
+            placeFromTray(centerTrayId(), index);
         } else if (item) {
-            // Select a placed tile: next tap moves/swaps it, or tap it again to return it
+            // Tray empty: select a placed tile: next tap moves/swaps it, or tap it again to return it
             selectedSource = 'board';
             selectedIndex = index;
             Sound.select();
@@ -3155,15 +3139,15 @@
             const cc = lineClashes(colIdx);
             rc.forEach(j => clashTiles.add(j));
             cc.forEach(j => clashTiles.add(j));
-            document.getElementById(`dot-row-${i}`).className = 'dot' + (rv ? ' valid' : rc.length ? ' clash' : '');
-            document.getElementById(`dot-col-${i}`).className = 'dot' + (cv ? ' valid' : cc.length ? ' clash' : '');
+            document.getElementById(`line-row-${i}`).className = 'line' + (rv ? ' valid' : rc.length ? ' clash' : '');
+            document.getElementById(`line-col-${i}`).className = 'line' + (cv ? ' valid' : cc.length ? ' clash' : '');
             if (rv) nowValid.add('r' + i); else rowsV = false;
             if (cv) nowValid.add('c' + i); else colsV = false;
             if (rc.length) nowClash.add('r' + i);
             if (cc.length) nowClash.add('c' + i);
         }
 
-        // Outline the clashing tiles — only where the guides are shown, like the dots
+        // Outline the clashing tiles — only where the guides are shown, like the line frames
         document.querySelectorAll('.slot.clash').forEach(s => s.classList.remove('clash'));
         if (params.guides) {
             clashTiles.forEach(j => document.querySelector(`.slot[data-index="${j}"]`)?.classList.add('clash'));
@@ -3184,7 +3168,7 @@
         const won = rowsV && colsV && uniqV && trayState.length === 0;
 
         // A chime when a line newly completes — rising if lines come quickly.
-        // Only where the guides are shown, or it would give away what the hidden dots hide.
+        // Only where the guides are shown, or it would give away what the hidden frames hide.
         const fresh = [...nowValid].some(k => !validLines.has(k));
         if (!silent && !won && params.guides && fresh) {
             const now = performance.now();

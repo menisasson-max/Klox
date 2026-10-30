@@ -2916,6 +2916,20 @@
         popIndex = null;
     }
 
+    // Hidden: five quick taps in a row on the same locked tile turn the board now,
+    // on any level, so the turn can be tried out
+    let lockTaps = { index: null, count: 0, at: 0 };
+    function lockedTap(index) {
+        const now = performance.now();
+        const same = lockTaps.index === index && now - lockTaps.at < 800;
+        lockTaps = { index, count: same ? lockTaps.count + 1 : 1, at: now };
+        if (lockTaps.count < 5 || turnStage) return false;
+        lockTaps = { index: null, count: 0, at: 0 };
+        turnAt.unshift(boardSecs);
+        maybeTurnBoard();
+        return true;
+    }
+
     function endTurn() {
         turnToken++;
         turnStage = null;
@@ -3056,9 +3070,11 @@
         const item = boardState[index];
 
         if (item?.locked) {
+            if (lockedTap(index)) return;
             if (selectedSource || trayState.length) rejectMove(el);
             return;
         }
+        lockTaps = { index: null, count: 0, at: 0 };
 
         if (selectedSource === 'board') {
             if (selectedIndex === index) {

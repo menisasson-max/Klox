@@ -2341,6 +2341,8 @@
         timeLeft += bonus;
         updateTimerUI();
         floatBonus(bonus);
+        // The last piece finishes the board: straight to the win, no rush
+        if (boardState.every(Boolean)) return;
         if (!rushLeft && rightTimes.length === RUSH_COUNT && now - rightTimes[0] < RUSH_WINDOW_MS) {
             rushLeft = RUSH_SECONDS;
             rightTimes = [];

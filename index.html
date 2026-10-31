@@ -1327,6 +1327,41 @@
             0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(7); opacity: 0; }
         }
+        .mq-badge {
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0 4px;
+            border-radius: 7px;
+            font-size: 0.55rem;
+            font-weight: 800;
+            line-height: 13px;
+            color: #1e293b;
+            background: var(--gold);
+            box-shadow: 0 0 6px rgba(253, 224, 71, 0.7);
+            direction: ltr;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        /* ROLL OVER TIME / SUPER SPIN / Naughty Goblin! */
+        .shout {
+            position: fixed; left: 50%; top: 40%; z-index: 196; pointer-events: none;
+            transform: translate(-50%, -50%);
+            animation: mqBanner 2.1s cubic-bezier(.3,1.5,.5,1) forwards;
+        }
+        .shout b {
+            display: block;
+            font-size: clamp(2rem, 10vw, 3.4rem); font-weight: 900; letter-spacing: 0.02em;
+            white-space: nowrap; color: #fff;
+            text-shadow: 0 3px 0 var(--shout-dark), 0 0 22px var(--shout-glow), 0 6px 18px var(--shadow);
+        }
+        .shout.roll { --shout-dark: #1e3a8a; --shout-glow: rgba(59, 130, 246, 0.9); }
+        .shout.roll b { color: #93c5fd; }
+        .shout.spin { --shout-dark: #6b21a8; --shout-glow: rgba(217, 70, 239, 0.95); }
+        .shout.spin b { color: #f0abfc; font-size: clamp(2.4rem, 12vw, 4rem); }
+        .shout.goblin { --shout-dark: #365314; --shout-glow: rgba(132, 204, 22, 0.9); }
+        .shout.goblin b { color: #bef264; }
         .mq-banner {
             position: fixed; left: 50%; top: 38%; z-index: 195; pointer-events: none;
             display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -1868,6 +1903,7 @@
             ach_daily: 'יעד יומי', ach_daily_d: '{n} לוחות ביום', ach_days3: '3 ימים ברצף', ach_days3_d: 'שיחקת 3 ימים רצופים',
             ach_days7: 'שבוע שלם', ach_days7_d: '7 ימים רצופים', ach_xp1000: '10,000 נקודות', ach_xp1000_d: 'צברת 10,000 ⭐',
             ach_peak8: 'פסגה', ach_peak8_d: 'הגעת לרמה 30',
+            rollShout: 'זמן התהפכות!', spinShout: 'סופר סיבוב!', goblinShout: 'שדון שובב!',
             secShort: 'ש׳', rushOn: '⚡ ×3 · {s}', rushT: '⚡ טורבו!',
             rushS: '3 אריחים נכונים ב־3 שניות! ב־{s} השניות הקרובות כל אריח נכון מוסיף {b} שניות',
             pairT: '🔗 זוג!', pairS: 'שני אריחים דבוקים. הם נכנסים יחד, בדיוק כמו שהם מסודרים — גם באלכסון',
@@ -1928,6 +1964,7 @@
             ach_daily: 'Daily goal', ach_daily_d: '{n} boards in a day', ach_days3: '3 days in a row', ach_days3_d: 'Played 3 days running',
             ach_days7: 'A full week', ach_days7_d: '7 days running', ach_xp1000: '10,000 points', ach_xp1000_d: 'Earned 10,000 ⭐',
             ach_peak8: 'Summit', ach_peak8_d: 'Reached level 30',
+            rollShout: 'ROLL OVER TIME', spinShout: 'SUPER SPIN', goblinShout: 'Naughty Goblin!',
             secShort: 's', rushOn: '⚡ ×3 · {s}', rushT: '⚡ Rush!',
             rushS: '3 right tiles in 3 seconds! For the next {s} seconds every right tile adds {b} seconds',
             pairT: '🔗 A pair!', pairS: 'Two tiles stuck together. They go in together, just as they sit — diagonals too',
@@ -2424,7 +2461,7 @@
             if (rushLeft > 0) rushLeft--;
             updateTimerUI();
             if (timeLeft > 0 && timeLeft <= 10) Sound.tick();
-            if (timeLeft > 0) maybeWreck();
+            if (timeLeft > 0) { maybeRoll(); maybeWreck(); }
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
@@ -2985,7 +3022,7 @@
 
         // Without unique pairs (6×6) a hidden tile could be anything, so no mystery there
         let mysteries = 0;
-        if (level >= MYSTERY_FROM_LEVEL && params.unique) mysteries = N >= 5 ? 2 : 1;
+        if (level >= MYSTERY_FROM_LEVEL && params.unique) mysteries = 1; // never more than one in the wheel
         const plain = () => singles.filter(x => !x.item.mystery && !x.item.filler);
         for (let k = 0; k < mysteries && plain().length >= 3; k++) pick(plain()).item.mystery = true;
 
@@ -3050,6 +3087,13 @@
             q.className = 'shape mystery-q';
             q.innerText = '?';
             tile.appendChild(q);
+            // worth a minute while it is still on its first try
+            if (!data.missed) {
+                const mb = document.createElement('div');
+                mb.className = 'mq-badge';
+                mb.innerText = '+1:00';
+                tile.appendChild(mb);
+            }
         } else {
             tile.appendChild(createShape(data));
         }
@@ -3434,21 +3478,58 @@
         return Math.min(WRECK_MAX, WRECK_RATE[difficulty] * (0.5 + 0.06 * (L - WRECK_FROM_LEVEL)));
     }
 
-    // They land somewhere in the middle of the clock, spread apart; each is a turn or a goblin
+    /* Board turns ("roll over") come twice as often as they used to and are no
+       longer planned ahead: every second there is a small chance of one, so
+       that on average a board sees as many turns as it used to see wreckers
+       of both kinds. After 30 seconds without a move the chance goes up by half.
+       Goblins are still planned ahead (half the wreckers, as before), and now
+       and then (rarely) a super spin. */
+    const IDLE_SECS = 30;
+    const IDLE_BOOST = 1.5;
+    const SPIN_CHANCE = 0.12;   // per board on medium, scaled by the difficulty like the rest
+    const SPIN_MS = 3200;
+    let lastMoveSecs = 0;       // board second of the player's last move
+    let turnsThisBoard = 0;
+
+    // Goblins land somewhere in the middle of the clock, spread apart
     function planWrecks() {
         wrecks = [];
         boardSecs = 0;
-        const mean = wreckersFor(level);
+        lastMoveSecs = 0;
+        turnsThisBoard = 0;
+        const mean = wreckersFor(level) / 2;
         const count = Math.floor(mean) + (Math.random() < mean % 1 ? 1 : 0);
-        if (!count) return;
         const from = Math.max(8, totalTime * 0.15), to = totalTime * 0.8;
-        const span = (to - from) / count;
+        const span = (to - from) / Math.max(1, count);
         for (let k = 0; k < count; k++) {
-            wrecks.push({
-                at: Math.round(from + span * (k + 0.2 + Math.random() * 0.6)),
-                kind: Math.random() < 0.5 ? 'turn' : 'goblin',
-            });
+            wrecks.push({ at: Math.round(from + span * (k + 0.2 + Math.random() * 0.6)), kind: 'goblin' });
         }
+        if (level >= WRECK_FROM_LEVEL && Math.random() < SPIN_CHANCE * WRECK_RATE[difficulty]) {
+            wrecks.push({ at: Math.round(totalTime * (0.3 + Math.random() * 0.4)), kind: 'spin' });
+        }
+        wrecks.sort((a, b) => a.at - b.at);
+    }
+
+    // Each second: maybe the board rolls over now
+    function maybeRoll() {
+        if (level < WRECK_FROM_LEVEL || boardSecs < 8 || turnsThisBoard >= WRECK_MAX) return;
+        if (turnStage || goblinBusy || isPaused || gameOver || (drag && drag.mode === 'tile')) return;
+        let p = wreckersFor(level) / Math.max(30, totalTime);
+        if (boardSecs - lastMoveSecs >= IDLE_SECS) p *= IDLE_BOOST;
+        if (Math.random() >= p) return;
+        wrecks.unshift({ at: boardSecs, kind: 'turn' });
+        maybeWreck();
+    }
+
+    // A big word across the middle of the screen: ROLL OVER TIME, SUPER SPIN, Naughty Goblin!
+    function shout(text, kind) {
+        document.querySelectorAll('.shout').forEach(el => el.remove());
+        const el = document.createElement('div');
+        el.className = 'shout ' + kind;
+        el.innerHTML = '<b></b>';
+        el.firstChild.innerText = text;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2200);
     }
 
     function maybeWreck() {
@@ -3462,6 +3543,7 @@
         }
         const token = turnToken;
         turnStage = 'rumble';
+        if (w.kind === 'spin') shout(t('spinShout'), 'spin'); else { turnsThisBoard++; shout(t('rollShout'), 'roll'); }
         const bc = document.getElementById('boardContainer');
         bc.classList.remove('rumble');
         void bc.offsetWidth;
@@ -3472,8 +3554,8 @@
             if (token !== turnToken) return;
             bc.classList.remove('rumble');
             // Paused or finished during the rumble: the turn waits for the next tick
-            if (isPaused || gameOver) { turnStage = null; if (!gameOver) wrecks.unshift({ at: boardSecs, kind: 'turn' }); return; }
-            startTurn(token);
+            if (isPaused || gameOver) { turnStage = null; if (!gameOver) wrecks.unshift({ at: boardSecs, kind: w.kind }); return; }
+            if (w.kind === 'spin') startSpin(token); else startTurn(token);
         }, RUMBLE_MS);
     }
 
@@ -3493,12 +3575,78 @@
             grid.classList.remove('turning', 'turned'); // no transition: the new layout looks the same
             turnStage = null;
             render(true);
-            if (!progress.turnSeen) {
-                progress.turnSeen = true;
-                saveProgress();
-                toast(t('turnT'), t('turnS'));
-            }
         }, TURN_MS + 30);
+    }
+
+    // A placed tile leaves the board for the wheel, and every undo step, so undo can't put it back
+    function pullFromBoard(id) {
+        const at = boardState.findIndex(x => x && x.id === id);
+        if (at < 0 || boardState[at].locked) return;
+        trayState.push(boardState[at]);
+        boardState[at] = null;
+        undoStack.forEach(snap => {
+            const j = snap.board.findIndex(x => x && x.id === id && !x.locked);
+            if (j >= 0) {
+                const it = snap.board[j];
+                snap.board[j] = null;
+                if (!snap.tray.some(x => x.id === id)) snap.tray.push(it);
+            }
+        });
+        if (selectedSource === 'board' && selectedIndex === at) clearSelection();
+    }
+
+    /* Super spin (rare): after the rumble the board spins at ludicrous speed,
+       flings at least three of your tiles off back to the wheel, and slows down
+       to a random quarter. The pictures stay upright the whole time, like in a
+       roll over, so the board you are left with is still a right one. */
+    function startSpin(token) {
+        turnStage = 'turning';
+        cancelDrag();
+        clearSelection();
+        const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const quarters = 1 + Math.floor(Math.random() * 3);
+        const deg = -(360 * (calm ? 1 : 4 + Math.floor(Math.random() * 2)) + 90 * quarters);
+        const dur = calm ? 1200 : SPIN_MS;
+        const grid = document.getElementById('boardGrid');
+        const ease = 'cubic-bezier(.5, 0, .12, 1)'; // winds up, races, then a long slow-down
+        const anims = [];
+        if (grid.animate) {
+            anims.push(grid.animate([{ transform: 'rotate(0deg)' }, { transform: `rotate(${deg}deg)` }], { duration: dur, easing: ease, fill: 'forwards' }));
+            grid.querySelectorAll('.tile').forEach(el => anims.push(el.animate([{ transform: 'rotate(0deg)' }, { transform: `rotate(${-deg}deg)` }], { duration: dur, easing: ease, fill: 'forwards' })));
+        }
+        Sound.turn();
+        Sound.rumble(dur / 1000);
+        buzz([40, 40, 40, 40, 40, 40, 80]);
+
+        // At full speed, tiles you placed fly off: at least three, if there are that many
+        const placed = shuffle(boardState.map((x, i) => (x && !x.locked) ? i : -1).filter(i => i >= 0));
+        const flung = placed.slice(0, Math.min(placed.length, 3 + (Math.random() < 0.35 ? 1 : 0)));
+        const ids = flung.map(i => boardState[i].id);
+        const bc = centreOf(document.getElementById('boardContainer'));
+        flung.forEach((idx, k) => setTimeout(() => {
+            if (token !== turnToken) return;
+            const tileEl = document.querySelector(`.slot[data-index="${idx}"] .tile`);
+            if (!tileEl) return;
+            const c = centreOf(tileEl);
+            const fly = fxSprite(createTileElement(boardState[idx] || {}, false), c.w, c.x, c.y);
+            tileEl.style.visibility = 'hidden';
+            const ang = Math.atan2(c.y - bc.y, c.x - bc.x) + 0.6; // flung outward, a little along the spin
+            const far = Math.max(innerWidth, innerHeight) * 0.75;
+            Sound.kick();
+            fxAnimate(fly, [
+                { transform: 'translate(0, 0) rotate(0deg) scale(1)', opacity: 1 },
+                { transform: `translate(${Math.cos(ang) * far}px, ${Math.sin(ang) * far}px) rotate(${k % 2 ? 900 : -900}deg) scale(0.7)`, opacity: 0 },
+            ], calm ? 400 : 900).then(() => fly.remove());
+        }, dur * 0.3 + k * 140));
+
+        setTimeout(() => {
+            if (token !== turnToken) return;
+            anims.forEach(a => a.cancel());
+            ids.forEach(pullFromBoard);
+            for (let k = 0; k < quarters; k++) rotateBoardLeft();
+            turnStage = null;
+            render(true);
+        }, dur + 40);
     }
 
     // A quarter turn left on screen: the top-right corner becomes the top-left.
@@ -3676,6 +3824,7 @@
                 if (selectedSource === 'board' && selectedIndex === at) clearSelection();
                 Sound.kick();
                 buzz([40, 30, 20]);
+                shout(t('goblinShout'), 'goblin');
                 // the tile flies off toward the wheel, spinning
                 const fly = fxSprite(createTileElement(item, false), from.w * 0.9, from.x, from.y);
                 const tr = centreOf(document.getElementById('trayContainer'));
@@ -4056,6 +4205,7 @@
     const WRONG_PENALTY = 5;
     function wrongMove(index) {
         steps++;
+        lastMoveSecs = boardSecs;
         requestAnimationFrame(() => rejectMove(document.querySelector(`.slot[data-index="${index}"]`)));
         timeLeft = Math.max(0, timeLeft - WRONG_PENALTY);
         updateTimerUI();
@@ -4111,6 +4261,7 @@
     }
 
     function afterMove() {
+        lastMoveSecs = boardSecs;
         render();
     }
 

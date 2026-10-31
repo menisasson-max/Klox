@@ -1681,6 +1681,12 @@
             box-shadow: 0 3px 8px var(--shadow);
         }
         .map-you.boss { background: #9333ea; }
+        /* 🧍 the traveller: stands beside your level and walks on after a level-up (#37) */
+        .map-hero { position: absolute; z-index: 5; width: 40px; height: 40px; margin: -34px 0 0 -20px; pointer-events: none;
+            font-size: 2rem; line-height: 40px; text-align: center; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.35)); }
+        .map-hero span { display: inline-block; }
+        .map-hero.walking span { animation: heroStep 0.32s ease-in-out infinite alternate; }
+        @keyframes heroStep { from { transform: translateY(0) rotate(-6deg); } to { transform: translateY(-7px) rotate(6deg); } }
         .map-cap { position: absolute; left: 50%; transform: translate(-50%, -50%); z-index: 2; text-align: center; color: var(--text-muted); font-size: 0.8rem; font-weight: 700; }
         .map-cap b { display: block; font-size: 1.8rem; color: var(--gold); }
         .map-foot { flex-shrink: 0; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: var(--bg-surface); border-top: 1px solid var(--border-color); }
@@ -4178,6 +4184,9 @@
     let mapOpen = false, mapWasPaused = false, mapDone = null, chestBusy = false;
 
     function mapX(L) { return 50 + 28 * Math.sin((L - 1) * 0.95); } // % across the track
+    // where the traveller stands at a level: beside its node, on the outer side of the path's swing
+    function heroX(L) { const x = mapX(L); return x < 50 ? x - 13 : x + 13; }
+    const HERO_STEP_MS = 650; // walking time per level
 
     function renderMap() {
         const L = levelInfo(progress.points).L;
@@ -4239,6 +4248,7 @@
             html += `<button class="${cls}" data-level="${nd.L}" style="--ch:${ch.hue};left:${mapX(nd.L)}%;top:${top(nd.y)}px">`
                 + (isBoss ? `<span class="crown">👑</span>` : '') + `${nd.L}${stars}</button>`;
             if (state === 'current') {
+                html += `<div class="map-hero" id="mapHero" style="left:${heroX(nd.L)}%;top:${top(nd.y)}px"><span>🚶</span></div>`;
                 const bossNow = isBoss && !beaten;
                 html += `<div class="map-you${bossNow ? ' boss' : ''}" style="left:${mapX(nd.L)}%;top:${top(nd.y) - (isBoss ? 56 : 40)}px">${escHtml(bossNow ? t('mapYouBoss') : t('mapYou'))}</div>`;
             }
@@ -4278,7 +4288,29 @@
 
     // milestone: opened by the win screen (a new chapter) — its chest opens by
     // itself, and onDone (the next board) runs when the map is closed
-    function openMap({ milestone = false, onDone = null } = {}) {
+    // The traveller walks from level `fromL` up to your level, node by node
+    function walkHero(fromL) {
+        const hero = $id('mapHero');
+        const L = levelInfo(progress.points).L;
+        if (!hero || !(fromL < L)) return 0;
+        const at = lv => {
+            const n = $id('mapTrack').querySelector(`.map-node[data-level="${lv}"]`);
+            return n ? { left: heroX(lv) + '%', top: n.style.top } : null;
+        };
+        const stops = [];
+        for (let lv = fromL; lv <= L; lv++) { const p = at(lv); if (p) stops.push(p); }
+        if (stops.length < 2) return 0;
+        const ms = HERO_STEP_MS * (stops.length - 1);
+        // face the way he walks: the emoji looks left, so flip him when heading right
+        const face = parseFloat(stops[stops.length - 1].left) > parseFloat(stops[0].left) ? -1 : 1;
+        hero.querySelector('span').style.scale = `${face} 1`;
+        hero.classList.add('walking');
+        const anim = hero.animate(stops.map(p => ({ left: p.left, top: p.top })), { duration: ms, easing: 'ease-in-out', fill: 'both' });
+        anim.onfinish = () => { hero.classList.remove('walking'); Sound.select(); };
+        return ms;
+    }
+
+    function openMap({ milestone = false, onDone = null, fromL = null } = {}) {
         if (mapOpen) return;
         if (!milestone) {
             if (gameOver || tutorial || (zen && !daily)) return;
@@ -4293,12 +4325,13 @@
         renderMap();
         $id('mapView').classList.add('open');
         scrollMapToCurrent(false);
+        const walkMs = fromL ? walkHero(fromL) : 0;
         if (milestone) {
             const c = chapterOf(levelInfo(progress.points).L);
             setTimeout(() => {
                 const el = $id('mapTrack').querySelector(`.map-chest[data-chest="${c}"]`);
                 if (mapOpen && el && chestReady(c)) openChest(c, el);
-            }, 650);
+            }, 650 + walkMs);
         }
     }
 
@@ -7745,7 +7778,7 @@
             const chapterHit = !daily && !zen && (endInfo.L > startInfo.L
                 || (chapterOf(endInfo.L) > chapterOf(startInfo.L) && chestReady(chapterOf(endInfo.L))));
             const buttons = [chapterHit
-                ? { label: t('toMap'), cls: 'btn-primary', action: () => openMap({ milestone: true, onDone: initLevel }) }
+                ? { label: t('toMap'), cls: 'btn-primary', action: () => openMap({ milestone: true, onDone: initLevel, fromL: startInfo.L }) }
                 : { label: unlockedN ? t('toBoard', { n: unlockedN }) : t('nextBoard'), cls: 'btn-primary', action: initLevel }];
             const dailyDate = daily && daily.date;
             if (dailyDate) buttons.push({ label: t('share'), cls: 'btn-secondary', stay: true, action: () => shareDaily(dailyDate) });

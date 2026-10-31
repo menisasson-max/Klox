@@ -867,6 +867,31 @@
             .tool-btn svg { width: 15px; height: 15px; }
         }
 
+        /* Paused: the top tile of the wheel gives way to a play button */
+        .wheel-play {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 68px;
+            height: 68px;
+            margin: -34px 0 0 -34px; /* placed by its centre, where the top tile sits */
+            border-radius: 18px;
+            border: 2px solid var(--accent);
+            background: var(--accent);
+            box-shadow: 0 6px 16px var(--shadow);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 20;
+            animation: playPulse 1.6s ease-in-out infinite;
+        }
+        .wheel-play svg { width: 30px; height: 30px; fill: #fff; margin-inline-start: 4px; }
+        [dir="rtl"] .wheel-play svg { margin-inline-start: 0; margin-inline-end: 4px; }
+        .tray-container.paused .wheel-play { display: flex; }
+        .tray-container.paused .tray-slot.center { visibility: hidden; }
+        @keyframes playPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+
         .tray-empty {
             position: absolute;
             left: 0;
@@ -1567,6 +1592,10 @@
             <span id="trayHint" data-i18n="spinWheel">↔ סובב את הגלגל</span>
         </div>
         <div class="tray-slots" id="traySlots"></div>
+        <!-- While paused, the wheel's top tile turns into this play button -->
+        <button class="wheel-play" id="wheelPlay" aria-label="המשך" data-i18n-aria="resume">
+            <svg viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20 7 4"></polygon></svg>
+        </button>
     </div>
 </div>
 
@@ -1786,7 +1815,7 @@
        ============================ */
     const STRINGS = {
         he: {
-            appName: 'קלוקס', a_settings: 'הגדרות', a_pause: 'השהה/המשך', a_theme: 'מצב כהה/בהיר', a_sound: 'צלילים',
+            appName: 'קלוקס', a_settings: 'הגדרות', resume: 'המשך', a_pause: 'השהה/המשך', a_theme: 'מצב כהה/בהיר', a_sound: 'צלילים',
             level: 'רמה', board: 'לוח', streakTitle: 'ימים ברצף', points: 'נקודות',
             chipRows: 'שורות שונות', chipCols: 'עמודות שונות', chipUnique: 'זוגות ייחודיים',
             undo: 'בטל מהלך', resetBoard: 'אפס לוח', spinWheel: '↔ סובב את הגלגל', left: '{n} נותרו',
@@ -1846,7 +1875,7 @@
             fillerT: '➕ אריח ממלא', fillerS: 'שים אותו במקום הנכון — והאריח הנכון למשבצת ריקה לידו יקפוץ גם הוא',
         },
         en: {
-            appName: 'Klox', a_settings: 'Settings', a_pause: 'Pause/Resume', a_theme: 'Dark/Light', a_sound: 'Sound',
+            appName: 'Klox', a_settings: 'Settings', resume: 'Resume', a_pause: 'Pause/Resume', a_theme: 'Dark/Light', a_sound: 'Sound',
             level: 'Level', board: 'Board', streakTitle: 'Days in a row', points: 'Points',
             chipRows: 'Rows differ', chipCols: 'Columns differ', chipUnique: 'Unique pairs',
             undo: 'Undo', resetBoard: 'Reset board', spinWheel: '↔ Spin the wheel', left: '{n} left',
@@ -2458,11 +2487,20 @@
     function setPaused(p) {
         isPaused = p;
         document.getElementById('boardContainer').classList.toggle('paused', p);
+        document.getElementById('trayContainer').classList.toggle('paused', p && !gameOver);
         document.getElementById('icon-pause').style.display = p ? 'none' : 'block';
         document.getElementById('icon-play').style.display = p ? 'block' : 'none';
         if (p) clearInterval(timerInterval);
         else if (!gameOver) startTimer();
     }
+
+    // The play button that takes the top tile's place while paused
+    document.getElementById('wheelPlay').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!isPaused || gameOver) return;
+        setPaused(false);
+        Sound.select();
+    });
 
     document.getElementById('pauseBtn').addEventListener('click', () => {
         if (gameOver) return;
@@ -3294,6 +3332,9 @@
         disc.style.width = disc.style.height = dr * 2 + 'px';
         disc.style.left = (wheel.cx - dr) + 'px';
         disc.style.top = (wheel.cy - dr) + 'px';
+        const play = document.getElementById('wheelPlay');
+        play.style.left = wheel.cx + 'px';
+        play.style.top = apexY + 'px';
 
         if (wheelAngle === null) wheelAngle = -Math.floor((trayState.length - 1) / 2) * wheel.step;
         wheelNearest = -1;

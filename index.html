@@ -1344,6 +1344,12 @@
             white-space: nowrap;
             pointer-events: none;
         }
+        /* Zen: no clock, no score, nothing collected; the board gets the room */
+        body.zen .clock, body.zen .goal-strip, body.zen #xpStat, body.zen #streakStat, body.zen .wiz-stash { display: none; }
+        body.zen #levelBadge { visibility: hidden; }
+        body.zen .board-wrapper { --wiz-strip: 0px; }
+        .shout.zen { --shout-dark: #065f46; --shout-glow: rgba(16, 185, 129, 0.9); }
+        .shout.zen b { color: #6ee7b7; }
         /* ROLL OVER TIME / SUPER SPIN / Naughty Goblin! */
         .shout {
             position: fixed; left: 50%; top: 40%; z-index: 196; pointer-events: none;
@@ -1694,12 +1700,18 @@
         <div class="set-section" data-i18n="game">משחק</div>
         <div class="set-group">
             <div class="set-row">
-                <span><span data-i18n="difficulty">רמת קושי</span><small data-i18n="difficultyNote">כמה הורסים מגיעים, מרמה 10</small></span>
+                <span><span data-i18n="difficulty">רמת קושי</span><small data-i18n="difficultyNote">כמה הורסים מגיעים, מרמה 10 · בזן: כמה משבצות ריקות</small></span>
                 <div class="seg" id="segDiff">
                     <button data-v="easy" data-i18n="easy">קל</button>
                     <button data-v="medium" data-i18n="medium">בינוני</button>
                     <button data-v="hard" data-i18n="hard">קשה</button>
                 </div>
+            </div>
+        </div>
+        <div class="set-group" style="margin-top: 8px;">
+            <div class="set-row">
+                <span><span data-i18n="zenMode">🧘 מצב זן</span><small data-i18n="zenNote">בלי שעון, תמיד 7×7, בלי הפתעות ובלי נקודות</small></span>
+                <button class="switch" id="swZen" role="switch" aria-label="מצב זן" data-i18n-aria="zenMode"></button>
             </div>
         </div>
         <div class="set-group" style="margin-top: 8px;">
@@ -1876,7 +1888,8 @@
             wandWizT: '🪄🧙 מטה קסם: גמדון!', wandWizS: 'אין סימן שאלה בגלגל, אז המטה הביא לך גמדון. כשהזמן נגמר הוא נותן עוד דקה',
             mysteryWinT: '❓🎉 פיצחת את סימן השאלה!', mysteryWinS: 'עוד דקה שלמה על השעון!', mysteryWinBig: '+1 דקה!',
             goblinT: '👺 שדון!', goblinS: 'מרמה 10 שדונים יכולים לבעוט אריח שהנחת בחזרה לגלגל. ברמת קושי גבוהה הם באים יותר',
-            difficulty: 'רמת קושי', difficultyNote: 'כמה הורסים מגיעים, מרמה 10', easy: 'קל', medium: 'בינוני', hard: 'קשה',
+            zenMode: '🧘 מצב זן', zenNote: 'בלי שעון, תמיד 7×7, בלי הפתעות ובלי נקודות', zenRank: 'מצב זן', zenDone: 'כל הכבוד! 🎊',
+            difficulty: 'רמת קושי', difficultyNote: 'כמה הורסים מגיעים, מרמה 10 · בזן: כמה משבצות ריקות', easy: 'קל', medium: 'בינוני', hard: 'קשה',
             extendedNote: '⏳ נפתר עם זמן נוסף — 0 נקודות', tiles: '🧩 אריחים', timeLeft: '⏱ זמן שנותר',
             goldenX2: '✨ לוח זהב ×2', dailyRow: '🎯 יעד יומי', total: 'סה״כ', zeroPts: '0 נקודות',
             boardOpened: 'לוח {n}×{n} נפתח!', newLevel: 'רמה חדשה!',
@@ -1937,7 +1950,8 @@
             wandWizT: '🪄🧙 Magic wand: a wizard!', wandWizS: 'No question mark in the wheel, so the wand brought you a wizard. When time runs out he gives another minute',
             mysteryWinT: '❓🎉 You cracked the question mark!', mysteryWinS: 'A whole extra minute on the clock!', mysteryWinBig: '+1 min!',
             goblinT: '👺 A goblin!', goblinS: 'From level 10 goblins can kick a tile you placed back to the wheel. Harder settings bring more of them',
-            difficulty: 'Difficulty', difficultyNote: 'How often wreckers come, from level 10', easy: 'Easy', medium: 'Medium', hard: 'Hard',
+            zenMode: '🧘 Zen mode', zenNote: 'No clock, always 7×7, no surprises, no points', zenRank: 'Zen mode', zenDone: 'Well done! 🎊',
+            difficulty: 'Difficulty', difficultyNote: 'How often wreckers come, from level 10 · In zen: how many slots are empty', easy: 'Easy', medium: 'Medium', hard: 'Hard',
             extendedNote: '⏳ Solved on extra time — 0 points', tiles: '🧩 Tiles', timeLeft: '⏱ Time left',
             goldenX2: '✨ Golden board ×2', dailyRow: '🎯 Daily goal', total: 'Total', zeroPts: '0 points',
             boardOpened: '{n}×{n} board unlocked!', newLevel: 'New level!',
@@ -2035,6 +2049,14 @@
     let style = store.get('klox_style') === 'shapes' ? 'shapes' : 'animals';
     // How often wreckers come from level 10 (Settings → Difficulty)
     let difficulty = ['easy', 'hard'].includes(store.get('klox_difficulty')) ? store.get('klox_difficulty') : 'medium';
+
+    /* Zen mode: no clock, always 7×7, plain boards. No wizards, wand, goblins,
+       turns, special tiles, golden boards, points or levels. Difficulty sets
+       how many slots are empty; hard is as bare as a board can be and still
+       have one answer (about 36 of 49 is the most it ever allows). A solved
+       board gets a quick cheer and the next one starts. */
+    let zen = store.get('klox_zen') === 'on';
+    const ZEN_MISSING = { easy: 20, medium: 28, hard: 34 };
 
     function applyStyleUI() {
         document.documentElement.dataset.style = style;
@@ -2412,6 +2434,7 @@
 
     // A right tile (or two, or a filler's pair) just landed: add time, maybe start a rush
     function rightPlaced(ids) {
+        if (zen) return; // no clock to add to
         const fresh = ids.filter(id => !rewarded.has(id));
         if (!fresh.length) return;
         const now = performance.now();
@@ -2456,6 +2479,7 @@
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
             if (isPaused || gameOver) return;
+            if (zen) { boardSecs++; return; } // no clock in zen
             timeLeft--;
             boardSecs++;
             if (rushLeft > 0) rushLeft--;
@@ -2626,6 +2650,7 @@
 
         $id('swSound').setAttribute('aria-checked', String(Sound.enabled));
         $id('swVibe').setAttribute('aria-checked', String(Vibe.enabled));
+        $id('swZen').setAttribute('aria-checked', String(zen));
         $id('rowVibe').style.display = 'vibrate' in navigator ? '' : 'none';
     }
 
@@ -2689,6 +2714,15 @@
         store.set('klox_vibrate', Vibe.enabled ? 'on' : 'off');
         buzz(20);
         refreshSettings();
+    });
+    // Zen on or off starts a fresh board straight away
+    $id('swZen').addEventListener('click', () => {
+        zen = !zen;
+        store.set('klox_zen', zen ? 'on' : 'off');
+        Sound.select();
+        refreshSettings();
+        closeSettings(false);
+        initLevel();
     });
     $id('setSkip').addEventListener('click', () => {
         closeSettings(false);
@@ -2795,6 +2829,7 @@
         const kinds = [...pool.keys()].map(k => { const [color, shape] = k.split('|'); return { k, color, shape }; });
         const open = [...holes];
         let found = 0;
+        let budget = 30000; // search steps; a board too deep to settle counts as "not one answer"
 
         const fits = (i, x) => {
             const r = Math.floor(i / n), c = i % n;
@@ -2807,6 +2842,7 @@
         };
         const search = () => {
             if (found >= limit) return;
+            if (--budget < 0) { found = limit; return; }
             if (!open.length) { found++; return; }
             // fill the slot with the fewest choices first
             let best = -1, bestC = null;
@@ -2848,7 +2884,7 @@
     function updateHud() {
         const li = levelInfo(progress.points);
         document.getElementById('levelDisplay').innerText = li.L;
-        document.getElementById('rankTitle').innerText = rankFor(difficultyFor(li.L));
+        document.getElementById('rankTitle').innerText = zen ? t('zenRank') : rankFor(difficultyFor(li.L));
         document.getElementById('sizeDisplay').innerText = `${N}×${N}`;
         document.getElementById('streakDisplay').innerText = liveDayStreak();
         document.getElementById('xpDisplay').innerText = progress.points.toLocaleString();
@@ -2875,7 +2911,10 @@
         scoreAnimId++; // stop any score count still running from the last board
         document.querySelectorAll('.lvlfx').forEach(el => el.remove());
         level = levelInfo(progress.points).L;
-        params = levelParams(boardDifficulty());
+        params = zen
+            ? { N: 7, t: 0, nextAt: null, missing: ZEN_MISSING[difficulty], time: 0, guides: true, unique: true }
+            : levelParams(boardDifficulty());
+        document.body.classList.toggle('zen', zen);
         N = params.N;
         colors = ALL_COLORS.slice(0, N);
         shapes = ALL_SHAPES.slice(0, N);
@@ -2890,7 +2929,7 @@
         updateTimerUI();
 
         // Variable reward: one board in eight is golden and pays double
-        golden = progress.played > 0 && Math.random() < 0.125;
+        golden = !zen && progress.played > 0 && Math.random() < 0.125;
 
         const bc = document.getElementById('boardContainer');
         bc.className = 'board-container size-' + N + (golden ? ' golden' : '');
@@ -2928,7 +2967,7 @@
                 boardState[pos] = item;
             }
         }
-        dealSpecials(singles);
+        if (!zen) dealSpecials(singles);
         trayState = [...singles.map(x => x.item), ...trayState];
 
         // Roughly the fewest moves a perfect player needs
@@ -2937,7 +2976,7 @@
         // Stingy on purpose: a wizard hides under one empty slot only every few boards,
         // never in the first two, and not while three are already collected.
         wiz = null;
-        if (progress.played >= WIZ_FROM_BOARD && progress.wizards < WIZ_MAX) {
+        if (!zen && progress.played >= WIZ_FROM_BOARD && progress.wizards < WIZ_MAX) {
             progress.sinceWizard++;
             const due = progress.sinceWizard >= WIZ_MAX_GAP
                 || (progress.sinceWizard >= WIZ_MIN_GAP && Math.random() < WIZ_CHANCE);
@@ -3041,7 +3080,7 @@
             if (progress[flag] || !has(test)) return;
             progress[flag] = true;
             saveProgress();
-            setTimeout(() => toast(t(tk), t(sk)), 400 + i * 900);
+            setTimeout(() => { if (!zen) toast(t(tk), t(sk)); }, 400 + i * 900);
         });
     }
 
@@ -3497,6 +3536,7 @@
         boardSecs = 0;
         lastMoveSecs = 0;
         turnsThisBoard = 0;
+        if (zen) return;
         const mean = wreckersFor(level) / 2;
         const count = Math.floor(mean) + (Math.random() < mean % 1 ? 1 : 0);
         const from = Math.max(8, totalTime * 0.15), to = totalTime * 0.8;
@@ -3512,7 +3552,7 @@
 
     // Each second: maybe the board rolls over now
     function maybeRoll() {
-        if (level < WRECK_FROM_LEVEL || boardSecs < 8 || turnsThisBoard >= WRECK_MAX) return;
+        if (zen || level < WRECK_FROM_LEVEL || boardSecs < 8 || turnsThisBoard >= WRECK_MAX) return;
         if (turnStage || goblinBusy || isPaused || gameOver || (drag && drag.mode === 'tile')) return;
         let p = wreckersFor(level) / Math.max(30, totalTime);
         if (boardSecs - lastMoveSecs >= IDLE_SECS) p *= IDLE_BOOST;
@@ -3677,6 +3717,7 @@
     // on any level, so the turn can be tried out
     let lockTaps = { index: null, count: 0, at: 0 };
     function lockedTap(index) {
+        if (zen) return false;
         const now = performance.now();
         const same = lockTaps.index === index && now - lockTaps.at < 800;
         lockTaps = { index, count: same ? lockTaps.count + 1 : 1, at: now };
@@ -3873,7 +3914,7 @@
     }
 
     function castWand() {
-        if (wandBusy || !trayState.length) return;
+        if (zen || wandBusy || !trayState.length) return;
         // It goes for a question mark in the wheel. With none there it brings a
         // wizard instead, unless the stash is full: then it throws any tile.
         const mq = trayState.find(x => x.mystery && wandTarget(x) >= 0);
@@ -4207,6 +4248,7 @@
         steps++;
         lastMoveSecs = boardSecs;
         requestAnimationFrame(() => rejectMove(document.querySelector(`.slot[data-index="${index}"]`)));
+        if (zen) return false;
         timeLeft = Math.max(0, timeLeft - WRONG_PENALTY);
         updateTimerUI();
         floatBonus(-WRONG_PENALTY);
@@ -4810,6 +4852,20 @@
         cancelDrag();
         clearInterval(timerInterval);
         updateToolButtons();
+
+        // Zen: nothing is scored. A quick cheer, then the next board.
+        if (zen) {
+            if (!won) { initLevel(); return; }
+            const burstMs = burstBoard();
+            setTimeout(() => {
+                Sound.win();
+                confetti(48);
+                buzz([30, 50, 30]);
+                shout(t('zenDone'), 'zen');
+            }, burstMs + 150);
+            setTimeout(() => { if (zen && gameOver) initLevel(); }, burstMs + 2100);
+            return;
+        }
 
         const stats = {
             // seconds actually played on this board, across resets, extra time and time bonuses

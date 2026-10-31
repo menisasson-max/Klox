@@ -810,6 +810,13 @@
 
         .tray-slot .tile { --radius: 14px; --s: 50%; }
 
+        /* 🔨 the ice hammer: a shade that a clockwise sweep lifts while it forms */
+        .hammer-tile { position: relative; overflow: hidden; background: linear-gradient(135deg, #e0f2fe, #7dd3fc); }
+        .hammer-tile .hammer-ico { font-size: 1.9em; line-height: 1; }
+        .hammer-tile::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+            background: conic-gradient(from 0deg, transparent 0 var(--formed, 0deg), rgba(15, 23, 42, 0.72) var(--formed, 0deg) 360deg); }
+        .hammer-tile.ready::after { display: none; }
+        .hammer-tile.ready { box-shadow: 0 0 12px #38bdf8; }
         /* Special wheel tiles: a pair, a dark question mark, a filler with a +1 badge */
         .pair-grid {
             display: grid;
@@ -2545,7 +2552,11 @@
             blk_fog: 'ערפל', blk_chain: 'שרשרת', blk_ice: 'קרח', blk_bomb: 'פצצה', blkIntroT: '{i} {b}!', blkGo: 'הבנתי, קדימה!',
             blkIntro_fog: 'כמה אריחים נתונים מוסתרים בערפל.\nהנח אריח במשבצת צמודה (מעל, מתחת או לצד) — והערפל מתפזר.\nאפשר לפתור את הלוח גם בלי לראות מתחתיו.',
             blkIntro_chain: 'משבצת ריקה נעולה בשרשרת.\nהיא מקבלת אריח רק אחרי שכל שאר המשבצות בשורה שלה מלאות.\nאריח שמונח עליה לפני כן פשוט חוזר — בלי עונש.',
-            blkIntro_ice: 'משבצת ריקה קפואה.\nהאריח הנכון בפעם הראשונה רק סודק את הקרח (בלי עונש),\nובפעם השנייה הוא נכנס.',
+            blkIntro_ice: 'משבצת ריקה קפואה.\nרק 🔨 פטיש הקרח שבגלגל שובר אותה. הוא נוצר תוך 10 שניות,\nואז שים אותו על הקרח — ואחר כך את האריח.',
+            iceBounceT: '🧊 קפוא', iceBounceS: 'שבור קודם את הקרח עם 🔨 הפטיש שבגלגל',
+            hammerT: '🔨 הפטיש מוכן!', hammerS: 'שים אותו על משבצת קפואה כדי לשבור את הקרח',
+            hammerWaitT: '🔨 הפטיש עוד נוצר', hammerWaitS: 'עוד {s} שניות',
+            mistakeT: '😬 שלוש טעויות ברצף', mistakeS: '−10 שניות, וזה מעיר צרות…',
             blkIntro_bomb: 'פצצה על משבצת ריקה סופרת לאחור את המהלכים שלך.\nהנח שם את האריח הנכון בזמן — היא מנוטרלת: ⁦+5⁩ שניות.\nאם היא מגיעה ל־0 — בום: ⁦−15⁩ שניות, והפצצה נעלמת.',
             bossBlk: '{i} {b} ⁦×{n}⁩ על הלוח.', chainBounceT: '⛓️ נעול בשרשרת', chainBounceS: 'מלא קודם את שאר המשבצות בשורה שלו',
             defuseShout: 'נוטרלה!', boomShout: 'בום!', mapBlk: 'חדש: {b}', mapSeason: 'השבוע: {s} · {n}/{g}',
@@ -2677,7 +2688,11 @@
             blk_fog: 'Fog', blk_chain: 'Chain', blk_ice: 'Ice', blk_bomb: 'Bomb', blkIntroT: '{i} {b}!', blkGo: 'Got it, go!',
             blkIntro_fog: 'Some given tiles hide under fog.\nPut a tile in a slot right next to one (above, below or beside) and the fog lifts.\nThe board can be worked out without seeing under it.',
             blkIntro_chain: 'An empty slot is chained shut.\nIt takes a tile only once every other slot in its row is filled.\nA tile put there before that just bounces back — no penalty.',
-            blkIntro_ice: 'An empty slot is iced.\nThe right tile the first time only cracks the ice (no penalty);\nthe second time it goes in.',
+            blkIntro_ice: 'An empty slot is iced.\nOnly the 🔨 ice hammer in the wheel breaks it. It takes 10 seconds to form,\nthen put it on the ice, and then the tile.',
+            iceBounceT: '🧊 Frozen', iceBounceS: 'Break the ice first with the 🔨 hammer in the wheel',
+            hammerT: '🔨 Hammer ready!', hammerS: 'Put it on an iced slot to break the ice',
+            hammerWaitT: '🔨 The hammer is still forming', hammerWaitS: '{s} more seconds',
+            mistakeT: '😬 Three mistakes in a row', mistakeS: '−10 seconds, and it wakes up trouble…',
             blkIntro_bomb: 'A bomb on an empty slot counts down your moves.\nPut the right tile there in time to defuse it: +5 seconds.\nIf it reaches 0 — boom: −15 seconds, and the bomb is gone.',
             bossBlk: '{i} {b} ×{n} on the board.', chainBounceT: '⛓️ Chained', chainBounceS: 'Fill the rest of its row first',
             defuseShout: 'DEFUSED!', boomShout: 'BOOM!', mapBlk: 'New: {b}', mapSeason: 'This week: {s} · {n}/{g}',
@@ -3373,6 +3388,7 @@
 
     // A right tile (or two, or a filler's pair) just landed: add time, maybe start a rush
     function rightPlaced(ids) {
+        missRun = 0;
         if (quietBoard()) return; // no clock to add to
         const fresh = ids.filter(id => !rewarded.has(id));
         if (!fresh.length) return;
@@ -3434,6 +3450,7 @@
             // A frozen clock (❄️ booster) stands still; the seconds still count toward stars
             if (freezeLeft > 0) freezeLeft--; else timeLeft--;
             boardSecs++;
+            hammerTick();
             if (rushLeft > 0) rushLeft--;
             updateTimerUI();
             if (!freezeLeft && timeLeft > 0 && timeLeft <= 10) Sound.tick();
@@ -3460,7 +3477,7 @@
         cancelDrag();
         setPaused(true);
         Sound.lose();
-        const left = trayState.length;
+        const left = tilesLeft();
         const buttons = [];
 
         // Spend a collected wizard: a full minute (never past the cap), points kept.
@@ -5134,7 +5151,8 @@
         rng = Math.random; // the deal is done: back to chance
         // Fog, chains, ice and bombs (none on a quiet board or today's puzzle)
         placeBlockers(noSurprises() ? {} : blockerPlan(), missingPos);
-        minSteps += blockers.filter(b => b && b.kind === 'ice').length; // a crack is a move too
+        minSteps += blockers.filter(b => b && b.kind === 'ice').length; // a hammer blow is a move too
+        addHammer();
         initialSnap = snapshot();
         undoStack = [];
         wheelAngle = null; // centre the wheel on the middle tile
@@ -5393,11 +5411,64 @@
         return false;
     }
 
-    // The right tile on ice: the ice cracks, the tile stays in the wheel
+    // The right tile on ice used to crack it; now ice only breaks under the
+    // 🔨 hammer (or the 🪄 wand), so a tile on ice just bounces, no penalty.
     function crackIce(index) {
         blockers[index].cracked = true;
         steps++;
         blockFx.push(['crack', index]);
+        return true;
+    }
+    function iceBounce(index) {
+        requestAnimationFrame(() => {
+            rejectMove(document.querySelector(`.slot[data-index="${index}"]`));
+            document.querySelector(`.slot[data-index="${index}"] .blk`)?.classList.add('rattle');
+        });
+        if (iceToldAt !== turnToken) { iceToldAt = turnToken; toast(t('iceBounceT'), t('iceBounceS')); }
+        return false;
+    }
+
+    /* 🔨 The ice hammer (Meni's idea, #27). A board with ice gets a hammer
+       in the wheel. It takes HAMMER_FORM_S seconds of clock to form, shown
+       by a shade that a clockwise sweep lifts off it; until then it can't be
+       used. Put it on an iced slot and the ice shatters in one blow, then it
+       forms again for the next ice. When no ice is left it is gone. It is not
+       a tile: it never counts toward winning, undo leaves it as it is, and
+       a wrong slot just bounces it, no penalty. */
+    const HAMMER_FORM_S = 10;
+    let iceToldAt = null;
+    function hammerItem() { return trayState.find(x => x.hammer) || null; }
+    function iceLeft() { return blockers.some(b => b && b.kind === 'ice' && !b.cracked); }
+    function addHammer() {
+        if (iceLeft() && !hammerItem()) trayState.push({ id: 'hammer', hammer: true, formLeft: HAMMER_FORM_S });
+    }
+    function tilesLeft() { return trayState.filter(x => !x.hammer).length; }
+    function hammerTick() {
+        const h = hammerItem();
+        if (!h || h.formLeft <= 0) return;
+        h.formLeft--;
+        const el = document.querySelector('#traySlots .hammer-tile');
+        if (el) el.style.setProperty('--formed', ((HAMMER_FORM_S - h.formLeft) / HAMMER_FORM_S * 360) + 'deg');
+        if (h.formLeft === 0) {
+            el?.classList.add('ready');
+            Sound.unlock();
+            if (!progress.hammerSeen) { progress.hammerSeen = true; saveProgress(); toast(t('hammerT'), t('hammerS')); }
+        }
+    }
+    function useHammer(index) {
+        const h = hammerItem();
+        const el = document.querySelector(`.slot[data-index="${index}"]`);
+        if (!h || h.formLeft > 0 || !iceAt(index)) {
+            requestAnimationFrame(() => rejectMove(el));
+            if (h && h.formLeft > 0) toast(t('hammerWaitT'), t('hammerWaitS', { s: h.formLeft }));
+            return false;
+        }
+        blockers[index] = null;
+        blockFx.push(['shatter', index]);
+        steps++;
+        if (iceLeft()) h.formLeft = HAMMER_FORM_S;
+        else trayState.splice(trayState.indexOf(h), 1);
+        wheelAngle = null;
         return true;
     }
 
@@ -5419,6 +5490,9 @@
                 b.free = free;
             }
         });
+        // no ice left (the wand smashed the last): the hammer goes too
+        const h = hammerItem();
+        if (h && !iceLeft()) trayState.splice(trayState.indexOf(h), 1);
         const moves = steps - bombSteps;
         bombSteps = steps;
         if (moves > 0) blockers.forEach((b, i) => {
@@ -5539,6 +5613,14 @@
         const tile = document.createElement('div');
         tile.className = 'tile' + (isSelected ? ' selected' : '') + (data.locked ? ' locked-tile' : '');
 
+        if (data.hammer) {
+            tile.classList.add('hammer-tile');
+            if (data.formLeft <= 0) tile.classList.add('ready');
+            tile.style.setProperty('--formed', ((HAMMER_FORM_S - data.formLeft) / HAMMER_FORM_S * 360) + 'deg');
+            tile.innerHTML = '<span class="hammer-ico">🔨</span>';
+            return tile;
+        }
+
         if (data.pair) {
             // The two halves sit as they do on the board: the grid inherits the
             // page's direction, so in Hebrew its first column is on the right, like the board's
@@ -5640,7 +5722,7 @@
             empty.innerText = t('trayEmpty');
             trayEl.appendChild(empty);
         }
-        document.getElementById('trayCountDisplay').innerText = t('left', { n: trayState.length });
+        document.getElementById('trayCountDisplay').innerText = t('left', { n: tilesLeft() });
         layoutWheel();
         updateToolButtons();
 
@@ -6029,6 +6111,7 @@
         turnsThisBoard = 0;
         boardDiff = difficulty;
         goblinKicked = new Set();
+        missRun = 0;
         if (noSurprises()) return;
         const resting = goblinRest > 0;
         if (resting) goblinRest--;
@@ -6314,8 +6397,8 @@
        into points, like every time bonus). He walks in slowly enough, and
        grins long enough, to give a fair chance: about two seconds.
        ============================ */
-    const GOBLIN_WALK_MS = 1000;
-    const GOBLIN_GRIN_MS = 600;
+    const GOBLIN_WALK_MS = 1300; // he walks in a little slower...
+    const GOBLIN_GRIN_MS = 1700; // ...and grins longer: about 3 s to tap him away (was 1.6 s)
     const BONK_BONUS = 5;
 
     // Tiles a goblin could kick: placed by the player, not in hand
@@ -6637,7 +6720,9 @@
 
     function restore(snap) {
         boardState = snap.board.map(x => x && { ...x });
-        trayState = snap.tray.map(copyTrayItem);
+        const h = hammerItem(); // the hammer is not undone: it stays as it is now
+        trayState = snap.tray.filter(x => !x.hammer).map(copyTrayItem);
+        if (h) trayState.push(h);
         clearSelection();
     }
 
@@ -6686,8 +6771,9 @@
     function placeFromTray(id, index) {
         const tIdx = trayState.findIndex(t => t.id === id);
         if (tIdx < 0 || boardState[index]?.locked) return false;
-        if (chainLocked(index)) return chainBounce(index); // right or wrong alike (see "Blockers")
         const item = trayState[tIdx];
+        if (item.hammer) return useHammer(index);
+        if (chainLocked(index)) return chainBounce(index); // right or wrong alike (see "Blockers")
 
         if (item.pair) {
             // A tap on either half's slot puts both
@@ -6711,7 +6797,7 @@
             missedIds.add(item.id);
             return wrongMove(index);
         }
-        if (iceAt(index)) return crackIce(index); // the first right tap only cracks it
+        if (iceAt(index)) return iceBounce(index); // only the 🔨 hammer breaks ice
         pushUndo();
         trayState.splice(tIdx, 1);
         const placed = plainTile(item);
@@ -6840,11 +6926,32 @@
     // A wrong move: the slot shakes (after the render that may follow) and it costs a move
     // A wrong move also costs 5 seconds off the clock, and the bar shows it
     const WRONG_PENALTY = 5;
+    /* Three wrong moves in a row (Meni, #27): the third costs 10 seconds
+       instead of 5 and wakes trouble: a goblin, an earthquake (a board turn)
+       or a super spin, at random among those this board allows. A right
+       move starts the count again. From the goblin levels on; below them
+       only the 10 seconds. Never on today's puzzle, zen or the tutorial. */
+    const MISS_RUN = 3, MISS_RUN_PENALTY = 10;
+    let missRun = 0;
     function wrongMove(index) {
         steps++;
         mistakes++;
         requestAnimationFrame(() => rejectMove(document.querySelector(`.slot[data-index="${index}"]`)));
         if (quietBoard()) return false;
+        missRun++;
+        if (missRun >= MISS_RUN && !noSurprises()) {
+            missRun = 0;
+            loseTime(MISS_RUN_PENALTY);
+            toast(t('mistakeT'), t('mistakeS'));
+            if (level >= WRECK_FROM_LEVEL && !gameOver) {
+                const kinds = ['goblin'];
+                if (!(N === 6 && turnsThisBoard >= SIX_TURNS_MAX)) kinds.push('turn', 'spin');
+                const kind = kinds[Math.floor(Math.random() * kinds.length)];
+                wrecks.unshift({ at: boardSecs, kind });
+                setTimeout(maybeWreck, 600);
+            }
+            return false;
+        }
         loseTime(WRONG_PENALTY);
         return false;
     }
@@ -6872,7 +6979,7 @@
             if (boardState[from]) missedIds.add(boardState[from].id);
             return wrongMove(to);
         }
-        if (iceAt(to)) return crackIce(to);
+        if (iceAt(to)) return iceBounce(to);
         pushUndo();
         [boardState[from], boardState[to]] = [boardState[to], boardState[from]];
         steps++;
@@ -7198,7 +7305,7 @@
         document.getElementById('chipCols').className = 'chip' + (colsV ? ' valid' : '');
         document.getElementById('chipUnique').className = 'chip' + (params.unique && uniqV ? ' valid' : '');
 
-        const won = rowsV && colsV && uniqV && trayState.length === 0;
+        const won = rowsV && colsV && uniqV && tilesLeft() === 0;
 
         // A chime when a line newly completes — rising if lines come quickly
         // (each within 5 seconds of the last). The second line in such a run

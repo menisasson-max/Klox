@@ -1346,6 +1346,8 @@
         }
         /* Zen: no clock, no score, nothing collected; the board gets the room */
         body.zen .clock, body.zen .goal-strip, body.zen #xpStat, body.zen #streakStat, body.zen #winStat, body.zen .wiz-stash { display: none; }
+        /* Today's puzzle is the same for everyone: no wizards to spend on it */
+        body.daily .wiz-stash { display: none; }
         body.zen #levelBadge { visibility: hidden; }
         body.zen .board-wrapper { --wiz-strip: 0px; }
         .shout.zen { --shout-dark: #065f46; --shout-glow: rgba(16, 185, 129, 0.9); }
@@ -1477,6 +1479,126 @@
         .line.tut-hl { border: 3px solid var(--accent) !important; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent), 0 0 18px var(--accent); animation: pulse 1s infinite; }
         .chip.tut-hl { border-color: var(--accent); color: var(--text-main); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
         .slot.tut-hl { box-shadow: inset 0 0 0 3px var(--gold), 0 0 14px var(--gold); }
+
+        /* Today's puzzle: a pill in the status bar, ringed until it is played */
+        .daily-btn {
+            display: flex; align-items: center; gap: 3px;
+            padding: 2px 9px; border-radius: 999px;
+            border: 1px solid var(--border-color); background: var(--bg-surface);
+            color: var(--text-main); font: inherit; font-size: 0.85rem; cursor: pointer; white-space: nowrap;
+        }
+        .daily-btn.todo { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent); }
+        .daily-btn b { color: var(--success); }
+        body.zen .daily-btn, body.tut .daily-btn { display: none; }
+        .level-badge { cursor: pointer; }
+
+        /* Boosters, bought with 💎: a compact row beside undo and reset */
+        .boosters { display: flex; gap: 6px; }
+        .boost-btn {
+            position: relative;
+            width: 52px; height: 36px; padding: 0;
+            border-radius: 12px; border: 1px solid var(--border-color);
+            background: var(--bg-surface); color: var(--text-main); font: inherit;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            line-height: 1; cursor: pointer;
+            transition: transform 0.15s ease, opacity 0.2s ease;
+        }
+        .boost-btn .ico { font-size: 0.95rem; }
+        .boost-btn .price { margin-top: 2px; font-size: 0.6rem; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; direction: ltr; }
+        .boost-btn:active:not(:disabled) { transform: scale(0.9); }
+        .boost-btn:disabled { opacity: 0.38; filter: grayscale(1); cursor: default; }
+        .boost-btn.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); opacity: 1; filter: none; }
+        body.no-boost .boosters { display: none; }
+        @media (max-height: 760px) {
+            .boost-btn { height: 30px; width: 50px; }
+            .boost-btn .ico { font-size: 0.85rem; }
+            .boost-btn .price { margin-top: 1px; }
+        }
+        .spend {
+            position: fixed; z-index: 190; pointer-events: none;
+            transform: translate(-50%, -50%);
+            font-weight: 800; font-size: 0.95rem; color: var(--gold); white-space: nowrap; direction: ltr;
+            text-shadow: 0 1px 2px var(--shadow);
+            animation: bonusUp 1.1s ease-out forwards;
+        }
+
+        /* What is switched on right now (🛡️ shield, ❄️ freeze), above the clock's right end */
+        .buffs {
+            position: absolute;
+            right: calc((100cqw - var(--bw)) / 2 + 2px);
+            bottom: calc(var(--bw) + 30px);
+            height: 30px;
+            display: flex; gap: 8px; align-items: center;
+            direction: ltr;
+            pointer-events: none;
+        }
+        .buff { font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 2px; animation: pop 0.35s ease; }
+        .buff small { font-size: 0.8rem; color: var(--text-main); font-variant-numeric: tabular-nums; }
+        body.zen .buffs, body.tut .buffs { display: none; }
+
+        /* Freeze: the clock bar ices over and stops */
+        .clock.frozen { border-color: #7dd3fc; box-shadow: 0 0 10px rgba(125, 211, 252, 0.75); }
+        .clock.frozen .clock-fill { background: linear-gradient(90deg, #bae6fd, #e0f2fe, #7dd3fc); animation: none; }
+        .clock.frozen::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: repeating-linear-gradient(60deg, rgba(255, 255, 255, 0.55) 0 2px, transparent 2px 10px);
+        }
+
+        /* Hint: the slot the wheel's top tile belongs in, and that tile */
+        .slot.hint { box-shadow: inset 0 0 0 3px var(--gold), 0 0 16px var(--gold); animation: pulse 1s infinite; }
+        .tray-slot.hinted { border-color: var(--gold); box-shadow: 0 0 14px var(--gold); }
+
+        /* A stash with wizards in it glows: tap it for time */
+        .wiz-stash.has::before {
+            content: ''; position: absolute; inset: -6px -10px; border-radius: 999px; z-index: -1;
+            background: radial-gradient(closest-side, rgba(167, 139, 250, 0.55), transparent);
+            animation: wizHalo 1.6s ease-in-out infinite;
+        }
+        @keyframes wizHalo { 0%, 100% { opacity: 0.45; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
+
+        /* A goblin on his way in can be tapped; his hit area is much bigger than he is */
+        .wiz-fly.goblin-hit { pointer-events: auto; cursor: pointer; touch-action: none; }
+        .wiz-fly.goblin-hit::after { content: ''; position: absolute; inset: -35%; border-radius: 50%; }
+        .shout.bonk { --shout-dark: #7c2d12; --shout-glow: rgba(251, 146, 60, 0.9); }
+        .shout.bonk b { color: #fed7aa; }
+
+        /* The hard board you chose */
+        .board-container.hard {
+            border: 2px solid var(--danger);
+            box-shadow: 0 0 22px color-mix(in srgb, var(--danger) 35%, transparent), 0 10px 30px var(--shadow);
+        }
+
+        /* Daily result: the share grid, and the copy box when the clipboard is refused */
+        .daily-block { margin: -4px 0 12px; }
+        .share-pre { font-family: inherit; white-space: pre; line-height: 1.15; font-size: 1.05rem; direction: ltr; margin-bottom: 6px; }
+        .share-box {
+            width: 100%; height: 150px; padding: 8px; border-radius: 10px;
+            border: 1px solid var(--border-color); background: var(--bg-slot); color: var(--text-main);
+            font: inherit; font-size: 0.8rem; direction: ltr; resize: none;
+            user-select: text; -webkit-user-select: text;
+        }
+        .daily-meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
+        .daily-meta b { color: var(--text-main); }
+
+        /* Achievements & records */
+        .rec-sizes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+        .rec-size { background: var(--bg-slot); border-radius: 12px; padding: 7px 2px; text-align: center; font-size: 0.72rem; color: var(--text-muted); }
+        .rec-size b { display: block; font-size: 0.95rem; color: var(--text-main); margin-bottom: 2px; }
+        .rec-size span { display: block; font-variant-numeric: tabular-nums; }
+        .rec-days { display: flex; gap: 4px; }
+        .rec-days span {
+            flex: 1; text-align: center; padding: 6px 0; border-radius: 10px;
+            background: var(--bg-slot); font-size: 0.8rem; color: var(--text-muted);
+        }
+        .rec-days span i { display: block; font-style: normal; font-size: 0.62rem; }
+        .ach-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .ach-item {
+            padding: 8px; border-radius: 12px; text-align: start;
+            background: color-mix(in srgb, var(--gold) 14%, var(--bg-slot)); border: 1px solid var(--gold);
+            font-size: 0.82rem; font-weight: 800; color: var(--text-main);
+        }
+        .ach-item small { display: block; font-weight: 500; font-size: 0.7rem; color: var(--text-muted); }
+        .ach-item.locked { background: var(--bg-slot); border-color: var(--border-color); color: var(--text-muted); filter: grayscale(1); opacity: 0.75; }
 
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; transition: none !important; }
@@ -1649,6 +1771,7 @@
         <span class="stat streak" id="streakStat" title="ימים ברצף" data-i18n-title="streakTitle">🔥 <b id="streakDisplay">0</b></span>
         <span class="stat wins" id="winStat" title="ניצחונות ברצף" data-i18n-title="winStreakTitle">⚡ <b id="winStreakDisplay">0</b></span>
         <span class="stat" id="xpStat" title="נקודות" data-i18n-title="points">💎 <b id="xpDisplay">0</b></span>
+        <button class="daily-btn" id="dailyBtn" title="החידה היומית" data-i18n-title="dailyPuzzle">📅<b id="dailyMark"></b></button>
     </div>
 
     <!-- Goal strip -->
@@ -1670,6 +1793,7 @@
     <!-- Board Area -->
     <div class="board-wrapper">
         <div class="wiz-stash" id="wizStash"></div>
+        <div class="buffs" id="buffs"></div>
         <!-- The clock: a bar above the board that drains as time runs out -->
         <div class="clock" id="clockBar">
             <div class="clock-fill" id="clockFill"></div>
@@ -1695,6 +1819,13 @@
                 <path d="M3 3v5h5"></path>
             </svg>
         </button>
+        <!-- Boosters: bought with 💎, greyed (price still shown) when out of reach -->
+        <div class="boosters" id="boosters">
+            <button class="boost-btn" data-boost="hint" title="רמז" data-i18n-title="b_hint"><span class="ico">💡</span><span class="price"></span></button>
+            <button class="boost-btn" data-boost="freeze" title="הקפאה" data-i18n-title="b_freeze"><span class="ico">❄️</span><span class="price"></span></button>
+            <button class="boost-btn" data-boost="shield" title="מגן" data-i18n-title="b_shield"><span class="ico">🛡️</span><span class="price"></span></button>
+            <button class="boost-btn" data-boost="wand" title="מטה קסם" data-i18n-title="b_wand"><span class="ico">🪄</span><span class="price"></span></button>
+        </div>
     </div>
 
     <!-- Tray wheel -->
@@ -1796,12 +1927,28 @@
             </div>
         </div>
         <div class="set-group" style="margin-top: 8px;">
+            <button class="set-action" id="setDaily"><span data-i18n="dailyPuzzleRow">📅 החידה היומית</span><small id="setDailyNote"></small></button>
+            <button class="set-action" id="setRecords"><span data-i18n="recordsRow">🏆 הישגים ושיאים</span></button>
             <button class="set-action" id="setTutorial"><span data-i18n="howToPlay">❓ איך משחקים</span><small data-i18n="howToPlayNote">הדרכה קצרה על לוח קטן</small></button>
             <button class="set-action" id="setSkip"><span data-i18n="skipBoard">⏭ דלג על הלוח הזה</span><small data-i18n="countsAsLoss">נחשב הפסד</small></button>
             <button class="set-action danger" id="setReset"><span data-i18n="resetAll">🗑 איפוס כל ההתקדמות</span></button>
         </div>
 
         <button class="btn btn-primary" id="setDone" data-i18n="continue">המשך לשחק</button>
+    </div>
+</div>
+
+<!-- Achievements & records -->
+<div class="modal-overlay" id="recordsModal">
+    <div class="modal-content settings" role="dialog" aria-labelledby="recTitle">
+        <div class="set-head">
+            <h2 id="recTitle" data-i18n="records">הישגים ושיאים</h2>
+            <button class="icon-btn set-close" id="recClose" aria-label="סגור" data-i18n-aria="close">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div id="recBody"></div>
+        <button class="btn btn-primary" id="recDone" data-i18n="continue">המשך לשחק</button>
     </div>
 </div>
 
@@ -1915,6 +2062,8 @@
         },
         // the goblin: a cheeky up-and-down cackle
         goblin() { [392, 330, 440, 330, 494].forEach((f, i) => this.tone(f, { type: 'square', dur: 0.08, vol: 0.035, delay: i * 0.09 })); },
+        // a goblin tapped away: a hollow bonk and a rising whistle
+        bonk() { this.tone(260, { type: 'square', dur: 0.08, slideTo: 120, vol: 0.1 }); this.tone(500, { dur: 0.45, slideTo: 1600, vol: 0.05, delay: 0.08 }); },
         kick() { this.tone(140, { type: 'triangle', dur: 0.18, slideTo: 60, vol: 0.16 }); this.tone(900, { dur: 0.25, slideTo: 300, vol: 0.04, delay: 0.05 }); },
         wand() { [1319, 1568, 1976].forEach((f, i) => this.tone(f, { dur: 0.14, vol: 0.05, delay: i * 0.07 })); },
         zap() { this.tone(1800, { type: 'sawtooth', dur: 0.2, slideTo: 600, vol: 0.04 }); this.tone(2400, { dur: 0.3, vol: 0.03, delay: 0.08 }); },
@@ -1962,14 +2111,14 @@
             trayLeft: '\nנשארו {n} אריחים בגלגל.', moreSecs: '⏳ עוד {s} שניות', noFinish: 'לא, סיים את הלוח',
             wizMinute: '🧙 גמדון: עוד דקה (יש לך {n})', wizAgain: 'הזמן נגמר שוב!\nגמדון נותן עוד דקה.',
             wizHint: '\n🧙 גמדון נותן דקה שלמה — והנקודות נשמרות.',
-            wizFoundT: '🧙 מצאת גמדון!', wizFoundS: 'הוא מחכה לך למעלה. כשהזמן נגמר — גמדון נותן עוד דקה',
-            wizStashT: '🧙 גמדונים: {n}', wizStashS: 'כשהזמן נגמר, כל גמדון נותן עוד דקה',
+            wizFoundT: '🧙 מצאת גמדון!', wizFoundS: 'הוא מחכה לך למעלה. הקש עליו בכל רגע — או כשהזמן נגמר — לעוד דקה',
+            wizStashT: '🧙 גמדונים: {n}', wizStashS: 'הקש על הגמדונים בכל רגע: כל אחד מוסיף דקה לשעון',
             goldenT: '✨ לוח זהב!', goldenS: 'הנקודות על הלוח הזה כפולות',
             turnT: '🔄 הלוח הסתובב!', turnS: 'מרמה 10 הלוח יכול להסתובב באמצע. הצורות נשארות ישרות, אבל המקומות שלהן זזים',
             wandT: '🪄 מטה קסם!', wandS: 'סיימת שורה ועמודה נכונות במהלך אחד, אז אריח סימן שאלה מהגלגל עף למקום הנכון שלו',
             wandWizT: '🪄🧙 מטה קסם: גמדון!', wandWizS: 'אין סימן שאלה בגלגל, אז המטה הביא לך גמדון. כשהזמן נגמר הוא נותן עוד דקה',
             mysteryWinT: '❓🎉 פיצחת את סימן השאלה!', mysteryWinS: 'עוד 20 שניות על השעון!', mysteryWinBig: '+20 שניות!',
-            goblinT: '👺 שדון!', goblinS: 'מרמה 10 שדונים יכולים לבעוט אריח שהנחת בחזרה לגלגל. ברמת קושי גבוהה הם באים יותר',
+            goblinT: '👺 שדון!', goblinS: 'מרמה 10 שדונים יכולים לבעוט אריח שהנחת בחזרה לגלגל. הקש על השדון כשהוא נכנס — והוא בורח',
             zenMode: '🧘 מצב זן', zenNote: 'בלי שעון, בלי הפתעות ובלי נקודות', zenSize: 'גודל לוח בזן', zenRank: 'מצב זן', zenDone: 'כל הכבוד! 🎊',
             difficulty: 'רמת קושי', difficultyNote: 'מהלוח הבא: כמה הורסים מגיעים, מרמה 10 · בזן: כמה משבצות ריקות', easy: 'קל', medium: 'בינוני', hard: 'קשה',
             extendedNote: '⏳ נפתר עם זמן נוסף — חצי נקודות', tiles: '🧩 אריחים',
@@ -2015,6 +2164,29 @@
             tutTapT: 'הקש על המשבצת שאליה שייך האריח שבראש הגלגל',
             tutTapS_a: 'הצבע שחסר בשורה, הציור שחסר בעמודה', tutTapS_s: 'הצבע שחסר בשורה, הצורה שחסרה בעמודה',
             tutSkip: 'דלג ⏭', tutDone: 'מוכן לשחק! 🎉',
+            dailyPuzzle: 'החידה היומית', dailyPuzzleRow: '📅 החידה היומית', recordsRow: '🏆 הישגים ושיאים', records: 'הישגים ושיאים',
+            dailyQ: '📅 החידה של היום', dailyM: '{d} · לוח {n}×{n}\nאותו לוח לכולם היום. רק הניסיון הראשון נחשב — בלי עוזרים ובלי הפתעות.',
+            dailyForfeit: '\nהלוח שאתה באמצע שלו ייחשב כדילוג.', dailyStart: '▶ התחל', dailyDoneQ: '📅 החידה של היום ✓',
+            dailyPractice: '🔁 שחק שוב (אימון)', share: '📤 שתף', copied: '📋 הועתק!', copiedS: 'הדבק את התוצאה איפה שתרצה',
+            copyBox: 'העתק מכאן:', dailySolvedT: '📅 פתרת את החידה היומית!',
+            dailyLostM: 'הניסיון של היום הסתיים. אפשר לשחק שוב לאימון — ומחר מחכה חידה חדשה.',
+            dailyMeta: '⏱ {t} · ❌ {m} טעויות', dailyStreakLine: '📅 {n} ימים ברצף של חידה יומית',
+            dailyUnfinished: 'לא הסתיים', practiceT: '🔁 אימון', practiceM: 'אימון — לא נחשב ולא מזכה בנקודות.',
+            practiceS: 'החידה של היום שוב — הפעם זה לא נחשב', dailyBusy: '📅 אתה כבר בחידה של היום',
+            dailyNotYet: 'עוד לא שיחקת היום', dailyPlayedToday: '✓ שוחקה היום', dailyToday: '📅 החידה של היום',
+            b_hint: 'רמז: איפה האריח שבראש הגלגל', b_freeze: 'הקפאה: השעון עוצר ל־10 שניות', b_shield: 'מגן: עוצר את השדון או הסיבוב הבא', b_wand: 'מטה קסם: אריח עף למקומו',
+            hintT: '💡 רמז', hintS: 'האריח שבראש הגלגל שייך למשבצת המהבהבת',
+            freezeT: '❄️ השעון קפוא!', freezeS: 'ל־{s} שניות השעון לא זז — ממשיכים לשחק',
+            shieldT: '🛡️ מגן פעיל', shieldS: 'השדון או הסיבוב הבא ייעצרו (המגן נשמר גם ללוחות הבאים)',
+            shieldGob: '🛡️ המגן עצר שדון!', shieldTurn: '🛡️ המגן עצר את הסיבוב!', shieldShout: 'נחסם!',
+            bonkShout: 'השדון גורש!', bonkT: '👊 גירשת שדון!', bonkS: 'הוא לא בעט באף אריח — ועוד {s} שניות על השעון',
+            wizFullT: '🧙 השעון מלא', wizFullS: 'שמור את הגמדון לרגע שהזמן אוזל',
+            hardQ: '💪 לוח קשה?', hardM: 'יותר משבצות ריקות ופחות זמן לכל אחת — והנקודות על הלוח כפולות.\nאו לוח רגיל, כרגיל.',
+            hardYes: '💪 כן, \u2066×2\u2069 💎', hardNo: 'לוח רגיל', hardT: '💪 לוח קשה', hardS: 'הנקודות על הלוח הזה כפולות', hardX2: '💪 לוח קשה \u2066×2\u2069',
+            newBest: '⏱ שיא זמן חדש ל־{n}×{n}!',
+            recSizes: '📏 לפי גודל לוח', recDaily: '📅 החידה היומית', recAch: '🏅 הישגים {n}/{t}',
+            recTotal: '⭐ {s} כוכבים · {b} לוחות מושלמים', recDailySum: 'רצף {s} · שיא {b} · נפתרו {w} מתוך {p}',
+            recBestT: 'זמן שיא', recNone: '—',
         },
         en: {
             appName: 'Klox', a_settings: 'Settings', resume: 'Resume', a_pause: 'Pause/Resume', a_theme: 'Dark/Light', a_sound: 'Sound',
@@ -2035,14 +2207,14 @@
             trayLeft: '\n{n} tiles left on the wheel.', moreSecs: '⏳ {s} more seconds', noFinish: 'No, end the board',
             wizMinute: '🧙 Wizard: one more minute ({n} left)', wizAgain: 'Time’s up again!\nA wizard gives you another minute.',
             wizHint: '\n🧙 A wizard gives a full minute — and you keep your points.',
-            wizFoundT: '🧙 You found a wizard!', wizFoundS: 'He’s waiting up top. When time runs out, a wizard gives you another minute',
-            wizStashT: '🧙 Wizards: {n}', wizStashS: 'When time runs out, each wizard gives another minute',
+            wizFoundT: '🧙 You found a wizard!', wizFoundS: 'He’s waiting up top. Tap him any time — or when time runs out — for another minute',
+            wizStashT: '🧙 Wizards: {n}', wizStashS: 'Tap the wizards any time: each adds a minute to the clock',
             goldenT: '✨ Golden board!', goldenS: 'Points on this board are doubled',
             turnT: '🔄 The board turned!', turnS: 'From level 10 the board can turn mid-game. The pictures stay upright, but their places move',
             wandT: '🪄 Magic wand!', wandS: 'You finished a right row and column in one move, so a question-mark tile flew to its right place',
             wandWizT: '🪄🧙 Magic wand: a wizard!', wandWizS: 'No question mark in the wheel, so the wand brought you a wizard. When time runs out he gives another minute',
             mysteryWinT: '❓🎉 You cracked the question mark!', mysteryWinS: '20 more seconds on the clock!', mysteryWinBig: '+20 sec!',
-            goblinT: '👺 A goblin!', goblinS: 'From level 10 goblins can kick a tile you placed back to the wheel. Harder settings bring more of them',
+            goblinT: '👺 A goblin!', goblinS: 'From level 10 goblins can kick a tile you placed back to the wheel. Tap one as he walks in to shoo him off',
             zenMode: '🧘 Zen mode', zenNote: 'No clock, no surprises, no points', zenSize: 'Zen board size', zenRank: 'Zen mode', zenDone: 'Well done! 🎊',
             difficulty: 'Difficulty', difficultyNote: 'From the next board: how often wreckers come, from level 10 · In zen: how many slots are empty', easy: 'Easy', medium: 'Medium', hard: 'Hard',
             extendedNote: '⏳ Solved on extra time — half points', tiles: '🧩 Tiles',
@@ -2088,6 +2260,29 @@
             tutTapT: 'Tap the slot where the wheel’s top tile goes',
             tutTapS_a: 'The colour its row lacks, the picture its column lacks', tutTapS_s: 'The colour its row lacks, the shape its column lacks',
             tutSkip: 'Skip ⏭', tutDone: 'Ready to play! 🎉',
+            dailyPuzzle: 'Today’s puzzle', dailyPuzzleRow: '📅 Daily puzzle', recordsRow: '🏆 Achievements & records', records: 'Achievements & records',
+            dailyQ: '📅 Today’s puzzle', dailyM: '{d} · {n}×{n} board\nThe same board for everyone today. Only your first try counts — no helpers, no surprises.',
+            dailyForfeit: '\nThe board you are on counts as skipped.', dailyStart: '▶ Start', dailyDoneQ: '📅 Today’s puzzle ✓',
+            dailyPractice: '🔁 Play again (practice)', share: '📤 Share', copied: '📋 Copied!', copiedS: 'Paste your result anywhere',
+            copyBox: 'Copy it from here:', dailySolvedT: '📅 Daily puzzle solved!',
+            dailyLostM: 'Today’s try is over. Replay it for practice — and a new one is waiting tomorrow.',
+            dailyMeta: '⏱ {t} · ❌ {m} mistakes', dailyStreakLine: '📅 {n}-day daily puzzle streak',
+            dailyUnfinished: 'not finished', practiceT: '🔁 Practice', practiceM: 'Practice — it doesn’t count and scores no points.',
+            practiceS: 'Today’s puzzle again — this one doesn’t count', dailyBusy: '📅 You’re on today’s puzzle',
+            dailyNotYet: 'Not played yet today', dailyPlayedToday: '✓ Played today', dailyToday: '📅 Today’s puzzle',
+            b_hint: 'Hint: where the top tile goes', b_freeze: 'Freeze: the clock stops for 10 seconds', b_shield: 'Shield: blocks the next goblin or turn', b_wand: 'Wand: a tile flies to its place',
+            hintT: '💡 Hint', hintS: 'The wheel’s top tile belongs in the glowing slot',
+            freezeT: '❄️ Clock frozen!', freezeS: 'For {s} seconds the clock stands still — keep playing',
+            shieldT: '🛡️ Shield on', shieldS: 'The next goblin or board turn is stopped (it keeps to later boards too)',
+            shieldGob: '🛡️ Your shield stopped a goblin!', shieldTurn: '🛡️ Your shield stopped the turn!', shieldShout: 'BLOCKED!',
+            bonkShout: 'Goblin bonked!', bonkT: '👊 Goblin bonked!', bonkS: 'He kicked nothing — and {s} more seconds on the clock',
+            wizFullT: '🧙 The clock is full', wizFullS: 'Save the wizard for when time runs low',
+            hardQ: '💪 A hard board?', hardM: 'More empty slots and less time for each — and the board pays double.\nOr a normal board, as usual.',
+            hardYes: '💪 Yes, ×2 💎', hardNo: 'Normal board', hardT: '💪 Hard board', hardS: 'Points on this board are doubled', hardX2: '💪 Hard board ×2',
+            newBest: '⏱ New best time on {n}×{n}!',
+            recSizes: '📏 By board size', recDaily: '📅 Daily puzzle', recAch: '🏅 Achievements {n}/{t}',
+            recTotal: '⭐ {s} stars · {b} perfect boards', recDailySum: 'Streak {s} · best {b} · solved {w} of {p}',
+            recBestT: 'Best time', recNone: '—',
         },
     };
     let lang = store.get('klox_lang') === 'en' ? 'en' : 'he';
@@ -2349,7 +2544,14 @@
        On top come the clock's overflow points (a bonus second that would push
        the clock past its cap becomes 3 💎, see the timer) and the daily-goal
        bonus. Solving on the 30 bought seconds pays half the tile points; a
-       wizard's minute costs nothing.
+       wizard's minute costs nothing. A hard board the player chose (see
+       "Hard board") pays × 2 on top, like a golden one.
+
+       Spending: points are also what boosters cost (see "Boosters"). The
+       level is read off everything ever earned (progress.points, which
+       only goes up); what has been spent is kept apart (progress.spent).
+       The 💎 a player sees and can spend is the balance, earned − spent,
+       never below 0. So buying a booster never lowers the level.
 
        Stars are the one signal for how well a board went: time used against
        par (half the starting clock) and how many moves went wrong. Fast and
@@ -2419,6 +2621,10 @@
             // stars, and the best rating at each player level
             starsTotal: 0, starBoards: [0, 0, 0], bestStars: {},
             newSizeLeft: 0, // wins left on the ×1.5 "new board size" bonus
+            spent: 0,       // 💎 spent on boosters; the balance is points − spent
+            shieldOn: false, // a bought 🛡️ waiting for the next goblin or turn, on any board
+            starsBySize: {}, bestTime: {}, // ⭐ won and fastest win (seconds) per board size
+            dailyHistory: {}, // 'YYYY-MM-DD' → today's puzzle: { won, stars, secs, mistakes, grid, n }
         };
     }
 
@@ -2437,12 +2643,23 @@
         if (!Array.isArray(base.starBoards) || base.starBoards.length !== 3) base.starBoards = fresh.starBoards;
         if (!base.bestStars || typeof base.bestStars !== 'object' || Array.isArray(base.bestStars)) base.bestStars = fresh.bestStars;
         if (!Number.isFinite(base.newSizeLeft)) base.newSizeLeft = 0;
+        // ...and saves from before boosters, records and the daily puzzle lack these
+        if (!Number.isFinite(base.spent) || base.spent < 0) base.spent = 0;
+        base.shieldOn = base.shieldOn === true;
+        ['starsBySize', 'bestTime', 'dailyHistory'].forEach(k => {
+            if (!base[k] || typeof base[k] !== 'object' || Array.isArray(base[k])) base[k] = {};
+        });
         return base;
     })();
     let level = levelInfo(progress.points).L;
 
     function saveProgress() {
         store.set(PROGRESS_KEY, JSON.stringify(progress));
+    }
+
+    // The 💎 the player has to spend (the level counts everything ever earned)
+    function balance() {
+        return Math.max(0, progress.points - progress.spent);
     }
 
     function dayKey(d = new Date()) {
@@ -2515,6 +2732,11 @@
         progress.starsTotal += stars;
         progress.starBoards[stars - 1]++;
         progress.bestStars[level] = Math.max(progress.bestStars[level] || 0, stars);
+        progress.starsBySize[N] = (progress.starsBySize[N] || 0) + stars;
+        // Best time per board size: seconds on the board, not counting a win on bought time
+        const prevBest = progress.bestTime[N];
+        const newBest = !extendedSolve && !!prevBest && boardSecs < prevBest;
+        if (!extendedSolve && (!prevBest || boardSecs < prevBest)) progress.bestTime[N] = boardSecs;
 
         // Points (see "Progress" above). Each multiplier's row shows only what it
         // adds, rounded, so the rows always sum to the total exactly.
@@ -2526,9 +2748,10 @@
         const starX = STAR_MULT[stars];
         const starPts = step(starX);
         const goldPts = golden ? step(2) : 0;
+        const hardPts = hard ? step(HARD_MULT) : 0;
         const streakX = streakMult(progress.winStreak);
         const streakPts = streakX > 1 ? step(streakX) : 0;
-        const newSize = progress.newSizeLeft > 0 && N === progress.maxN;
+        const newSize = !daily && progress.newSizeLeft > 0 && N === progress.maxN; // not on today's puzzle
         if (newSize) progress.newSizeLeft--;
         const newSizePts = newSize ? step(NEW_SIZE_MULT) : 0;
         const dailyBonus = dailyJustDone ? DAILY_BONUS : 0;
@@ -2548,7 +2771,7 @@
         if (levelInfo(progress.points).L >= 30) unlockAchievement('peak8', newAch);
 
         return {
-            tiles, perTile, tilePts, stars, starX, starPts, goldPts,
+            tiles, perTile, tilePts, stars, starX, starPts, goldPts, hardPts, newBest,
             winStreak: progress.winStreak, streakX, streakPts, newSize, newSizePts,
             overflow, dailyBonus, total, dailyJustDone, newAch, extendedSolve,
         };
@@ -2591,6 +2814,15 @@
     let wandBusy = false;      // a wand is throwing a tile
     let wandLines = new Set(); // row+column crossings that already brought a wand on this board
     let solution = [];         // the dealt board's answer, turned along with the board
+    let daily = null;          // {date, practice}: this board is that day's puzzle
+    let dailyNext = null;      // ...set just before initLevel deals it
+    let hard = false;          // this board is a hard one the player chose: × 2 points
+    let hardNext = false;      // ...set just before initLevel deals it
+    let hardAskedAt = -1;      // progress.played when the hard board was last offered
+    let mistakes = 0;          // wrong moves on this board
+    let missedIds = new Set(); // tiles that went somewhere wrong before they went right
+    let freezeLeft = 0;        // seconds the ❄️ booster still holds the clock
+    let hintId = null;         // the wheel tile the 💡 booster is pointing out
 
     /* ============================
        Timer
@@ -2636,10 +2868,14 @@
         el.classList.toggle('danger', danger);
         clockMax = Math.max(clockMax, timeLeft); // only a safety net: timeLeft never passes the cap
         const bar = document.getElementById('clockBar');
-        bar.classList.toggle('danger', danger && !rushLeft);
-        bar.classList.toggle('rush', rushLeft > 0);
+        bar.classList.toggle('danger', danger && !rushLeft && !freezeLeft);
+        bar.classList.toggle('rush', rushLeft > 0 && !freezeLeft);
+        bar.classList.toggle('frozen', freezeLeft > 0);
         document.getElementById('clockFill').style.width = (100 * Math.max(0, timeLeft) / clockMax).toFixed(2) + '%';
-        document.getElementById('clockRush').innerText = rushLeft > 0 ? t('rushOn', { s: rushLeft, x: RUSH_BONUS / RIGHT_BONUS }) : '';
+        document.getElementById('clockRush').innerText = freezeLeft > 0 ? '❄️ ' + freezeLeft
+            : rushLeft > 0 ? t('rushOn', { s: rushLeft, x: RUSH_BONUS / RIGHT_BONUS }) : '';
+        renderBuffs();
+        updateBoosters();
     }
 
     function clockCap() {
@@ -2720,11 +2956,12 @@
         timerInterval = setInterval(() => {
             if (isPaused || gameOver) return;
             if (quietBoard()) { boardSecs++; return; } // no clock in zen or the tutorial
-            timeLeft--;
+            // A frozen clock (❄️ booster) stands still; the seconds still count toward stars
+            if (freezeLeft > 0) freezeLeft--; else timeLeft--;
             boardSecs++;
             if (rushLeft > 0) rushLeft--;
             updateTimerUI();
-            if (timeLeft > 0 && timeLeft <= 10) Sound.tick();
+            if (!freezeLeft && timeLeft > 0 && timeLeft <= 10) Sound.tick();
             if (timeLeft > 0) { maybeRoll(); maybeWreck(); }
 
             if (timeLeft <= 0) {
@@ -2736,7 +2973,7 @@
 
     // the free extra time is offered once per board; wizards can keep it going
     function outOfTime() {
-        if (extended && !progress.wizards) endGame(false); else offerExtraTime();
+        if (extended && (!progress.wizards || daily)) endGame(false); else offerExtraTime();
     }
 
     const EXTRA_SECONDS = 30;
@@ -2751,8 +2988,9 @@
         const left = trayState.length;
         const buttons = [];
 
-        // Spend a collected wizard: a full minute (never past the cap), points kept
-        if (progress.wizards > 0) {
+        // Spend a collected wizard: a full minute (never past the cap), points kept.
+        // Not on today's puzzle, which is the same for everyone.
+        if (progress.wizards > 0 && !daily) {
             buttons.push({ label: t('wizMinute', { n: progress.wizards }), cls: 'btn-wizard', action: () => {
                 progress.wizards--;
                 saveProgress();
@@ -2779,7 +3017,7 @@
             setPaused(false);
         } });
 
-        const msg = (extended ? t('wizAgain') : t('extraQ', { s: EXTRA_SECONDS }) + (progress.wizards ? t('wizHint') : ''))
+        const msg = (extended ? t('wizAgain') : t('extraQ', { s: EXTRA_SECONDS }) + (progress.wizards && !daily ? t('wizHint') : ''))
             + (left ? t('trayLeft', { n: left }) : '');
         showDialog(t('timeUp'), msg, buttons);
     }
@@ -2792,6 +3030,7 @@
         document.getElementById('icon-play').style.display = p ? 'block' : 'none';
         if (p) clearInterval(timerInterval);
         else if (!gameOver) startTimer();
+        updateBoosters();
     }
 
     // The play button that takes the top tile's place while paused
@@ -2817,7 +3056,8 @@
     /* ============================
        Modal
        ============================ */
-    /* buttons: [{ label, cls, action }]. Nothing presses itself: the next board
+    /* buttons: [{ label, cls, action, stay }]. A button with stay (Share) does
+       its action and leaves the dialog open. Nothing presses itself: the next board
        always waits for the player. The end-of-board screen passes `counting`
        (a function, true while its score is still counting up): a tap anywhere
        on it while that runs calls `onSkip` (straight to the final totals)
@@ -2860,6 +3100,7 @@
             el.onclick = (e) => {
                 e.stopPropagation();
                 if (counting && counting()) { onSkip && onSkip(); return; }
+                if (b.stay) { if (b.action) b.action(); return; }
                 go();
             };
             press.push(go);
@@ -2873,7 +3114,11 @@
     }
 
     // The end-of-board screen: a tap anywhere on it skips the count, then continues
-    document.getElementById('dialogModal').addEventListener('click', () => { if (dialogTap) dialogTap(); });
+    // (the daily card, with its copy box, is left alone)
+    document.getElementById('dialogModal').addEventListener('click', (e) => {
+        if (e.target.closest('.daily-block')) return;
+        if (dialogTap) dialogTap();
+    });
 
     /* ============================
        Settings screen
@@ -2884,7 +3129,7 @@
     function refreshSettings() {
         const li = levelInfo(progress.points);
         $id('setLevel').innerText = li.L;
-        $id('setPoints').innerText = '💎 ' + progress.points.toLocaleString();
+        $id('setPoints').innerText = '💎 ' + balance().toLocaleString();
         $id('setNext').innerText = (li.need - li.into).toLocaleString();
 
         $id('segStyle').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === style));
@@ -2901,6 +3146,9 @@
         $id('rowZenSize').style.display = zen ? '' : 'none';
         $id('segZenSize').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.v === zenSize()));
         $id('setSkip').style.display = tutorial ? 'none' : '';
+        $id('setDaily').style.display = tutorial || zen ? 'none' : '';
+        const de = dailyEntry(dayKey());
+        $id('setDailyNote').innerText = de ? t('dailyPlayedToday') : t('dailyNotYet');
         $id('rowVibe').style.display = 'vibrate' in navigator ? '' : 'none';
     }
 
@@ -2975,6 +3223,14 @@
             initLevel();
         }
     });
+    $id('setDaily').addEventListener('click', () => {
+        closeSettings(false);
+        openDaily(true);
+    });
+    $id('setRecords').addEventListener('click', () => {
+        closeSettings(false);
+        openRecords(true);
+    });
     $id('setTutorial').addEventListener('click', () => {
         closeSettings(false);
         startTutorial();
@@ -3019,11 +3275,451 @@
     });
 
     /* ============================
-       Puzzle generation
+       Today's puzzle (📅)
+
+       One board a day, the same for everyone who plays on that calendar
+       date (the player's own date, YYYY-MM-DD): the date seeds the random
+       numbers that deal it (seededRng), so the answer, the empty slots and
+       the order of the wheel all come out the same. It is 5×5 — 6×6 on
+       Saturdays — at the middle of that size's difficulty, with the normal
+       clock and its time bonuses. To keep it equal nothing on it is left to
+       chance: no special tiles, golden board, wizards, wand, goblins or
+       turns, and no boosters or wizard minutes (the 30 bought seconds are
+       there, as for everyone).
+
+       Only the first try of the day counts, from the moment it starts, so
+       leaving it half-way uses it up. Solved, it pays points like any board
+       (no new-size bonus) and counts for the win streak, the day streak and
+       the daily goal; lost, it changes nothing but its own record. Replays
+       that day are practice: the same board, nothing scored or saved.
+
+       Each day's result is kept (progress.dailyHistory) with a card to
+       share: "Klox Daily <date> <stars> <time>", then the board as the
+       player saw it — ⬜ a tile that was given, 🟩 one placed right first
+       time, 🟨 one placed after it went somewhere wrong, ⬛ one never placed
+       — and the game's address. The puzzle streak counts days in a row with
+       the puzzle solved. Starting it mid-board drops that board; one with
+       moves on it counts as skipped (a loss).
        ============================ */
+    const GAME_URL = 'https://menisasson-max.github.io/Klox/';
+    const DAILY_T = 0.5; // where inside its size the puzzle sits
+
+    // A small seeded generator (a string hash into mulberry32): the same key gives the same numbers
+    function seededRng(key) {
+        let h = 1779033703 ^ key.length;
+        for (let i = 0; i < key.length; i++) {
+            h = Math.imul(h ^ key.charCodeAt(i), 3432918353);
+            h = (h << 13) | (h >>> 19);
+        }
+        let a = h >>> 0;
+        return () => {
+            a = (a + 0x6D2B79F5) | 0;
+            let x = Math.imul(a ^ (a >>> 15), 1 | a);
+            x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+            return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
+    function keyDate(k) {
+        const [y, m, d] = k.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    }
+    function dailySize(date) { return keyDate(date).getDay() === 6 ? 6 : 5; }
+    function dailyParams(date) {
+        const n = dailySize(date), cells = n * n;
+        const [f0, f1] = MISSING_FRAC[n];
+        const missing = Math.round(cells * (f0 + (f1 - f0) * DAILY_T));
+        return { N: n, t: DAILY_T, nextAt: null, missing, time: boardTime(missing, DAILY_T), guides: true, unique: n !== 6 };
+    }
+    function dailyEntry(date) { return progress.dailyHistory[date] || null; }
+
+    // m:ss
+    function clockText(secs) {
+        secs = Math.max(0, Math.round(secs || 0));
+        return Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0');
+    }
+
+    // The puzzle streak (days in a row solved, up to today or yesterday), the best one, and totals
+    function dailyStats() {
+        const h = progress.dailyHistory;
+        const keys = Object.keys(h).sort();
+        const won = k => !!(h[k] && h[k].won);
+        let cur = 0;
+        const d = new Date();
+        if (!h[dayKey(d)]) d.setDate(d.getDate() - 1); // today not played yet: the streak still stands
+        while (won(dayKey(d))) { cur++; d.setDate(d.getDate() - 1); }
+        let best = 0, run = 0, prev = null;
+        keys.forEach(k => {
+            if (!won(k)) { run = 0; prev = null; return; }
+            const at = keyDate(k);
+            run = prev && Math.round((at - prev) / 86400000) === 1 ? run + 1 : 1;
+            prev = at;
+            best = Math.max(best, run);
+        });
+        return { cur, best: Math.max(best, cur), played: keys.length, wins: keys.filter(won).length };
+    }
+
+    // The board as the player sees it, one emoji per slot (rows read right to left in Hebrew)
+    function dailyGrid() {
+        const rows = [];
+        for (let r = 0; r < N; r++) {
+            const row = [];
+            for (let c = 0; c < N; c++) {
+                const x = boardState[r * N + c];
+                row.push(!x ? '⬛' : x.locked ? '⬜' : missedIds.has(x.id) ? '🟨' : '🟩');
+            }
+            if (lang !== 'en') row.reverse();
+            rows.push(row.join(''));
+        }
+        return rows.join('\n');
+    }
+
+    function shareHead(date, e) {
+        return `Klox Daily ${date} ${e.won ? '⭐'.repeat(e.stars || 1) : '❌'} ${clockText(e.secs)}`;
+    }
+    function shareText(date) {
+        const e = dailyEntry(date);
+        return [shareHead(date, e), e.grid, GAME_URL].filter(Boolean).join('\n');
+    }
+
+    const escHtml = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    // The card on the result screens: the share text as it will look, time, mistakes, streak
+    function dailyBlockHtml(date) {
+        const e = dailyEntry(date);
+        const st = dailyStats();
+        const meta = e.secs != null ? t('dailyMeta', { t: clockText(e.secs), m: e.mistakes || 0 }) : t('dailyUnfinished');
+        return `<div class="daily-block" id="dailyBlock">
+            <div class="share-pre">${escHtml([shareHead(date, e), e.grid].filter(Boolean).join('\n'))}</div>
+            <div class="daily-meta">${escHtml(meta)}${st.cur ? '<br><b>' + escHtml(t('dailyStreakLine', { n: st.cur })) + '</b>' : ''}</div>
+        </div>`;
+    }
+
+    // Copy the card; if the clipboard says no, the share sheet; failing that, a box to copy from
+    function shareDaily(date) {
+        const text = shareText(date);
+        const box = () => {
+            const host = document.getElementById('dailyBlock');
+            if (!host) return;
+            let ta = host.querySelector('textarea');
+            if (!ta) {
+                const label = document.createElement('div');
+                label.className = 'daily-meta';
+                label.innerText = t('copyBox');
+                ta = document.createElement('textarea');
+                ta.className = 'share-box';
+                ta.readOnly = true;
+                host.append(label, ta);
+            }
+            ta.value = text;
+            ta.focus();
+            ta.select();
+        };
+        const viaShare = () => {
+            if (navigator.share) navigator.share({ text }).catch(err => { if (!err || err.name !== 'AbortError') box(); });
+            else box();
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => { toast(t('copied'), t('copiedS')); Sound.coin(); }, viaShare);
+        } else viaShare();
+    }
+
+    // Leaving a board that has moves on it: it counts as skipped, quietly
+    function forfeitBoard() {
+        progress.played++;
+        progress.winStreak = 0;
+        progress.failStreak++;
+        saveProgress();
+    }
+
+    function startDaily(practice) {
+        const date = dayKey();
+        // the counted try is used up as it starts
+        if (!practice) { progress.dailyHistory[date] = { won: false, n: dailySize(date) }; saveProgress(); }
+        dailyNext = { date, practice: !!practice };
+        initLevel();
+    }
+
+    // The 📅 button (and Settings → Daily puzzle): start today's puzzle, or see how it went
+    function openDaily(fromSettings = false) {
+        if (tutorial || gameOver) return;
+        const wasPaused = fromSettings ? settingsWasPaused : isPaused;
+        if (daily && !daily.practice) {
+            toast(t('dailyBusy'));
+            if (fromSettings && !wasPaused) setPaused(false);
+            return;
+        }
+        cancelDrag();
+        if (!isPaused) setPaused(true);
+        const back = () => { if (!wasPaused) setPaused(false); };
+        const date = dayKey();
+        const e = dailyEntry(date);
+        const forfeit = steps > 0 && !quietBoard() && !daily;
+        const go = practice => () => { if (forfeit) forfeitBoard(); startDaily(practice); };
+        if (!e) {
+            showDialog(t('dailyQ'), t('dailyM', { d: date, n: dailySize(date) }) + (forfeit ? t('dailyForfeit') : ''), [
+                { label: t('dailyStart'), cls: 'btn-primary', action: go(false) },
+                { label: t('cancel'), cls: 'btn-secondary', action: back },
+            ]);
+            return;
+        }
+        showDialog(t('dailyDoneQ'), forfeit ? t('dailyForfeit').trim() : '', [
+            { label: t('share'), cls: 'btn-primary', stay: true, action: () => shareDaily(date) },
+            { label: t('dailyPractice'), cls: 'btn-secondary', action: go(true) },
+            { label: t('close'), cls: 'btn-secondary', action: back },
+        ], { stars: e.won ? e.stars : 0, extraHtml: dailyBlockHtml(date) });
+    }
+
+    document.getElementById('dailyBtn').addEventListener('click', () => { Sound.select(); openDaily(); });
+
+    /* ============================
+       Achievements & records
+
+       From Settings or a tap on the level badge: stars and best time for
+       each board size, today's puzzle (streak, best streak, the last seven
+       days), and every achievement — the locked ones greyed, with what it
+       takes as the goal. Stars per size and best times are kept from the
+       version that brought this screen on.
+       ============================ */
+    function recordsHtml() {
+        const sizes = [3, 4, 5, 6, 7].map(n => {
+            const best = progress.bestTime[n];
+            return `<div class="rec-size"><b>${n}×${n}</b><span>⭐ ${progress.starsBySize[n] || 0}</span>`
+                + `<span title="${escHtml(t('recBestT'))}">⏱ ${best ? clockText(best) : t('recNone')}</span></div>`;
+        }).join('');
+        const st = dailyStats();
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const e = dailyEntry(dayKey(d));
+            const mark = !e ? '·' : e.won ? '⭐' + (e.stars || 1) : '✗';
+            const wd = d.toLocaleDateString(lang === 'en' ? 'en-US' : 'he-IL', { weekday: 'narrow' });
+            days.push(`<span>${mark}<i>${escHtml(wd)}</i></span>`);
+        }
+        const got = ACHIEVEMENTS.filter(a => progress.achievements.includes(a.id)).length;
+        const ach = ACHIEVEMENTS.map(a => {
+            const on = progress.achievements.includes(a.id);
+            return `<div class="ach-item${on ? '' : ' locked'}">${on ? '🏅' : '🔒'} ${escHtml(a.name)}<small>${escHtml(a.desc)}</small></div>`;
+        }).join('');
+        return `<div class="daily-meta">${escHtml(t('recTotal', { s: progress.starsTotal.toLocaleString(), b: progress.starBoards[2] }))}</div>
+            <div class="set-section">${escHtml(t('recSizes'))}</div><div class="rec-sizes">${sizes}</div>
+            <div class="set-section">${escHtml(t('recDaily'))}</div>
+            <div class="daily-meta">${escHtml(t('recDailySum', { s: st.cur, b: st.best, w: st.wins, p: st.played }))}</div>
+            <div class="rec-days">${days.join('')}</div>
+            <div class="set-section">${escHtml(t('recAch', { n: got, t: ACHIEVEMENTS.length }))}</div>
+            <div class="ach-list">${ach}</div>`;
+    }
+
+    function openRecords(fromSettings = false) {
+        if (gameOver) return;
+        cancelDrag();
+        if (!fromSettings) settingsWasPaused = isPaused;
+        if (!isPaused) setPaused(true);
+        $id('recBody').innerHTML = recordsHtml();
+        $id('recordsModal').style.display = 'flex';
+    }
+    function closeRecords() {
+        $id('recordsModal').style.display = 'none';
+        if (!settingsWasPaused) setPaused(false);
+    }
+    $id('levelBadge').addEventListener('click', () => { if (zen) return; Sound.select(); openRecords(); });
+    $id('recClose').addEventListener('click', closeRecords);
+    $id('recDone').addEventListener('click', () => { Sound.select(); closeRecords(); });
+    $id('recordsModal').addEventListener('click', (e) => { if (e.target.id === 'recordsModal') closeRecords(); });
+
+    /* ============================
+       Boosters (bought with 💎)
+
+       Four buttons beside undo and reset, each paid from the 💎 balance
+       (see "Progress": spending never lowers the level):
+         💡 Hint (300): the slot the wheel's top tile belongs in glows, and
+            so does that tile, until it is placed (the wand's own aim).
+         ❄️ Freeze (400): the clock stands still for 10 seconds; moves go on.
+         🛡️ Shield (400): stops the next goblin, board turn or super spin.
+            It waits, across boards, until one comes, so it is only sold
+            from level 10, where wreckers start. 🛡️ shows above the clock.
+         🪄 Wand (500): the magic wand on demand. It throws the wheel's top
+            tile to its right place (another tile, if that one can't fly).
+       A button is greyed, its price still showing, when the balance is
+       short or it can do nothing right now. None of them are in zen, the
+       tutorial or today's puzzle, nor before the third board (with the
+       other helpers).
+       ============================ */
+    const BOOSTERS = { hint: 300, freeze: 400, shield: 400, wand: 500 };
+    const FREEZE_SECONDS = 10;
+
+    function boostersOn() { return !noSurprises() && helpersOn(); }
+
+    function topTrayItem() {
+        const id = centerTrayId();
+        return trayState.find(x => x.id === id) || null;
+    }
+
+    // Where a wheel tile goes: its slot (a pair: both of its empty slots)
+    function hintSlots(item) {
+        if (!item) return [];
+        if (item.pair) return item.pair.filter(p => !boardState[p.home]).map(p => p.home);
+        const i = wandTarget(item);
+        return i >= 0 ? [i] : [];
+    }
+
+    // Called by render: the hinted tile and its slot glow until it leaves the wheel
+    function applyHint() {
+        document.querySelectorAll('.slot.hint').forEach(el => el.classList.remove('hint'));
+        document.querySelectorAll('.tray-slot.hinted').forEach(el => el.classList.remove('hinted'));
+        if (!hintId) return;
+        const item = trayState.find(x => x.id === hintId);
+        if (!item) { hintId = null; return; }
+        hintSlots(item).forEach(i => document.querySelector(`.slot[data-index="${i}"]`)?.classList.add('hint'));
+        document.querySelector(`#traySlots .tile[data-id="${hintId}"]`)?.closest('.tray-slot')?.classList.add('hinted');
+    }
+
+    function boosterReady(kind) {
+        if (!boostersOn() || gameOver || isPaused || turnStage === 'turning' || !boardState.length) return false;
+        if (kind === 'hint') { const it = topTrayItem(); return !!it && it.id !== hintId && hintSlots(it).length > 0; }
+        if (kind === 'freeze') return freezeLeft === 0;
+        if (kind === 'shield') return !progress.shieldOn && level >= WRECK_FROM_LEVEL;
+        if (kind === 'wand') return !wandBusy && !!wandPick(true);
+        return false;
+    }
+
+    function updateBoosters() {
+        document.body.classList.toggle('no-boost', !boostersOn());
+        if (!boostersOn()) return;
+        const cash = balance();
+        document.querySelectorAll('.boost-btn').forEach(b => {
+            const k = b.dataset.boost, price = BOOSTERS[k];
+            b.querySelector('.price').textContent = '💎' + price;
+            b.disabled = cash < price || !boosterReady(k);
+            b.classList.toggle('on', (k === 'shield' && progress.shieldOn) || (k === 'freeze' && freezeLeft > 0) || (k === 'hint' && !!hintId));
+        });
+    }
+
+    // 🛡️ and ❄️ above the clock's right end while they are on
+    function renderBuffs() {
+        const box = document.getElementById('buffs');
+        const shield = progress.shieldOn && !noSurprises();
+        const key = (shield ? 's' : '') + (freezeLeft > 0 ? 'f' : '');
+        if (box.dataset.k === key) return;
+        box.dataset.k = key;
+        box.innerHTML = (shield ? `<span class="buff" title="${escHtml(t('b_shield'))}">🛡️</span>` : '')
+            + (freezeLeft > 0 ? `<span class="buff" title="${escHtml(t('b_freeze'))}">❄️</span>` : '');
+    }
+
+    // "−300 💎" rises from the button that was bought
+    function floatSpend(btn, price) {
+        const r = btn.getBoundingClientRect();
+        const el = document.createElement('div');
+        el.className = 'spend';
+        el.innerText = '−' + price + ' 💎';
+        el.style.left = (r.left + r.width / 2) + 'px';
+        el.style.top = r.top + 'px';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1100);
+        const xp = document.getElementById('xpStat');
+        xp.classList.remove('bump'); void xp.offsetWidth; xp.classList.add('bump');
+    }
+
+    function buyBooster(kind, btn) {
+        const price = BOOSTERS[kind];
+        if (balance() < price || !boosterReady(kind)) return;
+        if (kind === 'hint') {
+            hintId = topTrayItem().id;
+            applyHint();
+            Sound.select();
+            if (!progress.hintSeen) { progress.hintSeen = true; toast(t('hintT'), t('hintS')); }
+        } else if (kind === 'freeze') {
+            freezeLeft = FREEZE_SECONDS;
+            Sound.wand();
+            toast(t('freezeT'), t('freezeS', { s: FREEZE_SECONDS }));
+        } else if (kind === 'shield') {
+            progress.shieldOn = true;
+            Sound.unlock();
+            toast(t('shieldT'), t('shieldS'));
+        } else if (kind === 'wand') {
+            if (!castWand(true)) return; // nothing it could throw: nothing is paid
+        }
+        progress.spent += price;
+        saveProgress();
+        updateHud();
+        floatSpend(btn, price);
+        buzz(10);
+        updateTimerUI();
+    }
+
+    document.getElementById('boosters').addEventListener('click', (e) => {
+        const b = e.target.closest('.boost-btn');
+        if (!b || b.disabled) return;
+        e.stopPropagation();
+        buyBooster(b.dataset.boost, b);
+    });
+
+    // The shield takes the hit: the wrecker never comes
+    function shieldBlock(kind) {
+        progress.shieldOn = false;
+        saveProgress();
+        shout(t('shieldShout'), 'roll');
+        toast(kind === 'goblin' ? t('shieldGob') : t('shieldTurn'));
+        Sound.unlock();
+        buzz([20, 30, 20]);
+        updateTimerUI();
+    }
+
+    /* ============================
+       Hard board (the player's choice)
+
+       Before every fifth board (the 5th, 10th, ... played) is dealt, the
+       player is asked whether they want it hard. Hard is the same board
+       size taken a full step (1.0) further up the difficulty scale, never
+       into the next size, and with 8% more of its slots empty: more to
+       place and fewer seconds for each. It pays × 2 points, its own row on
+       the win screen, and its frame is red. No deals the normal board;
+       nothing is ever forced. Not in zen, the tutorial or today's puzzle,
+       nor before the third board.
+       ============================ */
+    const HARD_EVERY = 5;
+    const HARD_STEP = 1.0;
+    const HARD_EXTRA_EMPTY = 0.08;
+    const HARD_MULT = 2;
+
+    function hardOfferDue() {
+        return !tutorial && !zen && !dailyNext && helpersOn()
+            && (progress.played + 1) % HARD_EVERY === 0 && hardAskedAt !== progress.played;
+    }
+
+    function offerHard() {
+        hardAskedAt = progress.played;
+        cancelDrag();
+        clearInterval(timerInterval);
+        gameOver = true; // nothing on screen is in play while the question is up (initLevel clears it)
+        showDialog(t('hardQ'), t('hardM'), [
+            { label: t('hardYes'), cls: 'btn-primary', action: () => { hardNext = true; initLevel(); } },
+            { label: t('hardNo'), cls: 'btn-secondary', action: () => { hardNext = false; initLevel(); } },
+        ]);
+    }
+
+    function hardParams() {
+        const d = boardDifficulty();
+        const bi = SIZE_BANDS.filter(b => b.from <= d).length - 1;
+        const end = SIZE_BANDS[bi + 1] ? SIZE_BANDS[bi + 1].from - 0.01 : MAX_LEVEL;
+        const p = levelParams(Math.max(d, Math.min(end, d + HARD_STEP)));
+        const cells = p.N * p.N;
+        p.missing = Math.min(cells, p.missing + Math.round(cells * HARD_EXTRA_EMPTY));
+        p.time = boardTime(p.missing, p.t);
+        return p;
+    }
+
+    /* ============================
+       Puzzle generation
+
+       Everything that deals a board draws from rng: Math.random, except
+       while today's puzzle is dealt, when it is seededRng of the date.
+       ============================ */
+    let rng = Math.random;
     function shuffle(arr) {
         for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
+            const j = Math.floor(rng() * (i + 1));
             [arr[i], arr[j]] = [arr[j], arr[i]];
         }
         return arr;
@@ -3067,8 +3763,8 @@
         const cols = shuffle([...Array(n).keys()]);
         const colorMap = shuffle([...colors]);
         const shapeMap = shuffle([...shapes]);
-        const transpose = Math.random() < 0.5;
-        const flip = Math.random() < 0.5;
+        const transpose = rng() < 0.5;
+        const flip = rng() < 0.5;
 
         const solution = [];
         for (let r = 0; r < n; r++) {
@@ -3161,11 +3857,15 @@
     function updateHud() {
         const li = levelInfo(progress.points);
         document.getElementById('levelDisplay').innerText = li.L;
-        document.getElementById('rankTitle').innerText = zen ? t('zenRank') : rankFor(difficultyFor(li.L));
+        document.getElementById('rankTitle').innerText = zen && !daily ? t('zenRank') : rankFor(difficultyFor(li.L));
         document.getElementById('sizeDisplay').innerText = `${N}×${N}`;
         document.getElementById('streakDisplay').innerText = liveDayStreak();
         document.getElementById('winStreakDisplay').innerText = progress.winStreak;
-        document.getElementById('xpDisplay').innerText = progress.points.toLocaleString();
+        document.getElementById('xpDisplay').innerText = balance().toLocaleString();
+        // 📅: ringed until today's puzzle is played, then ✓ (solved) or ✗
+        const de = dailyEntry(dayKey());
+        document.getElementById('dailyBtn').classList.toggle('todo', !de);
+        document.getElementById('dailyMark').innerText = !de || (daily && !daily.practice && !gameOver) ? '' : de.won ? '✓' : '✗';
 
         // Goal gradient: how far into this level, always visible
         document.getElementById('goalLabel').innerHTML =
@@ -3179,10 +3879,18 @@
     }
 
     function initLevel() {
+        // Every fifth board: ask first whether it should be a hard one
+        if (hardOfferDue()) { offerHard(); return; }
+        // Whatever deals next is today's puzzle or a hard board only when just asked for
+        daily = dailyNext;
+        dailyNext = null;
+        hard = hardNext && !daily && !zen && !tutorial;
+        hardNext = false;
         endTurn();
         clearSelection();
         steps = 0;
         gameOver = false;
+        toastQueue.length = 0; // news still waiting from the last board is no news on this one
         popIndex = null;
         lineCombo = 0;
 
@@ -3190,11 +3898,18 @@
         document.querySelectorAll('.lvlfx').forEach(el => el.remove());
         level = levelInfo(progress.points).L;
         params = tutorial ? TUT_PARAMS
+            : daily ? dailyParams(daily.date)
             : zen ? zenParams()
+            : hard ? hardParams()
             : levelParams(boardDifficulty());
         params = { ...params };
-        document.body.classList.toggle('zen', zen && !tutorial);
+        document.body.classList.toggle('zen', zen && !tutorial && !daily);
         document.body.classList.toggle('tut', tutorial);
+        document.body.classList.toggle('daily', !!daily);
+        mistakes = 0;
+        missedIds = new Set();
+        freezeLeft = 0;
+        hintId = null;
         N = params.N;
         colors = ALL_COLORS.slice(0, N);
         shapes = ALL_SHAPES.slice(0, N);
@@ -3210,10 +3925,10 @@
         updateTimerUI();
 
         // Variable reward: one board in eight is golden and pays double (from the third board)
-        golden = !quietBoard() && helpersOn() && Math.random() < 0.125;
+        golden = !noSurprises() && helpersOn() && Math.random() < 0.125;
 
         const bc = document.getElementById('boardContainer');
-        bc.className = 'board-container size-' + N + (golden ? ' golden' : '');
+        bc.className = 'board-container size-' + N + (golden ? ' golden' : '') + (hard ? ' hard' : '');
         const grid = document.getElementById('boardGrid');
         grid.style.gridTemplateColumns = `repeat(${N}, minmax(0, 1fr))`;
         grid.style.gridTemplateRows = `repeat(${N}, minmax(0, 1fr))`;
@@ -3222,6 +3937,8 @@
         updateHud();
 
         const cells = N * N;
+        // Today's puzzle is dealt from the date: the same answer, holes and wheel for everyone
+        if (daily) rng = seededRng('klox-daily-' + daily.date);
         solution = tutorial ? TUT_ANSWER.map(([c, sh]) => ({ color: ALL_COLORS[c], shape: ALL_SHAPES[sh] })) : generateValidBoard(N);
         wandLines = new Set();
         // Only as many empty slots as keep the answer the only one. Small boards
@@ -3249,7 +3966,7 @@
                 boardState[pos] = item;
             }
         }
-        if (!quietBoard()) dealSpecials(singles);
+        if (!noSurprises()) dealSpecials(singles);
         trayState = [...singles.map(x => x.item), ...trayState];
 
         // Roughly the fewest moves a perfect player needs
@@ -3258,7 +3975,7 @@
         // Stingy on purpose: a wizard hides under one empty slot only every few boards,
         // never in the first two, and not while three are already collected.
         wiz = null;
-        if (!quietBoard() && helpersOn() && progress.wizards < WIZ_MAX) {
+        if (!noSurprises() && helpersOn() && progress.wizards < WIZ_MAX) {
             progress.sinceWizard++;
             const due = progress.sinceWizard >= WIZ_MAX_GAP
                 || (progress.sinceWizard >= WIZ_MIN_GAP && Math.random() < WIZ_CHANCE);
@@ -3275,6 +3992,7 @@
         document.querySelectorAll('.time-bonus').forEach(el => el.remove());
 
         if (!tutorial) shuffle(trayState);
+        rng = Math.random; // the deal is done: back to chance
         initialSnap = snapshot();
         undoStack = [];
         wheelAngle = null; // centre the wheel on the middle tile
@@ -3283,6 +4001,8 @@
         render(true);
         setPaused(false);
         if (golden) { toast(t('goldenT'), t('goldenS')); Sound.coin(); }
+        if (hard) toast(t('hardT'), t('hardS'));
+        if (daily) toast(daily.practice ? t('practiceT') : t('dailyToday'), daily.practice ? t('practiceS') : daily.date);
         introduceSpecials();
         if (tutorial) tutBegin();
     }
@@ -3357,13 +4077,18 @@
     // The first board with a new kind of tile explains it once
     function introduceSpecials() {
         const has = f => trayState.some(f);
+        const token = turnToken;
         [['pairSeen', x => x.pair, 'pairT', 'pairS'],
          ['mysterySeen', x => x.mystery, 'mysteryT', 'mysteryS'],
          ['fillerSeen', x => x.filler, 'fillerT', 'fillerS']].forEach(([flag, test, tk, sk], i) => {
             if (progress[flag] || !has(test)) return;
-            progress[flag] = true;
-            saveProgress();
-            setTimeout(() => { if (!quietBoard()) toast(t(tk), t(sk)); }, 400 + i * 900);
+            // explained only if this board is still in play when the note is due
+            setTimeout(() => {
+                if (noSurprises() || token !== turnToken || progress[flag]) return;
+                progress[flag] = true;
+                saveProgress();
+                toast(t(tk), t(sk));
+            }, 400 + i * 900);
         });
     }
 
@@ -3532,6 +4257,7 @@
         popIndex = null;
         popMore = [];
 
+        applyHint();
         checkWizard(); // before validateState, so the winning move can reveal one too
         validateState(silent);
         if (tutorial && !gameOver) tutUpdate();
@@ -3542,7 +4268,11 @@
 
        Every few boards a little wizard waits under the right tile of one empty
        slot. Put that tile there and he pops out and flies to the stash above
-       the board. When time runs out, each wizard buys another minute.
+       the board. Each wizard buys another minute: a tap on the stash (it
+       glows while it holds any) spends one at any moment of a board, and
+       when time runs out the time-up screen offers one too. Either way the
+       minute stops at the clock's cap; a tap while the clock is already
+       full spends nothing.
        ============================ */
     const WIZ_MAX = 3;          // most you can hold at once
     /* The helpers and surprises — the wizard, the magic wand and golden boards —
@@ -3564,7 +4294,23 @@
     }
 
     document.getElementById('wizStash').addEventListener('click', () => {
-        if (progress.wizards > 0) toast(t('wizStashT', { n: progress.wizards }), t('wizStashS'));
+        if (progress.wizards - wizInFlight <= 0) return;
+        if (noSurprises() || gameOver || isPaused || turnStage === 'turning') {
+            toast(t('wizStashT', { n: progress.wizards }), t('wizStashS'));
+            return;
+        }
+        const room = clockCap() - timeLeft;
+        if (room < 1) { toast(t('wizFullT'), t('wizFullS')); return; }
+        const add = Math.min(WIZ_SECONDS, room);
+        progress.wizards--;
+        saveProgress();
+        renderStash();
+        timeLeft += add;
+        updateTimerUI();
+        floatBonus(add);
+        document.getElementById('timerDisplay').classList.add('wizard');
+        Sound.coin();
+        buzz([15, 30, 15]);
     });
 
     function checkWizard() {
@@ -3792,6 +4538,11 @@
        setting: on medium about one board in two at level 10, one a board at
        20, nearly two at 30. Easy brings well under half as many, hard almost
        twice as many.
+
+       6×6 is calmer: at most one board turn (a roll over or a super spin)
+       per board. Without the pair rule it is already the hardest size to
+       work out. A bought 🛡️ shield stops the next wrecker of either kind,
+       and a goblin can be tapped away on his way in (see "Goblin").
        ============================ */
     const WRECK_FROM_LEVEL = 10;
     const WRECK_RATE = { easy: 0.4, medium: 1, hard: 1.8 };
@@ -3799,6 +4550,7 @@
     const WRECK_MAX = 5;        // never more than this on one board
     const RUMBLE_MS = 1300;
     const TURN_MS = 700;
+    const SIX_TURNS_MAX = 1;    // board turns (and spins) on one 6×6 board
 
     // Expected wreckers on one board
     function wreckersFor(L) {
@@ -3823,7 +4575,7 @@
         boardSecs = 0;
         turnsThisBoard = 0;
         boardDiff = difficulty;
-        if (quietBoard()) return;
+        if (noSurprises()) return;
         const mean = wreckersFor(level) / 2;
         const count = Math.floor(mean) + (Math.random() < mean % 1 ? 1 : 0);
         const from = Math.max(8, totalTime * 0.15), to = totalTime * 0.8;
@@ -3839,7 +4591,7 @@
 
     // Each second: maybe the board rolls over now
     function maybeRoll() {
-        if (quietBoard() || level < WRECK_FROM_LEVEL || boardSecs < 8 || turnsThisBoard >= WRECK_MAX) return;
+        if (noSurprises() || level < WRECK_FROM_LEVEL || boardSecs < 8 || turnsThisBoard >= (N === 6 ? SIX_TURNS_MAX : WRECK_MAX)) return;
         if (turnStage || goblinBusy || isPaused || gameOver || (drag && drag.mode === 'tile')) return;
         if (Math.random() >= wreckersFor(level) / Math.max(30, totalTime)) return;
         wrecks.unshift({ at: boardSecs, kind: 'turn' });
@@ -3863,12 +4615,17 @@
         const w = wrecks.shift();
         if (w.kind === 'goblin') {
             // Nothing placed to kick yet: he comes back a little later
+            if (!goblinChoices().length) { wrecks.unshift({ at: boardSecs + 4, kind: 'goblin' }); return; }
+            if (progress.shieldOn) { shieldBlock('goblin'); return; }
             if (!goblinKick()) wrecks.unshift({ at: boardSecs + 4, kind: 'goblin' });
             return;
         }
+        if (N === 6 && turnsThisBoard >= SIX_TURNS_MAX) return; // calmer 6×6: this one never comes
+        turnsThisBoard++;
+        if (progress.shieldOn) { shieldBlock('turn'); return; }
         const token = turnToken;
         turnStage = 'rumble';
-        if (w.kind === 'spin') shout(t('spinShout'), 'spin'); else { turnsThisBoard++; shout(t('rollShout'), 'roll'); }
+        if (w.kind === 'spin') shout(t('spinShout'), 'spin'); else shout(t('rollShout'), 'roll');
         const bc = document.getElementById('boardContainer');
         bc.classList.remove('rumble');
         void bc.offsetWidth;
@@ -3879,7 +4636,7 @@
             if (token !== turnToken) return;
             bc.classList.remove('rumble');
             // Paused or finished during the rumble: the turn waits for the next tick
-            if (isPaused || gameOver) { turnStage = null; if (!gameOver) wrecks.unshift({ at: boardSecs, kind: w.kind }); return; }
+            if (isPaused || gameOver) { turnStage = null; if (!gameOver) { turnsThisBoard--; wrecks.unshift({ at: boardSecs, kind: w.kind }); } return; }
             if (w.kind === 'spin') startSpin(token); else startTurn(token);
         }, RUMBLE_MS);
     }
@@ -4002,7 +4759,7 @@
     // on any level, so the turn can be tried out
     let lockTaps = { index: null, count: 0, at: 0 };
     function lockedTap(index) {
-        if (quietBoard()) return false;
+        if (noSurprises()) return false;
         const now = performance.now();
         const same = lockTaps.index === index && now - lockTaps.at < 800;
         lockTaps = { index, count: same ? lockTaps.count + 1 : 1, at: now };
@@ -4016,6 +4773,7 @@
     // Hidden too: five quick taps on the clock send a goblin now, on any level
     let clockTaps = { count: 0, at: 0 };
     document.getElementById('clockBar').addEventListener('click', () => {
+        if (noSurprises()) return;
         const now = performance.now();
         clockTaps = { count: now - clockTaps.at < 800 ? clockTaps.count + 1 : 1, at: now };
         if (clockTaps.count < 5) return;
@@ -4082,14 +4840,30 @@
     /* ============================
        Goblin (a wrecker)
 
-       He runs in from the side, kicks one tile the player placed (never a
-       locked one) back to the wheel, and runs off laughing. The kick can't
-       be undone: it is taken out of every undo step too, like a board turn.
+       He runs in from the side, grins for a moment, kicks one tile the
+       player placed (never a locked one) back to the wheel, and runs off
+       laughing. The kick can't be undone: it is taken out of every undo
+       step too, like a board turn.
+
+       Until his boot swings he can be fought: a tap on him (his hit area is
+       well bigger than he is, for thumbs) bonks him. He kicks nothing, flies
+       off, and the clock gets 5 seconds (up to its cap; past it they turn
+       into points, like every time bonus). He walks in slowly enough, and
+       grins long enough, to give a fair chance: about two seconds.
        ============================ */
-    function goblinKick() {
-        const choices = boardState
+    const GOBLIN_WALK_MS = 1000;
+    const GOBLIN_GRIN_MS = 600;
+    const BONK_BONUS = 5;
+
+    // Tiles a goblin could kick: placed by the player, not in hand
+    function goblinChoices() {
+        return boardState
             .map((x, i) => (x && !x.locked && !(drag && drag.src === 'board' && drag.index === i)) ? i : -1)
             .filter(i => i >= 0);
+    }
+
+    function goblinKick() {
+        const choices = goblinChoices();
         if (!choices.length) return false;
         const index = choices[Math.floor(Math.random() * choices.length)];
         const id = boardState[index].id;
@@ -4112,15 +4886,30 @@
         const face = fromLeft ? 1 : -1;
         const offX = (fromLeft ? -1 : 1) * (Math.abs(standX - (fromLeft ? -size : innerWidth + size)));
 
+        // Tap him before the kick lands and he is gone
+        let bonked = false;
+        g.classList.add('goblin-hit');
+        g.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (bonked || !g.classList.contains('goblin-hit') || token !== turnToken || gameOver || isPaused) return;
+            bonked = true;
+            bonkGoblin(g, face, side, token);
+        });
+
         Sound.goblin();
-        const runIn = calm ? 250 : 700;
+        const runIn = calm ? 250 : GOBLIN_WALK_MS;
         const steps = [];
         for (let k = 0; k <= 6; k++) {
             const f = k / 6;
             steps.push({ transform: `translate(${(offX * (1 - f)).toFixed(1)}px, ${k % 2 ? -8 : 0}px) scaleX(${face})`, offset: f });
         }
         fxAnimate(g, steps, runIn).then(async () => {
+            if (bonked) return;
+            await sleep(calm ? 0 : GOBLIN_GRIN_MS);
+            if (bonked) return;
             const ok = await whenFree(token);
+            if (bonked) return;
             if (!ok) { g.remove(); return; }
             // kick: lean back, swing
             await fxAnimate(g, [
@@ -4128,6 +4917,8 @@
                 { transform: `translate(${-side * 6}px, -4px) scaleX(${face}) rotate(${-face * 14}deg)`, offset: 0.5 },
                 { transform: `translate(${side * 4}px, 0) scaleX(${face}) rotate(${face * 10}deg)` },
             ], calm ? 150 : 320);
+            if (bonked) return;
+            g.classList.remove('goblin-hit'); // the boot has swung: too late to bonk
             if (token !== turnToken || gameOver) { g.remove(); return; }
 
             const at = boardState.findIndex(x => x && x.id === id);
@@ -4178,12 +4969,44 @@
         return true;
     }
 
+    // Bonk! He squashes, spins off up and away, and the clock gets 5 seconds
+    function bonkGoblin(g, face, side, token) {
+        g.classList.remove('goblin-hit');
+        suppressClickUntil = performance.now() + 400; // the tap ends here, not on a tile under him
+        // stop his walk (or kick) where he is
+        const c = centreOf(g);
+        if (g.getAnimations) g.getAnimations().forEach(a => a.cancel());
+        g.style.left = (c.x - c.w / 2) + 'px';
+        g.style.top = (c.y - c.w / 2) + 'px';
+        const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        Sound.bonk();
+        buzz([25, 30, 40]);
+        sparkle(c.x, c.y, 16, c.w * 0.7);
+        shout(t('bonkShout'), 'bonk');
+        addBonusTime(BONK_BONUS);
+        if (!progress.bonkSeen) {
+            progress.bonkSeen = true;
+            saveProgress();
+            toast(t('bonkT'), t('bonkS', { s: BONK_BONUS }));
+        }
+        fxAnimate(g, [
+            { transform: `scaleX(${face}) scale(1, 1)`, opacity: 1 },
+            { transform: `scaleX(${face}) scale(1.25, 0.65)`, opacity: 1, offset: 0.18 },
+            { transform: `translate(${side * 140}px, -280px) scaleX(${face}) rotate(${face * 540}deg) scale(0.4)`, opacity: 0 },
+        ], calm ? 250 : 750).then(() => {
+            g.remove();
+            if (token === turnToken) goblinBusy = false;
+        });
+    }
+
     /* ============================
        Magic wand (a helper)
 
        One move that finishes a row and a column at once, both right, brings
        a wand: it zaps the wheel's top tile and throws it to its right slot.
        Each crossing brings it once per board, so undo and redo can't farm it.
+       The 🪄 booster casts one on demand (castWand(true)): that one always
+       throws a tile, the wheel's top one first, and never turns into a wizard.
        ============================ */
     // Where a tray tile belongs: a slot of the answer it fits that isn't already right
     function wandTarget(item) {
@@ -4198,17 +5021,27 @@
         return fits.find(i => !boardState[i]) ?? fits[0] ?? -1;
     }
 
-    function castWand() {
-        if (quietBoard() || !helpersOn() || wandBusy || !trayState.length) return;
+    // The tile a wand would throw: a question mark first (for the free wand), else
+    // the wheel's top tile, else any that has somewhere to go
+    function wandPick(paid) {
+        const fits = k => { const it = trayState.find(x => x.id === k); return !!it && wandTarget(it) >= 0; };
+        const all = [centerTrayId(), ...trayState.map(x => x.id)];
+        const mq = trayState.find(x => x.mystery && wandTarget(x) >= 0);
+        const order = paid ? all : mq ? [mq.id] : all;
+        return order.find(k => k && fits(k)) || null;
+    }
+
+    // Returns true when a wand is on its way
+    function castWand(paid = false) {
+        if (noSurprises() || !helpersOn() || wandBusy || !trayState.length) return false;
         // It goes for a question mark in the wheel. With none there it brings a
         // wizard instead, unless the stash is full: then it throws any tile.
         const mq = trayState.find(x => x.mystery && wandTarget(x) >= 0);
-        if (!mq && progress.wizards < WIZ_MAX) { wandWizard(); return; }
-        const order = mq ? [mq.id] : [centerTrayId(), ...trayState.map(x => x.id)];
-        const id = order.find(k => k && wandTarget(trayState.find(x => x.id === k)) >= 0);
-        if (!id) return;
+        if (!paid && !mq && progress.wizards < WIZ_MAX) { wandWizard(); return true; }
+        const id = wandPick(paid);
+        if (!id) return false;
         const tileEl = document.querySelector(`#traySlots .tile[data-id="${id}"]`);
-        if (!tileEl) return;
+        if (!tileEl) return false;
 
         wandBusy = true;
         const token = turnToken;
@@ -4272,12 +5105,13 @@
             wandCasting = true; // what the throw itself completes brings no second wand
             render();
             wandCasting = false;
-            if (!progress.wandSeen) {
+            if (!progress.wandSeen && !paid) {
                 progress.wandSeen = true;
                 saveProgress();
                 toast(t('wandT'), t('wandS'));
             }
         });
+        return true;
     }
     let wandCasting = false;
 
@@ -4337,6 +5171,7 @@
     function updateToolButtons() {
         document.getElementById('undoBtn').disabled = gameOver || undoStack.length === 0;
         document.getElementById('resetBtn').disabled = gameOver || undoStack.length === 0;
+        updateBoosters();
     }
 
     document.getElementById('undoBtn').addEventListener('click', () => {
@@ -4384,7 +5219,7 @@
             // A tap on either half's slot puts both
             const ok = item.pair.some(p => p.home === index)
                 && item.pair.every(p => !boardState[p.home] && isRight(p, p.home));
-            if (!ok) return wrongMove(index);
+            if (!ok) { item.pair.forEach(p => missedIds.add(p.id)); return wrongMove(index); }
             pushUndo();
             trayState.splice(tIdx, 1);
             item.pair.forEach(p => { boardState[p.home] = plainTile(p); });
@@ -4399,6 +5234,7 @@
 
         if (boardState[index] || !isRight(item, index)) {
             if (item.mystery) item.missed = true; // its 20 seconds are only for getting it right first time
+            missedIds.add(item.id);
             return wrongMove(index);
         }
         pushUndo();
@@ -4530,6 +5366,7 @@
     const WRONG_PENALTY = 5;
     function wrongMove(index) {
         steps++;
+        mistakes++;
         requestAnimationFrame(() => rejectMove(document.querySelector(`.slot[data-index="${index}"]`)));
         if (quietBoard()) return false;
         timeLeft = Math.max(0, timeLeft - WRONG_PENALTY);
@@ -4549,7 +5386,10 @@
     function moveOnBoard(from, to) {
         if (from === to) return false;
         if (boardState[to]?.locked || boardState[from]?.locked) return false;
-        if (boardState[to] || !isRight(boardState[from], to)) return wrongMove(to);
+        if (boardState[to] || !isRight(boardState[from], to)) {
+            if (boardState[from]) missedIds.add(boardState[from].id);
+            return wrongMove(to);
+        }
         pushUndo();
         [boardState[from], boardState[to]] = [boardState[to], boardState[from]];
         steps++;
@@ -4953,6 +5793,7 @@
             html += row('scTiles', `${t('tiles')} <bdi dir="ltr" class="num">${r.tiles} × ${r.perTile}</bdi>`, 0);
             html += row('scStars', t('starsRow', { s: '⭐'.repeat(r.stars) }) + x(r.starX), 0);
             if (r.goldPts) html += row('scGold', t('goldenX2'), 0);
+            if (r.hardPts) html += row('scHard', t('hardX2'), 0);
             if (r.streakPts) html += row('scStreak', t('streakRow', { n: r.winStreak }) + x(r.streakX), 0);
             if (r.newSizePts) html += row('scNewSize', t('newSizeRow') + x(NEW_SIZE_MULT), 0);
             if (r.overflow) html += row('scOver', t('overflowRow'), 0);
@@ -5079,7 +5920,7 @@
 
     // The rows after the tiles, in the order they count up
     function scoreSteps(r) {
-        return [['scStars', r.starPts], ['scGold', r.goldPts], ['scStreak', r.streakPts],
+        return [['scStars', r.starPts], ['scGold', r.goldPts], ['scHard', r.hardPts], ['scStreak', r.streakPts],
             ['scNewSize', r.newSizePts], ['scOver', r.overflow], ['scDaily', r.dailyBonus]]
             .filter(([id, n]) => n || id === 'scStars');
     }
@@ -5194,7 +6035,7 @@
         }
 
         // Zen: nothing is scored. A quick cheer, then the next board.
-        if (zen) {
+        if (zen && !daily) {
             if (!won) { initLevel(); return; }
             const burstMs = burstBoard();
             setTimeout(() => {
@@ -5214,16 +6055,35 @@
         };
         const perf = performance01(stats);
         const stars = won ? (extended ? 1 : starsFor(perf)) : 0;
+
+        // Today's puzzle again, for practice: a result, nothing scored or kept
+        if (daily && daily.practice) {
+            const burst = won ? burstBoard() : 0;
+            setTimeout(() => {
+                if (won) { Sound.win(); confetti(36); } else Sound.lose();
+                showDialog(won ? t('practiceT') : t('timeUp'),
+                    t('dailyMeta', { t: clockText(boardSecs), m: mistakes }) + '\n' + t('practiceM'), [
+                        { label: t('nextBoard'), cls: 'btn-primary', action: initLevel },
+                        { label: t('dailyPractice'), cls: 'btn-secondary', action: () => startDaily(true) },
+                    ], { stars });
+            }, won ? burst + 150 : 0);
+            return;
+        }
+
         const startPoints = progress.points;
         const startInfo = levelInfo(startPoints);
 
-        progress.played++;
+        // Today's puzzle doesn't count as a board played, and a lost one changes no streak
+        if (!daily) progress.played++;
         let reward = null;
         if (won) {
             reward = grantRewards(stars, stats, overflowPts, extended);
-        } else {
+        } else if (!daily) {
             progress.winStreak = 0;
             progress.failStreak++;
+        }
+        if (daily) {
+            progress.dailyHistory[daily.date] = { won, stars, secs: boardSecs, mistakes, grid: dailyGrid(), n: N };
         }
         const endInfo = levelInfo(progress.points);
         level = endInfo.L;
@@ -5257,6 +6117,9 @@
             if (unlockedN) {
                 title = t('boardOpenedT', { n: unlockedN });
                 msg = newInSize(unlockedN);
+            } else if (daily) {
+                title = won ? t('dailySolvedT') : t('timeUp');
+                msg = won ? '' : t('dailyLostM');
             } else if (won) {
                 title = endInfo.L > startInfo.L ? t('levelUpT') : (stars === 3 ? t('perfectT') : t('solvedT'));
                 msg = t('stepsSecs', { s: steps, t: usedSec });
@@ -5273,6 +6136,8 @@
                     : t('timeUpM');
             }
             if (progress.winStreak >= 2 && won) msg += '\n' + t('winStreak', { n: progress.winStreak });
+            if (reward && reward.newBest) msg += '\n' + t('newBest', { n: N });
+            msg = msg.replace(/^\n/, '');
 
             // The screen waits for a tap. A tap while the points count up jumps
             // to the final totals; the next one goes on to the next board.
@@ -5286,11 +6151,15 @@
                 const hint = document.getElementById('tapHint');
                 if (hint) hint.innerText = '';
             };
-            showDialog(title, msg, [
-                { label: unlockedN ? t('toBoard', { n: unlockedN }) : t('nextBoard'), cls: 'btn-primary', action: initLevel },
-            ], {
+            // Today's puzzle gets a Share button; after any other board, an
+            // unplayed puzzle is offered next to "next board"
+            const buttons = [{ label: unlockedN ? t('toBoard', { n: unlockedN }) : t('nextBoard'), cls: 'btn-primary', action: initLevel }];
+            const dailyDate = daily && daily.date;
+            if (dailyDate) buttons.push({ label: t('share'), cls: 'btn-secondary', stay: true, action: () => shareDaily(dailyDate) });
+            else if (helpersOn() && !dailyEntry(dayKey())) buttons.push({ label: t('dailyToday'), cls: 'btn-secondary', action: () => startDaily(false) });
+            showDialog(title, msg, buttons, {
                 stars,
-                extraHtml: scoreHtml(reward, startInfo) + badgesHtml(badges, reward?.dailyJustDone)
+                extraHtml: (dailyDate ? dailyBlockHtml(dailyDate) : '') + scoreHtml(reward, startInfo) + badgesHtml(badges, reward?.dailyJustDone)
                     + `<div class="tap-hint" id="tapHint">${t('tapToSkip')}</div>`,
                 counting: () => counting,
                 onSkip: () => { showFinalScore(startPoints, reward); done(); },
@@ -5384,7 +6253,9 @@
     let tutLoop = null;
 
     // Zen and the tutorial share the quiet board: no clock, no helpers, no wreckers
-    function quietBoard() { return zen || tutorial; }
+    function quietBoard() { return (zen && !daily) || tutorial; }
+    // ...and today's puzzle has a clock but nothing left to chance: no helpers, wreckers or boosters
+    function noSurprises() { return quietBoard() || !!daily; }
 
     function tutorialDue() {
         return !store.get(TUT_KEY) && store.get(PROGRESS_KEY) === null;

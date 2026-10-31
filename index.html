@@ -1719,6 +1719,101 @@
         .chest-prev .mini { width: 32px; height: 32px; }
         .chest-prev .col-board { width: 96px; height: 34px; }
 
+
+        /* Blockers on the board (see "Blockers" in the script). Sized from the
+           board's width and size (--n on the grid), so they read on 3×3 to 7×7. */
+        .board-grid { --cell: calc(var(--bw) / var(--n, 5)); }
+        .blk {
+            position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .blk span { font-size: calc(var(--cell) * 0.42); line-height: 1; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25)); }
+        /* Fog: a soft grey cloud over a given tile */
+        .blk-fog {
+            background: radial-gradient(circle at 30% 35%, #f8fafc 0 22%, transparent 48%),
+                        radial-gradient(circle at 72% 60%, #f1f5f9 0 24%, transparent 52%),
+                        linear-gradient(160deg, #cbd5e1, #94a3b8);
+            animation: fogDrift 4s ease-in-out infinite alternate;
+        }
+        .slot.has-fog .tile > * { visibility: hidden; }
+        @keyframes fogDrift { from { background-position: 0 0, 0 0, 0 0; } to { background-position: 6px -3px, -6px 3px, 0 0; } }
+        .tile.fog-lift { animation: fogLift 0.7s ease-out; }
+        @keyframes fogLift { from { filter: blur(6px) grayscale(1); opacity: 0.3; transform: scale(0.9); } to { filter: none; opacity: 1; transform: none; } }
+        /* Chain: a dark striped lock over an empty slot; faded once its row is full */
+        .blk-chain {
+            background: repeating-linear-gradient(45deg, rgba(71, 85, 105, 0.28) 0 6px, rgba(71, 85, 105, 0.08) 6px 12px);
+            border: 2px solid #64748b;
+        }
+        .blk-chain i {
+            position: absolute; bottom: 4%; inset-inline-end: 6%; font-style: normal;
+            font-size: calc(var(--cell) * 0.22); line-height: 1;
+        }
+        .blk-chain.free { background: none; border: 2px dashed color-mix(in srgb, var(--success) 70%, transparent); }
+        .blk-chain.free span { opacity: 0.3; }
+        .blk-chain.unchained span { animation: unchain 0.6s ease; }
+        @keyframes unchain { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(1.3) rotate(-12deg); } 100% { transform: scale(1); opacity: 0.3; } }
+        .blk.rattle span { animation: rattle 0.35s ease; }
+        @keyframes rattle { 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
+        /* Ice: frosted glass; cracked, it shows white cracks and thins */
+        .blk-ice {
+            background: linear-gradient(135deg, rgba(224, 242, 254, 0.95), rgba(125, 211, 252, 0.75) 55%, rgba(186, 230, 253, 0.9));
+            border: 2px solid #7dd3fc; box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.9);
+        }
+        .blk-ice::after { content: ''; position: absolute; top: 10%; left: 12%; width: 30%; height: 12%; border-radius: 99px; background: rgba(255, 255, 255, 0.8); transform: rotate(-30deg); }
+        .blk-ice.cracked { background: linear-gradient(135deg, rgba(224, 242, 254, 0.6), rgba(125, 211, 252, 0.4)); }
+        .blk-ice.cracked span { opacity: 0.45; }
+        .blk-ice svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #fff; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 1px #0369a1); }
+        .blk.crack-hit { animation: shake 0.35s ease; }
+        /* Bomb: the bomb and its count of moves left; the count turns red and pulses at 3 */
+        .blk-bomb { background: color-mix(in srgb, #f97316 14%, transparent); border: 2px solid #fb923c; }
+        .blk-bomb b {
+            position: absolute; top: 4%; inset-inline-end: 5%; min-width: calc(var(--cell) * 0.32); height: calc(var(--cell) * 0.32);
+            border-radius: 99px; background: #1e293b; color: #fff; font-size: calc(var(--cell) * 0.2); font-weight: 900;
+            display: flex; align-items: center; justify-content: center; padding: 0 3px; font-variant-numeric: tabular-nums;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        }
+        .blk-bomb.hot { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 18%, transparent); }
+        .blk-bomb.hot b { background: var(--danger); animation: pulse 0.8s infinite; }
+        .blk-bomb.hot span { animation: bombShake 0.5s ease-in-out infinite; }
+        @keyframes bombShake { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+        .boom-flash {
+            position: fixed; z-index: 185; pointer-events: none; border-radius: 50%; transform: translate(-50%, -50%) scale(0.2);
+            background: radial-gradient(circle, #fff7ed 0 15%, #fdba74 30%, #f97316 50%, rgba(239, 68, 68, 0.6) 65%, transparent 72%);
+            animation: boomFlash 0.7s ease-out forwards;
+        }
+        @keyframes boomFlash { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.2); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); } }
+        .shout.boom { --shout-dark: #7c2d12; --shout-glow: rgba(249, 115, 22, 0.95); }
+        .shout.boom b { color: #fed7aa; }
+        .spark.shard { background: #e0f2fe; border: 1px solid #38bdf8; border-radius: 1px; }
+        /* A blocker's card: one slot, drawn as on the board */
+        .blk-demo { display: flex; justify-content: center; margin: 4px 0 14px; }
+        .blk-demo .slot { width: 72px; height: 72px; --cell: 72px; border-radius: 12px; }
+
+        /* Badges above the board: this weekend's event, a hunt's chest, this week's season */
+        .event-pills {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            bottom: calc(var(--bw) + 32px); height: 26px;
+            display: flex; gap: 6px; align-items: center; white-space: nowrap;
+            max-width: calc(var(--bw) - 120px); overflow: hidden;
+        }
+        .ev-pill {
+            font: inherit; font-size: 0.74rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; cursor: pointer;
+            background: var(--bg-surface); color: var(--text-main); border: 1.5px solid var(--border-highlight);
+            box-shadow: 0 2px 6px var(--shadow); display: flex; align-items: center; gap: 3px;
+        }
+        .ev-pill b { font-variant-numeric: tabular-nums; }
+        .ev-pill.gold { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 18%, var(--bg-surface)); }
+        .ev-pill.chest { border-color: var(--gold); animation: pulse 1.2s infinite; }
+        .ev-pill.season { border-color: #eab308; }
+        .ev-pill.bump { animation: pop 0.4s ease; }
+        body.zen .event-pills, body.tut .event-pills, body.daily .event-pills { display: none; }
+        /* The map: what a chapter brings, under its name */
+        .map-banner { cursor: pointer; }
+        .map-banner em { display: block; font-style: normal; font-size: 0.72rem; font-weight: 800; color: var(--text-main); }
+        /* 🎃 Goblin: an event-only board theme */
+        .col-board.bt-classic { --board-bg: var(--bg-surface); } /* its preview, whatever theme is on */
+        .bt-goblin { --board-bg: linear-gradient(160deg, color-mix(in srgb, #f97316 34%, var(--bg-surface)), color-mix(in srgb, #65a30d 30%, var(--bg-surface))); --page-tint: color-mix(in srgb, #f97316 10%, var(--bg-base)); }
+
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; transition: none !important; }
         }
@@ -2007,6 +2102,8 @@
     <div class="board-wrapper">
         <div class="wiz-stash" id="wizStash"></div>
         <div class="buffs" id="buffs"></div>
+        <!-- This weekend's event, a hunt's chest, this week's Summit season -->
+        <div class="event-pills" id="eventPills"></div>
         <!-- The clock: a bar above the board that drains as time runs out -->
         <div class="clock" id="clockBar">
             <div class="clock-fill" id="clockFill"></div>
@@ -2094,7 +2191,7 @@
         <div class="set-group" style="padding: 8px;">
             <div class="col-grid" id="colTiles"></div>
             <div class="col-grid" id="colBoards" style="margin-top: 6px;"></div>
-            <div class="daily-meta" style="margin: 6px 2px 0; font-size: 0.72rem;" data-i18n="colNote">נפתחים בתיבות של פרקי המסע. הכללים לא משתנים.</div>
+            <div class="daily-meta" style="margin: 6px 2px 0; font-size: 0.72rem;" data-i18n="colNote">נפתחים בתיבות של פרקי המסע ובאירועי סוף שבוע. הכללים לא משתנים.</div>
         </div>
 
         <div class="set-section" data-i18n="language">שפה</div>
@@ -2298,6 +2395,10 @@
         goblin() { [392, 330, 440, 330, 494].forEach((f, i) => this.tone(f, { type: 'square', dur: 0.08, vol: 0.035, delay: i * 0.09 })); },
         // a goblin tapped away: a hollow bonk and a rising whistle
         bonk() { this.tone(260, { type: 'square', dur: 0.08, slideTo: 120, vol: 0.1 }); this.tone(500, { dur: 0.45, slideTo: 1600, vol: 0.05, delay: 0.08 }); },
+        puff() { this.tone(300, { dur: 0.35, slideTo: 900, vol: 0.05 }); },
+        clink() { this.tone(1760, { type: 'triangle', dur: 0.06, vol: 0.07 }); this.tone(2350, { type: 'triangle', dur: 0.12, vol: 0.06, delay: 0.07 }); },
+        crack() { this.tone(2600, { type: 'square', dur: 0.03, vol: 0.05 }); this.tone(1400, { type: 'sawtooth', dur: 0.08, slideTo: 500, vol: 0.05, delay: 0.03 }); },
+        boom() { this.tone(110, { type: 'sawtooth', dur: 0.5, slideTo: 40, vol: 0.18 }); this.tone(70, { type: 'square', dur: 0.6, slideTo: 30, vol: 0.12, delay: 0.05 }); },
         kick() { this.tone(140, { type: 'triangle', dur: 0.18, slideTo: 60, vol: 0.16 }); this.tone(900, { dur: 0.25, slideTo: 300, vol: 0.04, delay: 0.05 }); },
         wand() { [1319, 1568, 1976].forEach((f, i) => this.tone(f, { dur: 0.14, vol: 0.05, delay: i * 0.07 })); },
         zap() { this.tone(1800, { type: 'sawtooth', dur: 0.2, slideTo: 600, vol: 0.04 }); this.tone(2400, { dur: 0.3, vol: 0.03, delay: 0.08 }); },
@@ -2434,9 +2535,27 @@
             bossGoblin1: '👺 שדון בדרך! הקש עליו כשהוא נכנס — והוא בורח.', bossGoblin2: '👺👺 שני שדונים בדרך! הקש עליהם כשהם נכנסים — והם בורחים.',
             bossTurn: '🔄 הלוח יסתובב פעם אחת באמצע. הציורים נשארים ישרים — רק המקומות זזים.',
             bossT: '👑 לוח בוס \u2066×1.5\u2069', bossShout: 'בוס!', bossRow: '👑 לוח בוס', bossBeatT: '👑 ניצחת את הבוס!',
-            collection: '🎨 אוסף', colNote: 'נפתחים בתיבות של פרקי המסע. הכללים לא משתנים.', colLocked: '🔒 תיבת ה{c}',
+            collection: '🎨 אוסף', colNote: 'נפתחים בתיבות של פרקי המסע ובאירועי סוף שבוע. הכללים לא משתנים.', colLocked: '🔒 תיבת ה{c}',
             set_shapes: '🔷 צורות', set_animals: '🐱 ציורים', set_food: '🍎 אוכל', set_nature: '🌸 טבע',
             bt_classic: '⬜ קלאסי', bt_mint: '🌿 מנטה', bt_ocean: '🌊 אוקיינוס', bt_sunset: '🌅 שקיעה',
+            bt_goblin: '🎃 שדון', colEvent: '🔒 ציד שדונים (סופ״ש)',
+            blk_fog: 'ערפל', blk_chain: 'שרשרת', blk_ice: 'קרח', blk_bomb: 'פצצה', blkIntroT: '{i} {b}!', blkGo: 'הבנתי, קדימה!',
+            blkIntro_fog: 'כמה אריחים נתונים מוסתרים בערפל.\nהנח אריח במשבצת צמודה (מעל, מתחת או לצד) — והערפל מתפזר.\nאפשר לפתור את הלוח גם בלי לראות מתחתיו.',
+            blkIntro_chain: 'משבצת ריקה נעולה בשרשרת.\nהיא מקבלת אריח רק אחרי שכל שאר המשבצות בשורה שלה מלאות.\nאריח שמונח עליה לפני כן פשוט חוזר — בלי עונש.',
+            blkIntro_ice: 'משבצת ריקה קפואה.\nהאריח הנכון בפעם הראשונה רק סודק את הקרח (בלי עונש),\nובפעם השנייה הוא נכנס.',
+            blkIntro_bomb: 'פצצה על משבצת ריקה סופרת לאחור את המהלכים שלך.\nהנח שם את האריח הנכון בזמן — היא מנוטרלת: ⁦+5⁩ שניות.\nאם היא מגיעה ל־0 — בום: ⁦−15⁩ שניות, והפצצה נעלמת.',
+            bossBlk: '{i} {b} ⁦×{n}⁩ על הלוח.', chainBounceT: '⛓️ נעול בשרשרת', chainBounceS: 'מלא קודם את שאר המשבצות בשורה שלו',
+            defuseShout: 'נוטרלה!', boomShout: 'בום!', mapBlk: 'חדש: {b}', mapSeason: 'השבוע: {s} · {n}/{g}',
+            ev_goldenT: '✨ סוף שבוע זהוב!', ev_goldenS: 'כל הסופ״ש: לוח אחד מכל שלושה הוא לוח זהב (⁦×2⁩)',
+            ev_goblinT: '👺 ציד שדונים!', ev_goblinS: 'כל הסופ״ש מגיע שדון לכל לוח. הקש על {n} שדונים — וזכית בתיבה!',
+            evGoldenPill: 'סופ״ש זהוב', evChestPill: 'תיבה!', huntDoneT: '👺 הציד הושלם!', huntDoneS: 'תיבה מחכה — הקש על 🎁 מעל הלוח',
+            huntChestT: '🎁 תיבת ציד השדונים', huntWon: 'ניצחת בציד של הסופ״ש הזה!', huntProg: 'הקש על שדונים כשהם נכנסים: {n}/{g}',
+            seasonT: '🏔️ עונת הפסגה: {s}', seasonS: 'כל לוח בפסגה השבוע מביא אותו. {g} ניצחונות השבוע — אות העונה: {n}/{g}',
+            seasonAbout: 'מרמה {n}: בכל שבוע טוויסט אחר על לוחות הפסגה. {g} ניצחונות בשבוע — אות עונה.',
+            seasonBadge: 'אות עונה: {s}', seasonProg: '🏔️ {s} · \u2066{n}/{g}\u2069',
+            tw_fog: 'שבוע ערפל', tw_bomb: 'שבוע פצצות', tw_goblin: 'שבוע שדונים', tw_ice: 'שבוע קרח',
+            recSeasons: '🏔️ אותות עונה', recSeasonNow: 'השבוע: {s} · {n}/{g} ניצחונות', recSeasonLater: 'העונות מתחילות בפסגה, מרמה {n}',
+            recSeasonNone: 'עוד אין', recSeasonGoal: '{g} ניצחונות בפסגה בשבוע אחד',
             p_toast: 'טוסט', p_apple: 'תפוח', p_pizza: 'פיצה', p_icecream: 'גלידה', p_donut: 'דונאט', p_candy: 'סוכרייה', p_banana: 'בננה',
             p_cloud: 'ענן', p_flower: 'פרח', p_leaf: 'עלה', p_snowflake: 'פתית שלג', p_mushroom: 'פטרייה', p_butterfly: 'פרפר', p_moon: 'ירח',
         },
@@ -2548,9 +2667,27 @@
             bossGoblin1: '👺 The goblin is coming! Tap him as he walks in to chase him off.', bossGoblin2: '👺👺 Two goblins are coming! Tap them as they walk in to chase them off.',
             bossTurn: '🔄 The board will turn once mid-game. The pictures stay upright — only their places move.',
             bossT: '👑 Boss board ×1.5', bossShout: 'BOSS!', bossRow: '👑 Boss board', bossBeatT: '👑 Boss beaten!',
-            collection: '🎨 Collection', colNote: 'Unlocked by the journey’s chapter chests. The rules never change.', colLocked: '🔒 {c} chest',
+            collection: '🎨 Collection', colNote: 'Unlocked by the journey’s chapter chests and weekend events. The rules never change.', colLocked: '🔒 {c} chest',
             set_shapes: '🔷 Shapes', set_animals: '🐱 Pictures', set_food: '🍎 Food', set_nature: '🌸 Nature',
             bt_classic: '⬜ Classic', bt_mint: '🌿 Mint', bt_ocean: '🌊 Ocean', bt_sunset: '🌅 Sunset',
+            bt_goblin: '🎃 Goblin', colEvent: '🔒 Goblin Hunt weekend',
+            blk_fog: 'Fog', blk_chain: 'Chain', blk_ice: 'Ice', blk_bomb: 'Bomb', blkIntroT: '{i} {b}!', blkGo: 'Got it, go!',
+            blkIntro_fog: 'Some given tiles hide under fog.\nPut a tile in a slot right next to one (above, below or beside) and the fog lifts.\nThe board can be worked out without seeing under it.',
+            blkIntro_chain: 'An empty slot is chained shut.\nIt takes a tile only once every other slot in its row is filled.\nA tile put there before that just bounces back — no penalty.',
+            blkIntro_ice: 'An empty slot is iced.\nThe right tile the first time only cracks the ice (no penalty);\nthe second time it goes in.',
+            blkIntro_bomb: 'A bomb on an empty slot counts down your moves.\nPut the right tile there in time to defuse it: +5 seconds.\nIf it reaches 0 — boom: −15 seconds, and the bomb is gone.',
+            bossBlk: '{i} {b} ×{n} on the board.', chainBounceT: '⛓️ Chained', chainBounceS: 'Fill the rest of its row first',
+            defuseShout: 'DEFUSED!', boomShout: 'BOOM!', mapBlk: 'New: {b}', mapSeason: 'This week: {s} · {n}/{g}',
+            ev_goldenT: '✨ Golden Weekend!', ev_goldenS: 'All weekend: one board in three is golden (×2)',
+            ev_goblinT: '👺 Goblin Hunt!', ev_goblinS: 'All weekend a goblin comes on every board. Bonk {n} to win a chest!',
+            evGoldenPill: 'Golden weekend', evChestPill: 'Chest!', huntDoneT: '👺 Hunt complete!', huntDoneS: 'A chest is waiting — tap 🎁 above the board',
+            huntChestT: '🎁 Goblin Hunt chest', huntWon: 'You won this weekend’s hunt!', huntProg: 'Bonk goblins as they walk in: {n}/{g}',
+            seasonT: '🏔️ Summit season: {s}', seasonS: 'Every Summit board this week brings it. Win {g} this week for the season badge: {n}/{g}',
+            seasonAbout: 'From level {n}: each week a different twist on the Summit boards. {g} wins in the week earn a season badge.',
+            seasonBadge: 'Season badge: {s}', seasonProg: '🏔️ {s} · {n}/{g}',
+            tw_fog: 'Fog week', tw_bomb: 'Bomb week', tw_goblin: 'Goblin week', tw_ice: 'Ice week',
+            recSeasons: '🏔️ Season badges', recSeasonNow: 'This week: {s} · {n}/{g} wins', recSeasonLater: 'Seasons start at the Summit, level {n}',
+            recSeasonNone: 'None yet', recSeasonGoal: '{g} Summit wins in one week',
             p_toast: 'toast', p_apple: 'apple', p_pizza: 'pizza', p_icecream: 'ice cream', p_donut: 'donut', p_candy: 'sweet', p_banana: 'banana',
             p_cloud: 'cloud', p_flower: 'flower', p_leaf: 'leaf', p_snowflake: 'snowflake', p_mushroom: 'mushroom', p_butterfly: 'butterfly', p_moon: 'moon',
         },
@@ -2705,6 +2842,7 @@
     const toastQueue = [];
     let toastBusy = false;
     let toastTimer = null;
+    let toastHold = false; // a blocker's card is up: news waits behind it (see "Blockers")
 
     // Drop everything waiting and on screen (the journey map opening or closing)
     function flushToasts() {
@@ -2719,6 +2857,10 @@
         if (mapOpen && !onMap) return;
         toastQueue.push({ title, sub });
         while (toastQueue.length > TOAST_QUEUE_MAX) toastQueue.shift();
+        if (!toastBusy && !toastHold) nextToast();
+    }
+    function releaseToasts() {
+        toastHold = false;
         if (!toastBusy) nextToast();
     }
 
@@ -2730,6 +2872,7 @@
     }
 
     function nextToast() {
+        if (toastHold) { toastBusy = false; return; }
         const next = toastQueue.shift();
         if (!next) { toastBusy = false; return; }
         toastBusy = true;
@@ -2928,7 +3071,11 @@
             freeBoosts: {},  // boosters given by chests, used before any 💎 is paid: { hint: 1, ... }
             chests: [],      // chapters (by index) whose chest has been opened
             bosses: [],      // boss levels (5, 10, ...) whose boss board was beaten
-            unlocked: [],    // collection items given some other way than a chest (later events)
+            unlocked: [],    // collection items given some other way than a chest: weekend event prizes
+            blockSeen: {},   // blockers (fog, chain, ice, bomb) whose card has been shown: { fog: true, ... }
+            event: null,     // this weekend's event: { id, bonks, seen } (see "Weekend events")
+            eventChest: false, // a Goblin Hunt chest won and not opened yet (it waits past the weekend)
+            seasons: {},     // Summit seasons by ISO week: { '2026-W44': { twist, wins } } (see "Seasons")
         };
     }
 
@@ -2956,6 +3103,12 @@
         // ...and saves from before the journey map lack these
         if (!Number.isFinite(base.gifts) || base.gifts < 0) base.gifts = 0;
         ['chests', 'bosses', 'unlocked'].forEach(k => { if (!Array.isArray(base[k])) base[k] = []; });
+        // ...and saves from before blockers, weekend events and seasons lack these
+        ['blockSeen', 'seasons'].forEach(k => {
+            if (!base[k] || typeof base[k] !== 'object' || Array.isArray(base[k])) base[k] = {};
+        });
+        if (!base.event || typeof base.event !== 'object' || typeof base.event.id !== 'string') base.event = null;
+        base.eventChest = base.eventChest === true;
         return base;
     })();
     let level = levelInfo(progress.points).L;
@@ -3067,6 +3220,7 @@
         const dailyBonus = dailyJustDone ? DAILY_BONUS : 0;
         const total = run + overflow + dailyBonus;
         progress.points += total;
+        const season = seasonWin();
 
         unlockAchievement('first', newAch);
         if (stars === 3) unlockAchievement('perfect', newAch);
@@ -3083,7 +3237,7 @@
         return {
             tiles, perTile, tilePts, stars, starX, starPts, goldPts, hardPts, bossPts, newBest,
             winStreak: progress.winStreak, streakX, streakPts, newSize, newSizePts,
-            overflow, dailyBonus, total, dailyJustDone, newAch, extendedSolve,
+            overflow, dailyBonus, total, dailyJustDone, newAch, extendedSolve, season,
         };
     }
 
@@ -3149,7 +3303,8 @@
        the clock (each tile once a board, so taking one off and putting it back
        earns nothing). Three right tiles inside 3 seconds start a rush: for
        the next 10 seconds every right tile adds 8 seconds instead. A question
-       mark worked out by hand adds 20. A wrong move takes 5 off.
+       mark worked out by hand adds 20, a defused 💣 bomb 5. A wrong move
+       takes 5 off, and a bomb that goes off 15 (see "Blockers").
 
        The clock has a hard cap: 1.2 × the board's starting clock. Bonus
        seconds that would go past it are not lost — each one becomes 3 points
@@ -3812,6 +3967,14 @@
             const wd = d.toLocaleDateString(lang === 'en' ? 'en-US' : 'he-IL', { weekday: 'narrow' });
             days.push(`<span>${mark}<i>${escHtml(wd)}</i></span>`);
         }
+        const now = seasonNow();
+        const earned = Object.entries(progress.seasons).filter(([, e]) => e.wins >= SEASON_GOAL).sort((a, b) => a[0] < b[0] ? 1 : -1);
+        const seasonLine = summitAt(levelInfo(progress.points).L)
+            ? t('recSeasonNow', { s: seasonName(now.twist), n: Math.min(seasonWins(now.id), SEASON_GOAL), g: SEASON_GOAL })
+            : t('recSeasonLater', { n: CHAPTER_START[CHAPTER_START.length - 1] });
+        const seasonBadges = earned.length ? earned.map(([id, e]) =>
+            `<div class="ach-item">🏅 ${escHtml(seasonName(e.twist))}<small>${escHtml(weekLabel(id))}</small></div>`).join('')
+            : `<div class="ach-item locked">🔒 ${escHtml(t('recSeasonNone'))}<small>${escHtml(t('recSeasonGoal', { g: SEASON_GOAL }))}</small></div>`;
         const got = ACHIEVEMENTS.filter(a => progress.achievements.includes(a.id)).length;
         const ach = ACHIEVEMENTS.map(a => {
             const on = progress.achievements.includes(a.id);
@@ -3822,6 +3985,9 @@
             <div class="set-section">${escHtml(t('recDaily'))}</div>
             <div class="daily-meta">${escHtml(t('recDailySum', { s: st.cur, b: st.best, w: st.wins, p: st.played }))}</div>
             <div class="rec-days">${days.join('')}</div>
+            <div class="set-section">${escHtml(t('recSeasons'))}</div>
+            <div class="daily-meta">${escHtml(seasonLine)}</div>
+            <div class="ach-list">${seasonBadges}</div>
             <div class="set-section">${escHtml(t('recAch', { n: got, t: ACHIEVEMENTS.length }))}</div>
             <div class="ach-list">${ach}</div>`;
     }
@@ -3868,13 +4034,18 @@
        past a chapter before chests existed find its chest waiting there
        (a dot on 🗺️ says so). The map opens from 🗺️ in the status bar,
        pausing the board, and never in zen or the tutorial.
+
+       Each chapter from the Garden on brings one new blocker (see
+       "Blockers"), named on its banner; a tap on the banner explains it.
+       The Summit's banner names this week's season twist and how many
+       Summit wins the season badge still needs (see "Seasons").
        ============================ */
     const CHAPTERS = [
         { key: 'ch0', emoji: '🌼', hue: '#22c55e' },
-        { key: 'ch1', emoji: '🌷', hue: '#ec4899', chest: { gems: 300, boosts: { hint: 1, freeze: 1 }, unlock: 'food' } },
-        { key: 'ch2', emoji: '🏡', hue: '#f97316', chest: { gems: 600, boosts: { hint: 1, wand: 1 }, unlock: 'mint' } },
-        { key: 'ch3', emoji: '🏙️', hue: '#3b82f6', chest: { gems: 1000, boosts: { freeze: 1, shield: 1 }, unlock: 'nature' } },
-        { key: 'ch4', emoji: '⛰️', hue: '#8b5cf6', chest: { gems: 1500, boosts: { shield: 1, wand: 1 }, unlock: 'ocean' } },
+        { key: 'ch1', emoji: '🌷', hue: '#ec4899', chest: { gems: 300, boosts: { hint: 1, freeze: 1 }, unlock: 'food' }, blocker: 'fog' },
+        { key: 'ch2', emoji: '🏡', hue: '#f97316', chest: { gems: 600, boosts: { hint: 1, wand: 1 }, unlock: 'mint' }, blocker: 'chain' },
+        { key: 'ch3', emoji: '🏙️', hue: '#3b82f6', chest: { gems: 1000, boosts: { freeze: 1, shield: 1 }, unlock: 'nature' }, blocker: 'ice' },
+        { key: 'ch4', emoji: '⛰️', hue: '#8b5cf6', chest: { gems: 1500, boosts: { shield: 1, wand: 1 }, unlock: 'ocean' }, blocker: 'bomb' },
         { key: 'ch5', emoji: '🏔️', hue: '#eab308', chest: { gems: 2500, boosts: { wand: 2 }, unlock: 'sunset' } },
     ];
     const BOOST_ICON = { hint: '💡', freeze: '❄️', shield: '🛡️', wand: '🪄' };
@@ -3899,9 +4070,9 @@
        pictures are always there; 🍎 food and 🌸 nature come from chapter
        chests. Board themes (the board's frame and the page behind it; the
        slots and tiles stay as they are): classic always, 🌿 mint, 🌊 ocean
-       and 🌅 sunset from chests. What is owned is worked out from the
-       chests opened (and progress.unlocked, for anything given later some
-       other way); the choice is kept per device like the style (klox_picset,
+       and 🌅 sunset from chests, and 🎃 goblin only from a 👺 Goblin Hunt
+       chest (see "Weekend events"). What is owned is worked out from the
+       chests opened (and progress.unlocked, for event prizes); the choice is kept per device like the style (klox_picset,
        klox_board) and falls back to the default if it is not owned (after
        "reset all progress", say). Picked in Settings → Collection, or from
        a chest's card.
@@ -3909,9 +4080,11 @@
     const COLLECTION = [
         { id: 'shapes', kind: 'tiles' }, { id: 'animals', kind: 'tiles' }, { id: 'food', kind: 'tiles' }, { id: 'nature', kind: 'tiles' },
         { id: 'classic', kind: 'board' }, { id: 'mint', kind: 'board' }, { id: 'ocean', kind: 'board' }, { id: 'sunset', kind: 'board' },
+        { id: 'goblin', kind: 'board', event: 'goblin' }, // only from a 👺 Goblin Hunt chest (see "Weekend events")
     ];
     function chestFor(id) { return CHAPTERS.findIndex(c => c.chest && c.chest.unlock === id); }
     function owns(id) {
+        if (COLLECTION.some(x => x.id === id && x.event)) return progress.unlocked.includes(id);
         const c = chestFor(id);
         return c < 0 || progress.chests.includes(c) || progress.unlocked.includes(id);
     }
@@ -3966,7 +4139,7 @@
         const card = x => {
             const own = owns(x.id);
             const on = x.kind === 'board' ? boardTheme === x.id : tilesOn(x.id);
-            const lock = own ? '' : `<small>${escHtml(t('colLocked', { c: t(CHAPTERS[chestFor(x.id)].key) }))}</small>`;
+            const lock = own ? '' : `<small>${escHtml(x.event ? t('colEvent') : t('colLocked', { c: t(CHAPTERS[chestFor(x.id)].key) }))}</small>`;
             return `<button class="col-item${on ? ' on' : ''}${own ? '' : ' locked'}" data-id="${x.id}">`
                 + `<span class="col-prev">${previewHtml(x.id, 4)}</span>${escHtml(cosmeticName(x.id))}${lock}</button>`;
         };
@@ -4031,7 +4204,12 @@
             const n = levelParams(difficultyFor(b.from)).N;
             const range = b.c + 1 < CHAPTERS.length ? t('chRange', { n, a: b.from, b: b.to }) : t('chEndless', { n, a: b.from });
             html += `<div class="map-band" style="--ch:${ch.hue};top:${top(b.y1)}px;height:${b.y1 - b.y0}px"></div>`;
-            html += `<div class="map-banner" style="--ch:${ch.hue};top:${top(b.bannerY)}px"><b>${ch.emoji} ${escHtml(t(ch.key))}</b><small>${escHtml(range)}</small></div>`;
+            // what the chapter brings: its blocker, or (the Summit) this week's season
+            const s = seasonNow();
+            const twist = ch.blocker ? t('mapBlk', { b: BLOCKERS[ch.blocker].icon + ' ' + t('blk_' + ch.blocker) })
+                : b.c === CHAPTERS.length - 1 ? t('mapSeason', { s: seasonName(s.twist), n: Math.min(seasonWins(s.id), SEASON_GOAL), g: SEASON_GOAL }) : '';
+            html += `<div class="map-banner" data-c="${b.c}" style="--ch:${ch.hue};top:${top(b.bannerY)}px"><b>${ch.emoji} ${escHtml(t(ch.key))}</b><small>${escHtml(range)}</small>`
+                + (twist ? `<em>${escHtml(twist)}</em>` : '') + `</div>`;
         });
         html += svg;
         nodes.forEach(nd => {
@@ -4183,6 +4361,14 @@
             else if (!progress.chests.includes(c)) toast(t('chestLockedT', { n: CHAPTER_START[c] }), '', true);
             return;
         }
+        // a chapter's banner: what its blocker does (the Summit: this week's season)
+        const banner = e.target.closest('.map-banner');
+        if (banner) {
+            const c = +banner.dataset.c, k = CHAPTERS[c].blocker;
+            if (k) toast(BLOCKERS[k].icon + ' ' + t('blk_' + k), t('blkIntro_' + k), true);
+            else if (c === CHAPTERS.length - 1) toast(t('seasonT', { s: seasonName(seasonNow().twist) }), t('seasonAbout', { g: SEASON_GOAL, n: CHAPTER_START[CHAPTER_START.length - 1] }), true);
+            return;
+        }
         const node = e.target.closest('.map-node');
         if (node && isBossLevel(+node.dataset.level)) {
             const L = +node.dataset.level;
@@ -4224,7 +4410,7 @@
     function hintSlots(item) {
         if (!item) return [];
         if (item.pair) return item.pair.filter(p => !boardState[p.home]).map(p => p.home);
-        const i = wandTarget(item);
+        const i = wandTarget(item, true);
         return i >= 0 ? [i] : [];
     }
 
@@ -4387,12 +4573,17 @@
        and its own × 1.5 row on the win screen. A lost boss comes back as the
        next board while the player is still on that level; once beaten, that
        level's boards are normal again. The trouble is fixed, not left to chance:
-         level 5 (before wreckers start at 10): a step harder inside the size
-           and 6% more slots empty, so more to place and less time for each;
+         level 5 (before wreckers start at 10): a quarter step harder inside
+           the size (on 4×4 that is 10 of the 16 slots empty instead of 8),
+           so more to place and less time for each;
          10, 20, 30, ...: a goblin is coming (two from level 30), about a
            quarter and two thirds of the way into the clock;
          15, 25, 35, ...: the board turns once, at about 40% of the clock
-           (and from 35 a goblin comes too).
+           (and from 35 a goblin comes too);
+         and every boss also brings two of its chapter's blocker (see
+           "Blockers": 🌫️ fog at 5, ⛓️ chains at 10 and 15, 🧊 ice at 20 and
+           25, 💣 bombs at 30 and 35; on the Summit, the blocker of this
+           week's season, unless it is goblin week), named on the card.
        Nothing else comes on a boss board: no golden board, no random turns,
        spins or goblins. A 🛡️ shield and a bonk work on a boss's goblin as on
        any other, and a board solved before the trouble is due never sees it.
@@ -4401,15 +4592,19 @@
        ============================ */
     const BOSS_EVERY = 5;
     const BOSS_MULT = 1.5;
-    const BOSS_STEP = 0.5;
-    const BOSS_EXTRA_EMPTY = 0.06;
+    const BOSS_STEP = 0.25;
+    const BOSS_EXTRA_EMPTY = 0;
+    const BOSS_BLOCKERS = 2;
 
     function isBossLevel(L) { return L % BOSS_EVERY === 0; }
 
     function bossPlan(L) {
-        if (L < WRECK_FROM_LEVEL) return { L, kind: 'empty', goblins: 0, turns: 0 };
-        if ((L / BOSS_EVERY) % 2 === 0) return { L, kind: 'goblin', goblins: L >= 30 ? 2 : 1, turns: 0 };
-        return { L, kind: 'turn', goblins: L >= 35 ? 1 : 0, turns: 1 };
+        const blocker = chapterBlocker(chapterOf(L));
+        const plan = L < WRECK_FROM_LEVEL ? { L, kind: 'empty', goblins: 0, turns: 0 }
+            : (L / BOSS_EVERY) % 2 === 0 ? { L, kind: 'goblin', goblins: L >= 30 ? 2 : 1, turns: 0 }
+            : { L, kind: 'turn', goblins: L >= 35 ? 1 : 0, turns: 1 };
+        plan.blocker = blocker;
+        return plan;
     }
 
     // What the boss brings, in words (the announcement, the toast, a tap on the map)
@@ -4418,6 +4613,7 @@
         if (plan.kind === 'empty') lines.push(t('bossEmpty'));
         if (plan.turns) lines.push(t('bossTurn'));
         if (plan.goblins) lines.push(t(plan.goblins > 1 ? 'bossGoblin2' : 'bossGoblin1'));
+        if (plan.blocker) lines.push(t('bossBlk', { i: BLOCKERS[plan.blocker].icon, b: t('blk_' + plan.blocker), n: BOSS_BLOCKERS }));
         return lines.join('\n');
     }
 
@@ -4447,6 +4643,182 @@
         if (plan.goblins > 1) out.push({ at: at(0.65), kind: 'goblin' });
         return out.sort((a, b) => a.at - b.at);
     }
+
+    /* ============================
+       Weekend events (✨ 👺)
+
+       Every Saturday and Sunday (the player's own date) has an event, and
+       nothing has to be set up for it: weekends take turns by the ISO week
+       number, an even week ✨ Golden Weekend, an odd one 👺 Goblin Hunt.
+         ✨ Golden Weekend: one board in three is golden (× 2 points),
+            instead of one in eight.
+         👺 Goblin Hunt: every board brings one goblin more (even before
+            level 10, where goblins otherwise start), and every goblin
+            bonked counts. 5 bonks win the hunt's chest: 500 💎 to spend
+            (progress.gifts, like a chapter chest: never part of the level)
+            and, the first time, the 🎃 Goblin board theme, which only the
+            hunt gives (progress.unlocked). The chest waits, past the
+            weekend if need be, until it is opened from its 🎁 badge.
+       A badge above the board says which event is on (and the hunt's
+       bonks so far); a tap on it explains it. The first board of each event
+       weekend says so too. Each weekend starts fresh: its state
+       (progress.event) is keyed by the event and its ISO week. Like the
+       other surprises, never in zen, the tutorial or today's puzzle, nor
+       on the first two boards.
+       ============================ */
+    const GOLDEN_CHANCE = 0.125, GOLDEN_WEEKEND_CHANCE = 1 / 3;
+    const HUNT_GOAL = 5, HUNT_GEMS = 500, HUNT_PRIZE = 'goblin';
+
+    // The ISO week a date is in: weeks start on Monday, and week 1 holds the year's first Thursday
+    function isoWeek(d = new Date()) {
+        const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        x.setDate(x.getDate() - (x.getDay() + 6) % 7 + 3); // that week's Thursday
+        const year = x.getFullYear();
+        const jan4 = new Date(year, 0, 4);
+        const week = 1 + Math.round(((x - jan4) / 86400000 - 3 + (jan4.getDay() + 6) % 7) / 7);
+        return { year, week };
+    }
+
+    // { kind, id } on a Saturday or Sunday, else null
+    function weekendEvent(d = new Date()) {
+        const day = d.getDay();
+        if (day !== 0 && day !== 6) return null;
+        const w = isoWeek(d);
+        const kind = w.week % 2 ? 'goblin' : 'golden';
+        return { kind, id: kind + '-' + w.year + '-W' + w.week };
+    }
+
+    // This weekend's event and its state (started fresh the first time it is looked at)
+    function eventState() {
+        const ev = weekendEvent();
+        if (!ev) return null;
+        if (!progress.event || progress.event.id !== ev.id) progress.event = { id: ev.id, bonks: 0, seen: false };
+        return { ...ev, st: progress.event };
+    }
+    function eventsOn() { return !noSurprises() && helpersOn(); }
+    function huntOn() { const e = eventsOn() && eventState(); return !!e && e.kind === 'goblin'; }
+    function goldenChance() { const e = eventState(); return e && e.kind === 'golden' ? GOLDEN_WEEKEND_CHANCE : GOLDEN_CHANCE; }
+
+    // The first board of an event weekend says what is on
+    function announceEvent() {
+        if (!eventsOn()) return;
+        const e = eventState();
+        if (!e || e.st.seen) return;
+        e.st.seen = true;
+        saveProgress();
+        toast(t('ev_' + e.kind + 'T'), t('ev_' + e.kind + 'S', { n: HUNT_GOAL }));
+    }
+
+    // A goblin bonked during the hunt
+    function huntBonk() {
+        if (!huntOn()) return;
+        const st = eventState().st;
+        if (st.bonks >= HUNT_GOAL) return; // this weekend's chest is already won
+        st.bonks++;
+        if (st.bonks >= HUNT_GOAL) {
+            progress.eventChest = true;
+            toast(t('huntDoneT'), t('huntDoneS'));
+        }
+        saveProgress();
+        renderEventPills();
+        document.querySelector('.ev-pill[data-ev="goblin"]')?.classList.add('bump');
+    }
+
+    // The hunt's chest, opened from its 🎁 badge: 💎 and (the first time) the 🎃 board theme
+    function openEventChest() {
+        if (!progress.eventChest || gameOver) return;
+        cancelDrag();
+        const wasPaused = isPaused;
+        if (!isPaused) setPaused(true);
+        const fresh = !progress.unlocked.includes(HUNT_PRIZE);
+        progress.eventChest = false;
+        progress.gifts += HUNT_GEMS;
+        if (fresh) progress.unlocked.push(HUNT_PRIZE);
+        saveProgress();
+        updateHud();
+        Sound.jackpot();
+        buzz([30, 50, 30]);
+        confetti(40);
+        const row = x => `<div class="score-row on"><span>${escHtml(x)}</span></div>`;
+        const back = () => { if (!wasPaused && !gameOver) setPaused(false); updateHud(); };
+        const buttons = [{ label: t('chestOk'), cls: 'btn-secondary', action: back }];
+        if (fresh) buttons.unshift({ label: t('chestUse'), cls: 'btn-primary', action: () => { pickCosmetic(HUNT_PRIZE); back(); } });
+        showDialog(t('huntChestT'), '', buttons, {
+            extraHtml: `<div class="score">${row(t('chestGems', { n: HUNT_GEMS.toLocaleString() }))}`
+                + (fresh ? row(t('chestUnlock', { x: cosmeticName(HUNT_PRIZE) })) : '') + '</div>'
+                + (fresh ? `<div class="col-prev chest-prev">${previewHtml(HUNT_PRIZE)}</div>` : ''),
+        });
+    }
+
+    /* ============================
+       Seasons (🏔️ the Summit, from level 38)
+
+       Past the last chapter the levels go on without end, so the Summit
+       runs in weekly seasons (ISO weeks, Monday to Sunday). Each week has
+       a twist, in turn: 🌫️ fog week, 💣 bomb week, 👺 goblin week and
+       🧊 ice week. Every Summit board that week brings it: 2–3 of that
+       blocker (see "Blockers"), or one goblin more. 10 Summit boards won
+       inside the week earn that season's badge (progress.seasons, by
+       week), shown with the others in Achievements & records; the win
+       screen counts the way there. The map's Summit banner and a badge
+       above the board show this week's twist and the count.
+       ============================ */
+    const SEASON_TWISTS = ['fog', 'bomb', 'goblin', 'ice'];
+    const TWIST_ICON = { fog: '🌫️', bomb: '💣', goblin: '👺', ice: '🧊' };
+    const SEASON_GOAL = 10;
+    let seasonBoard = null; // { id, twist }: this board is a Summit board of that season
+
+    function seasonNow(d = new Date()) {
+        const w = isoWeek(d);
+        return { id: w.year + '-W' + String(w.week).padStart(2, '0'), twist: SEASON_TWISTS[w.week % SEASON_TWISTS.length] };
+    }
+    function summitAt(L) { return L >= CHAPTER_START[CHAPTER_START.length - 1]; }
+    function seasonWins(id) { return (progress.seasons[id] && progress.seasons[id].wins) || 0; }
+    function seasonName(twist) { return TWIST_ICON[twist] + ' ' + t('tw_' + twist); }
+    // "2026-W45", kept left to right inside Hebrew
+    function weekLabel(id) { return '\u2066' + id + '\u2069'; }
+
+    // A Summit board won: one more toward the badge. Returns what the win screen shows.
+    function seasonWin() {
+        if (!seasonBoard || daily) return null;
+        const e = progress.seasons[seasonBoard.id] ||= { twist: seasonBoard.twist, wins: 0 };
+        e.wins++;
+        return { ...seasonBoard, wins: e.wins, badge: e.wins === SEASON_GOAL };
+    }
+
+    // The badges above the board: this weekend's event, a hunt's chest, this week's season
+    function renderEventPills() {
+        const box = document.getElementById('eventPills');
+        const pills = [];
+        if (eventsOn()) {
+            const e = eventState();
+            if (e && e.kind === 'golden') pills.push(`<button class="ev-pill gold" data-ev="golden">✨ ${escHtml(t('evGoldenPill'))}</button>`);
+            if (e && e.kind === 'goblin') pills.push(`<button class="ev-pill" data-ev="goblin">👺 <b>${e.st.bonks >= HUNT_GOAL ? '✓' : e.st.bonks + '/' + HUNT_GOAL}</b></button>`);
+            if (progress.eventChest) pills.push(`<button class="ev-pill chest" data-ev="chest">🎁 ${escHtml(t('evChestPill'))}</button>`);
+            if (seasonBoard) {
+                const w = seasonWins(seasonBoard.id);
+                pills.push(`<button class="ev-pill season" data-ev="season">🏔️${TWIST_ICON[seasonBoard.twist]} <b>${w >= SEASON_GOAL ? '🏅' : w + '/' + SEASON_GOAL}</b></button>`);
+            }
+        }
+        const html = pills.join('');
+        if (box.dataset.h !== html) { box.dataset.h = html; box.innerHTML = html; }
+    }
+    document.getElementById('eventPills').addEventListener('click', (e) => {
+        const b = e.target.closest('.ev-pill');
+        if (!b) return;
+        e.stopPropagation();
+        Sound.select();
+        const k = b.dataset.ev;
+        if (k === 'chest') { openEventChest(); return; }
+        if (k === 'golden') toast(t('ev_goldenT'), t('ev_goldenS'));
+        if (k === 'goblin') {
+            const st = eventState()?.st;
+            toast(t('ev_goblinT'), st && st.bonks >= HUNT_GOAL ? t('huntWon') : t('huntProg', { n: st ? st.bonks : 0, g: HUNT_GOAL }));
+        }
+        if (k === 'season' && seasonBoard) {
+            toast(t('seasonT', { s: seasonName(seasonBoard.twist) }), t('seasonS', { n: seasonWins(seasonBoard.id), g: SEASON_GOAL }));
+        }
+    });
 
     /* ============================
        Puzzle generation
@@ -4531,10 +4903,13 @@
     // How many ways (stopping at limit) can the empty slots be filled with the
     // wheel's tiles so every row and column differs (and, when the rule is on,
     // every pair is unique)? holes: indices left empty in the answer.
-    function countSolutions(answer, holes, n, limit = 2) {
+    // blanks: given tiles the player can't see (🌫️ fog): they count as
+    // unknown, so they rule nothing out and need no filling.
+    function countSolutions(answer, holes, n, limit = 2, blanks = []) {
         const key = x => x.color + '|' + x.shape;
         const cells = answer.map(x => x && { ...x });
         holes.forEach(i => { cells[i] = null; });
+        blanks.forEach(i => { cells[i] = null; });
         const pool = new Map(); // tile kind -> how many are in the wheel
         holes.forEach(i => { const k = key(answer[i]); pool.set(k, (pool.get(k) || 0) + 1); });
         const kinds = [...pool.keys()].map(k => { const [color, shape] = k.split('|'); return { k, color, shape }; });
@@ -4606,6 +4981,7 @@
         document.getElementById('dailyMark').innerText = !de || (daily && !daily.practice && !gameOver) ? '' : de.won ? '✓' : '✗';
         // 🗺️: a dot while a chapter chest waits to be opened
         document.getElementById('mapBtn').classList.toggle('chest', chestsWaiting().length > 0);
+        renderEventPills();
 
         // Goal gradient: how far into this level, always visible
         document.getElementById('goalLabel').innerHTML =
@@ -4635,6 +5011,7 @@
         steps = 0;
         gameOver = false;
         toastQueue.length = 0; // news still waiting from the last board is no news on this one
+        toastHold = false;
         popIndex = null;
         lineCombo = 0;
 
@@ -4669,14 +5046,18 @@
         extended = false;
         updateTimerUI();
 
-        // Variable reward: one board in eight is golden and pays double (from the third board)
-        golden = !noSurprises() && helpersOn() && !boss && Math.random() < 0.125;
+        // Variable reward: one board in eight is golden and pays double (from the third board);
+        // one in three on a ✨ Golden Weekend (see "Weekend events")
+        golden = !noSurprises() && helpersOn() && !boss && Math.random() < goldenChance();
+        // A Summit board counts toward this week's season badge (see "Seasons")
+        seasonBoard = !noSurprises() && helpersOn() && summitAt(level) ? seasonNow() : null;
 
         const bc = document.getElementById('boardContainer');
         bc.className = 'board-container size-' + N + (golden ? ' golden' : '') + (hard ? ' hard' : '') + (boss ? ' boss' : '');
         const grid = document.getElementById('boardGrid');
         grid.style.gridTemplateColumns = `repeat(${N}, minmax(0, 1fr))`;
         grid.style.gridTemplateRows = `repeat(${N}, minmax(0, 1fr))`;
+        grid.style.setProperty('--n', N);
         grid.classList.toggle('no-guides', !params.guides);
         document.getElementById('chipUnique').style.display = params.unique ? '' : 'none';
         updateHud();
@@ -4739,6 +5120,9 @@
 
         if (!tutorial) shuffle(trayState);
         rng = Math.random; // the deal is done: back to chance
+        // Fog, chains, ice and bombs (none on a quiet board or today's puzzle)
+        placeBlockers(noSurprises() ? {} : blockerPlan(), missingPos);
+        minSteps += blockers.filter(b => b && b.kind === 'ice').length; // a crack is a move too
         initialSnap = snapshot();
         undoStack = [];
         wheelAngle = null; // centre the wheel on the middle tile
@@ -4746,10 +5130,12 @@
         clashLines = new Set();
         render(true);
         setPaused(false);
+        introduceBlockers(); // a new blocker's card first: the news below waits behind it
         if (golden) { toast(t('goldenT'), t('goldenS')); Sound.coin(); }
         if (hard) toast(t('hardT'), t('hardS'));
         if (boss) { shout(t('bossShout'), 'boss'); toast(t('bossT'), bossText(boss)); }
         if (daily) toast(daily.practice ? t('practiceT') : t('dailyToday'), daily.practice ? t('practiceS') : daily.date);
+        announceEvent();
         introduceSpecials();
         if (tutorial) tutBegin();
     }
@@ -4764,7 +5150,8 @@
        right place. With every pair unique you can still work it out: it is
        the one tile no other wheel tile is.
        Filler: a tile with a +1 badge. Put it right and the right tile for an
-       empty slot next to it (any of the eight ways) jumps from the wheel too.
+       empty slot next to it (any of the eight ways) jumps from the wheel too
+       (never into a chained or iced slot, see "Blockers").
        ============================ */
     const FILLER_FROM_LEVEL = 3;
     const PAIR_FROM_LEVEL = 4;
@@ -4837,6 +5224,294 @@
                 toast(t(tk), t(sk));
             }, 400 + i * 900);
         });
+    }
+
+    /* ============================
+       Blockers (🌫️ ⛓️ 🧊 💣)
+
+       Each chapter of the journey from the Garden on brings one blocker
+       that changes how a board is worked out. The first board that has
+       one stops for a card that explains it (once per blocker, kept in
+       progress.blockSeen), and the map names it on its chapter's banner.
+         🌫️ Fog (from the Garden, 4×4): a few given tiles hide under fog
+            until a tile is put in a slot right next to them (above, below
+            or beside; every tile on the board is a right one). Fog only goes
+            where the board can still be worked out without seeing under it
+            at all (countSolutions with those tiles blank), and only beside
+            an empty slot, so it always lifts on the way. No question-mark
+            tile on a foggy board: that one is worked out from every given
+            tile.
+         ⛓️ Chain (from the Village, 5×5): an empty slot is chained shut
+            until every other slot in its row is filled. A tile tapped or
+            dropped there just bounces off, right or wrong, with no penalty
+            and no move counted (so it gives nothing away). Never two chains
+            in one row or one column (so a board turn can't line two up
+            either), never on a pair's slot, and only in a row with another
+            empty slot: a chain never waits on another chain or on itself,
+            so there is no deadlock. Once its tile is in, the chain is gone.
+         🧊 Ice (from the City, 6×6): an empty slot is iced. The right tile
+            the first time cracks the ice (nothing is placed, no penalty, a
+            move like any other); the second time it goes in. A wrong tile
+            is a wrong move, as anywhere. Never on a pair's slot.
+         💣 Bomb (from the Mountain, 7×7): sits on an empty slot and counts
+            the moves down (every move that counts on the board: a tile
+            placed, a wrong one, a crack, an undo), 8 for the first bomb on
+            a board and 4 more for each one after. The right tile there in
+            time defuses it: +5 seconds and a party. At 0 it goes off: −15
+            seconds, and the bomb is gone (one blast each, fair and done).
+       What is broken stays broken: undo and reset never bring back fog,
+       ice, a chain whose slot was filled, or a bomb.
+       The helpers respect them: the 🪄 wand never throws into a slot
+       still chained (it picks another tile, or waits), smashes ice in one
+       go, and a tile it throws onto a bomb defuses it. A filler's +1 skips
+       chained and iced slots. 💡 hint shows the tile's slot even while it
+       is chained. A board turn takes every blocker along with its slot.
+       How often: on about 45% of boards from the Garden on, 1–2 of the
+       chapter's own blocker (1–3 on 6×6 and 7×7), and on 20% of boards
+       from the Village on, one of an earlier chapter's too. Boss boards
+       bring two of their chapter's as their announced twist, and nothing
+       else; Summit boards bring 2–3 of this week's season blocker (see
+       "Seasons"). Never in zen, the tutorial or today's puzzle, nor on the
+       first two boards.
+       ============================ */
+    const BLOCKERS = {
+        fog:   { icon: '🌫️', chapter: 1 },
+        chain: { icon: '⛓️', chapter: 2 },
+        ice:   { icon: '🧊', chapter: 3 },
+        bomb:  { icon: '💣', chapter: 4 },
+    };
+    const BLOCK_CHANCE = 0.45;  // boards with some of the chapter's own blocker
+    const MIX_CHANCE = 0.2;     // ...and with one of an earlier chapter's
+    const BOMB_MOVES = 8, BOMB_MORE = 4;
+    const BOMB_PENALTY = 15, BOMB_BONUS = 5;
+    let blockers = [];          // per slot: null or { kind, free (chain), cracked (ice), left (bomb) }
+    let bombSteps = 0;          // moves already counted down on the bombs
+    let blockFx = [];           // [what, index]: effects to play once the board is drawn
+    let chainToldAt = -1;       // the board (turnToken) a bounced tile last explained the chain on
+
+    // The blocker a chapter brings; the Summit's is this week's season twist, if it is one
+    function chapterBlocker(c) {
+        if (CHAPTERS[c] && CHAPTERS[c].blocker) return CHAPTERS[c].blocker;
+        if (c === CHAPTERS.length - 1) { const tw = seasonNow().twist; return BLOCKERS[tw] ? tw : null; }
+        return null;
+    }
+
+    // What this board gets: { kind: how many }
+    function blockerPlan() {
+        if (noSurprises() || !helpersOn()) return {};
+        if (boss) return boss.blocker ? { [boss.blocker]: BOSS_BLOCKERS } : {};
+        const c = chapterOf(level), plan = {};
+        const own = chapterBlocker(c);
+        if (c === CHAPTERS.length - 1) {
+            if (own) plan[own] = 2 + (Math.random() < 0.5 ? 1 : 0); // the season's twist: every Summit board
+        } else if (own && Math.random() < BLOCK_CHANCE) {
+            plan[own] = 1 + Math.floor(Math.random() * (N >= 6 ? 3 : 2));
+        }
+        const older = Object.keys(BLOCKERS).filter(k => BLOCKERS[k].chapter < c && !plan[k]);
+        if (older.length && Math.random() < MIX_CHANCE) plan[older[Math.floor(Math.random() * older.length)]] = 1;
+        return plan;
+    }
+
+    const rowOf = i => Math.floor(i / N), colOf = i => i % N;
+    // The slots above, below and beside
+    function orthogonal(i) {
+        return neighbours(i).filter(p => rowOf(p) === rowOf(i) || colOf(p) === colOf(i));
+    }
+
+    // Deal the plan onto the board just dealt (holes: its empty slots).
+    // Returns the board's blockers too, for the self-checks in the tests.
+    function placeBlockers(plan, holes) {
+        blockers = Array(N * N).fill(null);
+        bombSteps = steps;
+        blockFx = [];
+        const holeSet = new Set(holes);
+        const pairHomes = new Set();
+        trayState.forEach(x => x.pair && x.pair.forEach(p => pairHomes.add(p.home)));
+        const free = () => holes.filter(i => !pairHomes.has(i) && !blockers[i]);
+        const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+        let bombs = 0;
+        // chains first: theirs is the pickiest rule
+        ['chain', 'fog', 'ice', 'bomb'].forEach(kind => {
+            for (let k = 0; k < (plan[kind] || 0); k++) {
+                if (kind === 'fog') {
+                    const fog = blockers.map((b, i) => b && b.kind === 'fog' ? i : -1).filter(i => i >= 0);
+                    const cands = shuffle([...Array(N * N).keys()].filter(i => !holeSet.has(i) && !blockers[i]
+                        && orthogonal(i).some(p => holeSet.has(p))));
+                    // still one answer with every fogged tile unseen
+                    const at = cands.slice(0, 12).find(i => countSolutions(solution, holes, N, 2, [...fog, i]) === 1);
+                    if (at === undefined) break;
+                    blockers[at] = { kind: 'fog' };
+                    continue;
+                }
+                const cands = kind !== 'chain' ? free() : free().filter(i =>
+                    holes.some(j => j !== i && rowOf(j) === rowOf(i))
+                    && !blockers.some((b, j) => b && b.kind === 'chain' && (rowOf(j) === rowOf(i) || colOf(j) === colOf(i))));
+                if (!cands.length) break;
+                const at = pick(cands);
+                blockers[at] = kind === 'bomb' ? { kind, left: BOMB_MOVES + BOMB_MORE * bombs++ } : { kind };
+            }
+        });
+        if (blockers.some(b => b && b.kind === 'fog')) trayState.forEach(x => { delete x.mystery; });
+        blockers.forEach((b, i) => { if (b && b.kind === 'chain') b.free = chainFree(i); });
+        return blockers;
+    }
+
+    // Every other slot in the chained slot's row is filled
+    function chainFree(i) {
+        const r = rowOf(i);
+        for (let c = 0; c < N; c++) if (r * N + c !== i && !boardState[r * N + c]) return false;
+        return true;
+    }
+    function chainLocked(i) {
+        const b = blockers[i];
+        return !!b && b.kind === 'chain' && !boardState[i] && !chainFree(i);
+    }
+    function iceAt(i) {
+        const b = blockers[i];
+        return !!b && b.kind === 'ice' && !b.cracked;
+    }
+
+    // A tile on a chained slot bounces off: no penalty, no move
+    function chainBounce(index) {
+        requestAnimationFrame(() => {
+            rejectMove(document.querySelector(`.slot[data-index="${index}"]`));
+            document.querySelector(`.slot[data-index="${index}"] .blk`)?.classList.add('rattle');
+        });
+        if (chainToldAt !== turnToken) { chainToldAt = turnToken; toast(t('chainBounceT'), t('chainBounceS')); }
+        return false;
+    }
+
+    // The right tile on ice: the ice cracks, the tile stays in the wheel
+    function crackIce(index) {
+        blockers[index].cracked = true;
+        steps++;
+        blockFx.push(['crack', index]);
+        return true;
+    }
+
+    // Before each draw: lift fog, free or drop chains, defuse or set off bombs
+    function updateBlockers() {
+        if (!blockers.length) return;
+        blockers.forEach((b, i) => {
+            if (!b) return;
+            if (b.kind === 'fog') {
+                if (orthogonal(i).some(p => boardState[p] && !boardState[p].locked)) { blockers[i] = null; blockFx.push(['fog', i]); }
+            } else if (boardState[i]) {
+                // its tile is in: done with
+                blockers[i] = null;
+                if (b.kind === 'bomb') blockFx.push(['defuse', i]);
+                if (b.kind === 'ice' && !b.cracked) blockFx.push(['shatter', i]);
+            } else if (b.kind === 'chain') {
+                const free = chainFree(i);
+                if (free && !b.free) blockFx.push(['unchain', i]);
+                b.free = free;
+            }
+        });
+        const moves = steps - bombSteps;
+        bombSteps = steps;
+        if (moves > 0) blockers.forEach((b, i) => {
+            if (!b || b.kind !== 'bomb') return;
+            b.left -= moves;
+            if (b.left <= 0) { blockers[i] = null; blockFx.push(['boom', i]); }
+        });
+    }
+
+    // What a blocker looks like on its slot (also on its card)
+    function blockerHtml(b) {
+        if (b.kind === 'fog') return '<div class="blk blk-fog"><span>🌫️</span></div>';
+        if (b.kind === 'chain') return `<div class="blk blk-chain${b.free ? ' free' : ''}"><span>⛓️</span><i>${b.free ? '🔓' : '🔒'}</i></div>`;
+        if (b.kind === 'ice') return `<div class="blk blk-ice${b.cracked ? ' cracked' : ''}"><span>🧊</span>`
+            + (b.cracked ? '<svg viewBox="0 0 100 100"><path d="M50 4 L44 30 L58 42 L40 62 L52 78 L46 96 M58 42 L84 34 M40 62 L14 70 M44 30 L22 18"/></svg>' : '') + '</div>';
+        if (b.kind === 'bomb') return `<div class="blk blk-bomb${b.left <= 3 ? ' hot' : ''}"><span>💣</span><b>${b.left}</b></div>`;
+        return '';
+    }
+
+    // After the draw: the effects of what updateBlockers (or a crack) just did
+    function playBlockFx() {
+        const fx = blockFx;
+        blockFx = [];
+        const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        fx.forEach(([what, i]) => {
+            const slot = document.querySelector(`.slot[data-index="${i}"]`);
+            const c = slot ? centreOf(slot) : { x: innerWidth / 2, y: innerHeight / 2, w: 50 };
+            if (what === 'fog') {
+                slot?.querySelector('.tile')?.classList.add('fog-lift');
+                Sound.puff();
+            } else if (what === 'unchain') {
+                slot?.querySelector('.blk')?.classList.add('unchained');
+                sparkle(c.x, c.y, 8, c.w * 0.6);
+                Sound.clink();
+            } else if (what === 'crack' || what === 'shatter') {
+                slot?.querySelector('.blk')?.classList.add('crack-hit');
+                shards(c.x, c.y, what === 'crack' ? 8 : 14, c.w * 0.7);
+                Sound.crack();
+                buzz(what === 'crack' ? 12 : [10, 20, 10]);
+            } else if (what === 'defuse') {
+                addBonusTime(BOMB_BONUS);
+                shout(t('defuseShout'), 'zen');
+                sparkle(c.x, c.y, 18, c.w * 1.2);
+                if (!calm) confettiAt(c.x, c.y, 36);
+                Sound.jackpot();
+                buzz([20, 30, 20, 30, 60]);
+            } else if (what === 'boom') {
+                const flash = document.createElement('div');
+                flash.className = 'boom-flash';
+                flash.style.left = c.x + 'px';
+                flash.style.top = c.y + 'px';
+                flash.style.width = flash.style.height = (c.w * 3) + 'px';
+                document.body.appendChild(flash);
+                setTimeout(() => flash.remove(), 800);
+                const board = document.querySelector('.board-container');
+                if (board && !calm) { board.classList.remove('mq-shake'); void board.offsetWidth; board.classList.add('mq-shake'); setTimeout(() => board.classList.remove('mq-shake'), 700); }
+                shout(t('boomShout'), 'boom');
+                Sound.boom();
+                buzz([60, 40, 90]);
+                if (!quietBoard() && !gameOver) loseTime(BOMB_PENALTY);
+            }
+        });
+    }
+
+    // Little ice splinters flying off a slot
+    function shards(cx, cy, count, reach) {
+        for (let k = 0; k < count; k++) {
+            const a = (k / count) * Math.PI * 2 + Math.random() * 0.5;
+            const d = reach * (0.6 + Math.random() * 0.6);
+            const sp = document.createElement('div');
+            sp.className = 'spark shard';
+            sp.style.left = cx + 'px';
+            sp.style.top = cy + 'px';
+            sp.style.setProperty('--dx', (Math.cos(a) * d).toFixed(1) + 'px');
+            sp.style.setProperty('--dy', (Math.sin(a) * d).toFixed(1) + 'px');
+            document.body.appendChild(sp);
+            setTimeout(() => sp.remove(), 750);
+        }
+    }
+
+    // The first board with a blocker the player has never met stops for a
+    // card (one per blocker), with a slot drawn as it will look
+    function introduceBlockers() {
+        const kinds = [...new Set(blockers.filter(Boolean).map(b => b.kind))].filter(k => !progress.blockSeen[k]);
+        if (!kinds.length) return;
+        const token = turnToken;
+        cancelDrag();
+        setPaused(true);
+        // news waits behind the card, and whatever is on screen now goes
+        toastHold = true;
+        clearTimeout(toastTimer);
+        toastBusy = false;
+        document.querySelectorAll('#toasts .toast').forEach(el => el.remove());
+        const next = () => {
+            if (token !== turnToken || gameOver) return;
+            const k = kinds.shift();
+            if (!k) { setPaused(false); releaseToasts(); return; }
+            progress.blockSeen[k] = true;
+            saveProgress();
+            const demo = k === 'chain' ? { kind: k, free: false } : k === 'bomb' ? { kind: k, left: BOMB_MOVES } : { kind: k };
+            showDialog(t('blkIntroT', { i: BLOCKERS[k].icon, b: t('blk_' + k) }), t('blkIntro_' + k), [
+                { label: t('blkGo'), cls: 'btn-primary', action: next },
+            ], { extraHtml: `<div class="blk-demo"><div class="slot${k === 'fog' ? ' locked' : ''}">${blockerHtml(demo)}</div></div>` });
+        };
+        next();
     }
 
     // Is this tile the answer's tile for that slot?
@@ -4958,6 +5633,7 @@
         updateToolButtons();
 
         // 2. Board
+        updateBlockers();
         const grid = document.getElementById('boardGrid');
         grid.innerHTML = '';
 
@@ -4985,6 +5661,11 @@
             } else {
                 slot.addEventListener('click', () => handleBoardClick(index, slot));
             }
+            const blk = blockers[index];
+            if (blk) {
+                slot.classList.add('has-' + blk.kind);
+                slot.insertAdjacentHTML('beforeend', blockerHtml(blk));
+            }
             grid.appendChild(slot);
         });
         // Row and column frames go on top of the slots, after them in the grid
@@ -5004,6 +5685,7 @@
         popIndex = null;
         popMore = [];
 
+        playBlockFx();
         applyHint();
         checkWizard(); // before validateState, so the winning move can reveal one too
         validateState(silent);
@@ -5290,6 +5972,8 @@
        per board. Without the pair rule it is already the hardest size to
        work out. A bought 🛡️ shield stops the next wrecker of either kind,
        and a goblin can be tapped away on his way in (see "Goblin").
+       A 👺 Goblin Hunt weekend and a Summit goblin week each bring one
+       goblin more per board, at any level (see "Weekend events", "Seasons").
        ============================ */
     const WRECK_FROM_LEVEL = 10;
     const WRECK_RATE = { easy: 0.4, medium: 1, hard: 1.8 };
@@ -5332,6 +6016,12 @@
         }
         if (level >= WRECK_FROM_LEVEL && Math.random() < SPIN_CHANCE * WRECK_RATE[boardDiff]) {
             wrecks.push({ at: Math.round(totalTime * (0.3 + Math.random() * 0.4)), kind: 'spin' });
+        }
+        // One goblin more on a 👺 Goblin Hunt weekend, and another in a Summit goblin week
+        // (at any level: see "Weekend events" and "Seasons")
+        const extra = (huntOn() ? 1 : 0) + (seasonBoard && seasonBoard.twist === 'goblin' ? 1 : 0);
+        for (let k = 0; k < extra; k++) {
+            wrecks.push({ at: Math.round(Math.max(10, totalTime * (0.3 + 0.3 * k + Math.random() * 0.1))), kind: 'goblin' });
         }
         wrecks.sort((a, b) => a.at - b.at);
     }
@@ -5498,6 +6188,7 @@
         undoStack.forEach(s => { s.board = turn(s.board); turnPairs(s.tray); });
         if (initialSnap) { initialSnap.board = turn(initialSnap.board); turnPairs(initialSnap.tray); }
         solution = turn(solution);
+        if (blockers.length) blockers = turn(blockers); // fog, chains, ice and bombs go with their slots
         if (wiz) wiz.pos = turnIdx(wiz.pos);
         popIndex = null;
     }
@@ -5731,6 +6422,7 @@
         sparkle(c.x, c.y, 16, c.w * 0.7);
         shout(t('bonkShout'), 'bonk');
         addBonusTime(BONK_BONUS);
+        huntBonk();
         if (!progress.bonkSeen) {
             progress.bonkSeen = true;
             saveProgress();
@@ -5754,13 +6446,17 @@
        Each crossing brings it once per board, so undo and redo can't farm it.
        The 🪄 booster casts one on demand (castWand(true)): that one always
        throws a tile, the wheel's top one first, and never turns into a wizard.
+       A wand never throws into a ⛓️ chained slot, smashes 🧊 ice on the way
+       in and defuses a 💣 bomb it lands on (see "Blockers").
        ============================ */
     // Where a tray tile belongs: a slot of the answer it fits that isn't already right
-    function wandTarget(item) {
+    // (never a chained one, unless anySlot: the 💡 hint shows it anyway)
+    function wandTarget(item, anySlot = false) {
         if (!item || item.pair) return -1; // a pair is too heavy to throw
         const fits = [];
         solution.forEach((want, i) => {
             const b = boardState[i];
+            if (!anySlot && chainLocked(i)) return;
             if (want.color === item.color && want.shape === item.shape && !b?.locked
                 && !(b && b.color === want.color && b.shape === want.shape)) fits.push(i);
         });
@@ -5960,6 +6656,7 @@
     function placeFromTray(id, index) {
         const tIdx = trayState.findIndex(t => t.id === id);
         if (tIdx < 0 || boardState[index]?.locked) return false;
+        if (chainLocked(index)) return chainBounce(index); // right or wrong alike (see "Blockers")
         const item = trayState[tIdx];
 
         if (item.pair) {
@@ -5984,6 +6681,7 @@
             missedIds.add(item.id);
             return wrongMove(index);
         }
+        if (iceAt(index)) return crackIce(index); // the first right tap only cracks it
         pushUndo();
         trayState.splice(tIdx, 1);
         const placed = plainTile(item);
@@ -6093,7 +6791,7 @@
     function fillNext(index) {
         const options = [];
         neighbours(index).forEach(p => {
-            if (boardState[p]) return;
+            if (boardState[p] || chainLocked(p) || iceAt(p)) return; // never past a chain or through ice
             const k = trayState.findIndex(x => !x.pair && isRight(x, p));
             if (k >= 0) options.push([p, k]);
         });
@@ -6116,9 +6814,15 @@
         mistakes++;
         requestAnimationFrame(() => rejectMove(document.querySelector(`.slot[data-index="${index}"]`)));
         if (quietBoard()) return false;
-        timeLeft = Math.max(0, timeLeft - WRONG_PENALTY);
+        loseTime(WRONG_PENALTY);
+        return false;
+    }
+
+    // Seconds off the clock (a wrong move, a bomb), and the bar shows it
+    function loseTime(secs) {
+        timeLeft = Math.max(0, timeLeft - secs);
         updateTimerUI();
-        floatBonus(-WRONG_PENALTY);
+        floatBonus(-secs);
         const bar = document.getElementById('clockBar');
         bar.classList.remove('hit'); void bar.offsetWidth; bar.classList.add('hit');
         clearTimeout(bar._hit);
@@ -6127,16 +6831,17 @@
             clearInterval(timerInterval);
             outOfTime();
         }
-        return false;
     }
 
     function moveOnBoard(from, to) {
         if (from === to) return false;
         if (boardState[to]?.locked || boardState[from]?.locked) return false;
+        if (chainLocked(to)) return chainBounce(to);
         if (boardState[to] || !isRight(boardState[from], to)) {
             if (boardState[from]) missedIds.add(boardState[from].id);
             return wrongMove(to);
         }
+        if (iceAt(to)) return crackIce(to);
         pushUndo();
         [boardState[from], boardState[to]] = [boardState[to], boardState[from]];
         steps++;
@@ -6365,7 +7070,7 @@
 
         if (zone.dataset.drop === 'board') {
             const idx = +zone.dataset.index;
-            const ok = !boardState[idx]?.locked && !(drag.src === 'board' && drag.index === idx);
+            const ok = !boardState[idx]?.locked && !chainLocked(idx) && !(drag.src === 'board' && drag.index === idx);
             zone.classList.add(ok ? 'drop-ok' : 'drop-bad');
             drag.target = { kind: 'board', index: idx, ok };
         } else if (zone.dataset.drop === 'tray' && drag.src === 'board') {
@@ -6841,6 +7546,8 @@
         const unlockedN = nextN > progress.maxN ? nextN : null;
         // Badges won on this board: never toasted mid-game, all shown together on this screen
         const badges = reward ? reward.newAch : [];
+        const season = reward && reward.season;
+        if (season && season.badge) badges.push({ name: t('seasonBadge', { s: seasonName(season.twist) }), desc: weekLabel(season.id) });
         if (unlockedN) {
             progress.maxN = nextN;
             progress.newSizeLeft = NEW_SIZE_BOARDS;
@@ -6885,6 +7592,7 @@
             }
             if (progress.winStreak >= 2 && won) msg += '\n' + t('winStreak', { n: progress.winStreak });
             if (reward && reward.newBest) msg += '\n' + t('newBest', { n: N });
+            if (season) msg += '\n' + t('seasonProg', { s: seasonName(season.twist), n: Math.min(season.wins, SEASON_GOAL), g: SEASON_GOAL });
             msg = msg.replace(/^\n/, '');
 
             // The screen waits for a tap. A tap while the points count up jumps

@@ -343,15 +343,70 @@
             min-height: 0; /* Important for flex child to shrink properly */
             position: relative;
             container-type: size; /* lets the board size itself to the smaller side */
-            --wiz-strip: 34px; /* room above the board for the wizards you have collected */
+            --wiz-strip: 62px; /* room above the board for the clock and the wizards you have collected */
             --bw: min(100cqw, calc(100cqh - var(--wiz-strip)), 460px);
         }
 
-        /* Wizards collected so far, in a row just above the board's left edge */
+        /* The clock: a bar the width of the board, just above it, that drains as time runs out */
+        .clock {
+            position: absolute;
+            left: calc((100cqw - var(--bw)) / 2);
+            width: var(--bw);
+            bottom: calc(var(--bw) + 6px);
+            height: 20px;
+            border-radius: 10px;
+            background: var(--bg-slot);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            cursor: default;
+        }
+        .clock-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            transition: width 1s linear, background 0.3s ease;
+        }
+        [dir="rtl"] .clock-fill { background: linear-gradient(270deg, var(--accent), var(--success)); }
+        .clock.danger .clock-fill { background: var(--danger); animation: pulse 1s infinite; }
+        .clock.rush { border-color: var(--gold); box-shadow: 0 0 10px color-mix(in srgb, var(--gold) 50%, transparent); }
+        .clock.rush .clock-fill { background: repeating-linear-gradient(-45deg, var(--gold), var(--gold) 8px, #fde047 8px, #fde047 16px); }
+        .clock .timer, .clock-rush {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            font-size: 0.78rem;
+            color: var(--text-main);
+            text-shadow: 0 0 3px var(--bg-base), 0 0 2px var(--bg-base);
+        }
+        .clock .timer { inset-inline-end: 9px; }
+        .clock .timer.danger { color: var(--text-main); animation: none; }
+        .clock-rush { inset-inline-start: 9px; font-weight: 800; }
+        .timer.bump { animation: pop 0.35s ease; }
+        .time-bonus {
+            position: fixed;
+            z-index: 190;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            font-weight: 800;
+            font-size: 1rem;
+            color: var(--success);
+            text-shadow: 0 1px 2px var(--shadow);
+            animation: bonusUp 1.1s ease-out forwards;
+        }
+        .time-bonus.big { color: var(--gold); font-size: 1.25rem; }
+        @keyframes bonusUp {
+            0% { opacity: 0; transform: translate(-50%, -20%) scale(0.7); }
+            20% { opacity: 1; transform: translate(-50%, -80%) scale(1.1); }
+            100% { opacity: 0; transform: translate(-50%, -260%) scale(1); }
+        }
+
+        /* Wizards collected so far, in a row just above the clock's left edge */
         .wiz-stash {
             position: absolute;
             left: calc((100cqw - var(--bw)) / 2 + 2px);
-            bottom: calc(var(--bw) + 4px);
+            bottom: calc(var(--bw) + 30px);
             height: 30px;
             display: flex;
             gap: 5px;
@@ -727,6 +782,53 @@
         }
 
         .tray-slot .tile { --radius: 14px; --s: 50%; }
+
+        /* Special wheel tiles: a pair, a dark question mark, a filler with a +1 badge */
+        .pair-grid {
+            display: grid;
+            width: 92%;
+            height: 92%;
+            gap: 2px;
+        }
+        .pair-cell {
+            --s: 72%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 0;
+            min-height: 0;
+            border-radius: 6px;
+            background: color-mix(in srgb, var(--accent) 14%, transparent);
+            outline: 1.5px solid color-mix(in srgb, var(--accent) 55%, transparent);
+        }
+        .pair-cell .shape { width: var(--s); height: var(--s); }
+        .pair-cell .shape.animal { width: 92%; height: 92%; }
+        .mystery-tile { background: #1e1b2e; }
+        .mystery-q {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.7rem;
+            font-weight: 900;
+            color: #a78bfa;
+            text-shadow: 0 0 8px rgba(167, 139, 250, 0.6);
+        }
+        .drag-ghost.mystery-tile { background: #1e1b2e; }
+        .drag-ghost.pair-tile .pair-grid { width: 92%; height: 92%; }
+        .filler-badge {
+            position: absolute;
+            top: 2px;
+            inset-inline-end: 2px;
+            padding: 0 4px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-weight: 800;
+            line-height: 14px;
+            color: #1e293b;
+            background: var(--gold);
+            pointer-events: none;
+            direction: ltr; /* "+1", not "1+", in Hebrew */
+        }
         /* Only the tile on top can be picked; the rest are dimmed, and a tap on
            one turns the wheel to bring it to the top */
         .tray-slot.off .tile { opacity: 0.45; filter: saturate(0.7); cursor: pointer; }
@@ -1330,7 +1432,6 @@
     <!-- Status Bar -->
     <div class="status-bar">
         <span class="stat"><span data-i18n="board">לוח</span> <b id="sizeDisplay">3×3</b></span>
-        <span class="stat">⏱ <span class="timer" id="timerDisplay">02:00</span></span>
         <span class="stat streak" id="streakStat" title="ימים ברצף" data-i18n-title="streakTitle">🔥 <b id="streakDisplay">0</b></span>
         <span class="stat" id="xpStat" title="נקודות" data-i18n-title="points">⭐ <b id="xpDisplay">0</b></span>
     </div>
@@ -1354,6 +1455,12 @@
     <!-- Board Area -->
     <div class="board-wrapper">
         <div class="wiz-stash" id="wizStash"></div>
+        <!-- The clock: a bar above the board that drains as time runs out -->
+        <div class="clock" id="clockBar">
+            <div class="clock-fill" id="clockFill"></div>
+            <span class="clock-rush" id="clockRush"></span>
+            <span class="timer" id="timerDisplay">02:00</span>
+        </div>
         <div class="board-container" id="boardContainer">
             <div class="board-grid" id="boardGrid"></div>
         </div>
@@ -1647,6 +1754,11 @@
             ach_daily: 'יעד יומי', ach_daily_d: '{n} לוחות ביום', ach_days3: '3 ימים ברצף', ach_days3_d: 'שיחקת 3 ימים רצופים',
             ach_days7: 'שבוע שלם', ach_days7_d: '7 ימים רצופים', ach_xp1000: '10,000 נקודות', ach_xp1000_d: 'צברת 10,000 ⭐',
             ach_peak8: 'פסגה', ach_peak8_d: 'הגעת לרמה 30',
+            secShort: 'ש׳', rushOn: '⚡ ×3 · {s}', rushT: '⚡ טורבו!',
+            rushS: '3 אריחים נכונים ב־3 שניות! ב־{s} השניות הקרובות כל אריח נכון מוסיף {b} שניות',
+            pairT: '🔗 זוג!', pairS: 'שני אריחים דבוקים. הם נכנסים יחד, בדיוק כמו שהם מסודרים — גם באלכסון',
+            mysteryT: '❓ אריח מסתורין', mysteryS: 'מה מסתתר מאחורי סימן השאלה? רק המקום הנכון שלו יגלה',
+            fillerT: '➕ אריח ממלא', fillerS: 'שים אותו במקום הנכון — והאריח הנכון למשבצת ריקה לידו יקפוץ גם הוא',
         },
         en: {
             appName: 'Klox', a_settings: 'Settings', a_pause: 'Pause/Resume', a_theme: 'Dark/Light', a_sound: 'Sound',
@@ -1700,6 +1812,11 @@
             ach_daily: 'Daily goal', ach_daily_d: '{n} boards in a day', ach_days3: '3 days in a row', ach_days3_d: 'Played 3 days running',
             ach_days7: 'A full week', ach_days7_d: '7 days running', ach_xp1000: '10,000 points', ach_xp1000_d: 'Earned 10,000 ⭐',
             ach_peak8: 'Summit', ach_peak8_d: 'Reached level 30',
+            secShort: 's', rushOn: '⚡ ×3 · {s}', rushT: '⚡ Rush!',
+            rushS: '3 right tiles in 3 seconds! For the next {s} seconds every right tile adds {b} seconds',
+            pairT: '🔗 A pair!', pairS: 'Two tiles stuck together. They go in together, just as they sit — diagonals too',
+            mysteryT: '❓ Mystery tile', mysteryS: 'What hides behind the question mark? Only its right place will show',
+            fillerT: '➕ Filler tile', fillerS: 'Put it in its right place and the right tile for an empty slot next to it jumps in too',
         },
     };
     let lang = store.get('klox_lang') === 'en' ? 'en' : 'he';
@@ -1837,18 +1954,27 @@
     }
 
     // Each size owns a stretch of the level scale; within it, t runs 0 → 1.
+
+    // 3×3 and 4×4 are short warm-ups (player levels 1–2 and 3–7); the bigger boards keep their long stretches.
     const SIZE_BANDS = [
         { N: 3, from: 1.0 },
-        { N: 4, from: 3.0 },
-        { N: 5, from: 5.5 },
-        { N: 6, from: 8.0 },
-        { N: 7, from: 10.5 },
+        { N: 4, from: 1.5 },
+        { N: 5, from: 2.75 },
+        { N: 6, from: 5.25 },
+        { N: 7, from: 7.75 },
     ];
     const MIN_LEVEL = 1.0;
-    const MAX_LEVEL = 13.0;
+    const MAX_LEVEL = 10.25;
 
     // What fraction of the board you place yourself, from the start of a size to its end
     const MISSING_FRAC = { 3: [0.34, 0.95], 4: [0.35, 0.8], 5: [0.3, 0.64], 6: [0.25, 0.56], 7: [0.22, 0.46] };
+
+    // The clock is where a size gets harder: seconds per tile fall from 10 to 3
+    // as you climb through it. Every right tile also adds 10 seconds back, so
+    // that is 20 down to 13 a tile in all.
+    function boardTime(missing, t) {
+        return Math.round(20 + missing * (10 - 7 * t));
+    }
 
     function levelParams(L) {
         let bi = 0;
@@ -1864,10 +1990,7 @@
             N, t,
             nextAt: SIZE_BANDS[bi + 1] ? SIZE_BANDS[bi + 1].from : null,
             missing,
-            // Past the middle of a size, some tiles start on the board in the wrong place
-            scrambled: t >= 0.4 ? Math.min(missing - 1, Math.floor((t - 0.3) * N)) : 0,
-            // Seconds per tile shrink as you climb within a size
-            time: Math.round(25 + missing * (22 - 10 * t)),
+            time: boardTime(missing, t),
             // Late in each size (from 4×4 on) the row and column frames go away
             guides: N === 3 || t < 0.75,
             unique: N !== 6,
@@ -1875,12 +1998,12 @@
     }
 
     function rankFor(L) {
-        if (L >= 12) return t('r7');
-        if (L >= 10.5) return t('r6');
-        if (L >= 8) return t('r5');
-        if (L >= 6) return t('r4');
-        if (L >= 4.5) return t('r3');
-        if (L >= 3) return t('r2');
+        if (L >= 9.25) return t('r7');
+        if (L >= 7.75) return t('r6');
+        if (L >= 5.25) return t('r5');
+        if (L >= 3.75) return t('r4');
+        if (L >= 2.75) return t('r3');
+        if (L >= 1.5) return t('r2');
         return t('r1');
     }
 
@@ -1894,9 +2017,9 @@
        ones take several good boards. A fast solve leaves more seconds and so
        climbs faster — "too easy, jump ahead" falls out of the scoring.
 
-       The level sets the board on the 1–13 difficulty scale above, a quarter
-       step per level: 3×3 for levels 1–8, 4×4 from 9, 5×5 from 19, 6×6 from
-       29, 7×7 from 39. Levels go on past 49; the board stops getting harder.
+       The level sets the board on the 1–10.25 difficulty scale above, a quarter
+       step per level: 3×3 for levels 1–2, 4×4 from 3, 5×5 from 8, 6×6 from
+       18, 7×7 from 28. Levels go on past 38; the board stops getting harder.
 
        A loss earns nothing and never takes points away. After losses in a
        row the boards ease a little — inside the current board size, without
@@ -2074,12 +2197,12 @@
     let validLines = new Set();
     let clashLines = new Set();
     let popIndex = null;       // board index to animate on next render
+    let popMore = [];          // more board indices to animate (a pair's second half, a filler's extra tile)
     let lineCombo = 0;
     let lastLineAt = 0;
     let autoTimer = null;
     let undoStack = [];        // snapshots before each move
     let initialSnap = null;    // the board as dealt, for "reset board"
-    let spentBeforeReset = 0;  // seconds used before the board was reset; still counts for stars
     let extended = false;      // the player bought extra time: solving still counts, but earns no points
     let wizardUsed = false;    // a wizard's minute was spent on this board: no time bonus
     let wiz = null;            // {pos, color, shape, found}: a wizard hiding under one empty slot's right tile
@@ -2100,6 +2223,20 @@
     let timeLeft = totalTime;
     let timerInterval = null;
     let isPaused = false;
+    let clockMax = totalTime;  // what a full clock bar stands for; time bonuses can stretch it
+
+    /* Time bonuses. Every tile you put in its right place adds 10 seconds to
+       the clock (each tile once a board, so taking one off and putting it back
+       earns nothing). Three right tiles inside 3 seconds start a rush: for
+       the next 10 seconds every right tile adds 30 seconds instead. */
+    const RIGHT_BONUS = 10;
+    const RUSH_BONUS = 30;
+    const RUSH_COUNT = 3;
+    const RUSH_WINDOW_MS = 3000;
+    const RUSH_SECONDS = 10;
+    let rushLeft = 0;          // seconds of rush left
+    let rightTimes = [];       // when the last right tiles landed, for starting a rush
+    let rewarded = new Set();  // tile ids that already earned their bonus on this board
 
     function formatTime(s) {
         const m = Math.floor(s / 60).toString().padStart(2, '0');
@@ -2110,7 +2247,54 @@
     function updateTimerUI() {
         const el = document.getElementById('timerDisplay');
         el.innerText = formatTime(timeLeft);
-        el.classList.toggle('danger', timeLeft <= Math.min(30, Math.floor(totalTime / 4)));
+        const danger = timeLeft <= Math.min(30, Math.floor(totalTime / 4));
+        el.classList.toggle('danger', danger);
+        clockMax = Math.max(clockMax, timeLeft);
+        const bar = document.getElementById('clockBar');
+        bar.classList.toggle('danger', danger && !rushLeft);
+        bar.classList.toggle('rush', rushLeft > 0);
+        document.getElementById('clockFill').style.width = (100 * Math.max(0, timeLeft) / clockMax).toFixed(2) + '%';
+        document.getElementById('clockRush').innerText = rushLeft > 0 ? t('rushOn', { s: rushLeft }) : '';
+    }
+
+    // A right tile (or two, or a filler's pair) just landed: add time, maybe start a rush
+    function rightPlaced(ids) {
+        const fresh = ids.filter(id => !rewarded.has(id));
+        if (!fresh.length) return;
+        const now = performance.now();
+        let bonus = 0;
+        fresh.forEach(id => {
+            rewarded.add(id);
+            bonus += rushLeft > 0 ? RUSH_BONUS : RIGHT_BONUS;
+            rightTimes.push(now);
+        });
+        rightTimes = rightTimes.slice(-RUSH_COUNT);
+        timeLeft += bonus;
+        updateTimerUI();
+        floatBonus(bonus);
+        if (!rushLeft && rightTimes.length === RUSH_COUNT && now - rightTimes[0] < RUSH_WINDOW_MS) {
+            rushLeft = RUSH_SECONDS;
+            rightTimes = [];
+            updateTimerUI();
+            Sound.wand();
+            buzz([15, 30, 15]);
+            toast(t('rushT'), t('rushS', { s: RUSH_SECONDS, b: RUSH_BONUS }));
+        }
+    }
+
+    // "+10s" rises from the clock bar
+    function floatBonus(secs) {
+        const bar = document.getElementById('clockBar');
+        const r = bar.getBoundingClientRect();
+        const el = document.createElement('div');
+        el.className = 'time-bonus' + (secs >= RUSH_BONUS ? ' big' : '');
+        el.innerText = '+' + secs + t('secShort');
+        el.style.left = (r.left + r.width / 2) + 'px';
+        el.style.top = r.top + 'px';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1100);
+        const tm = document.getElementById('timerDisplay');
+        tm.classList.remove('bump'); void tm.offsetWidth; tm.classList.add('bump');
     }
 
     function startTimer() {
@@ -2119,6 +2303,7 @@
             if (isPaused || gameOver) return;
             timeLeft--;
             boardSecs++;
+            if (rushLeft > 0) rushLeft--;
             updateTimerUI();
             if (timeLeft > 0 && timeLeft <= 10) Sound.tick();
             if (timeLeft > 0) maybeWreck();
@@ -2150,8 +2335,7 @@
                 saveProgress();
                 renderStash();
                 wizardUsed = true;
-                spentBeforeReset += WIZ_SECONDS;
-                timeLeft = WIZ_SECONDS;
+                timeLeft = clockMax = WIZ_SECONDS;
                 updateTimerUI();
                 document.getElementById('timerDisplay').classList.add('wizard');
                 setPaused(false);
@@ -2161,9 +2345,7 @@
         if (!extended) {
             buttons.push({ label: t('moreSecs', { s: EXTRA_SECONDS }), cls: 'btn-primary', action: () => {
                 extended = true;
-                // the whole original clock is spent; keep "seconds used" honest across the extension
-                spentBeforeReset += EXTRA_SECONDS;
-                timeLeft = EXTRA_SECONDS;
+                timeLeft = clockMax = EXTRA_SECONDS;
                 updateTimerUI();
                 document.getElementById('timerDisplay').classList.add('extended');
                 setPaused(false);
@@ -2424,6 +2606,77 @@
         return solution;
     }
 
+    /* ============================
+       One answer only
+
+       A board is dealt from its answer, then its empty slots are picked one
+       at a time, keeping a slot empty only if the board still has just one
+       way to finish with the tiles in the wheel. So every board can be
+       worked out, never guessed, and "the right place" for a tile is always
+       the one place it can go.
+       ============================ */
+    // How many ways (stopping at limit) can the empty slots be filled with the
+    // wheel's tiles so every row and column differs (and, when the rule is on,
+    // every pair is unique)? holes: indices left empty in the answer.
+    function countSolutions(answer, holes, n, limit = 2) {
+        const key = x => x.color + '|' + x.shape;
+        const cells = answer.map(x => x && { ...x });
+        holes.forEach(i => { cells[i] = null; });
+        const pool = new Map(); // tile kind -> how many are in the wheel
+        holes.forEach(i => { const k = key(answer[i]); pool.set(k, (pool.get(k) || 0) + 1); });
+        const kinds = [...pool.keys()].map(k => { const [color, shape] = k.split('|'); return { k, color, shape }; });
+        const open = [...holes];
+        let found = 0;
+
+        const fits = (i, x) => {
+            const r = Math.floor(i / n), c = i % n;
+            for (let j = 0; j < n; j++) {
+                const a = cells[r * n + j], b = cells[j * n + c];
+                if (a && (a.color === x.color || a.shape === x.shape)) return false;
+                if (b && (b.color === x.color || b.shape === x.shape)) return false;
+            }
+            return true;
+        };
+        const search = () => {
+            if (found >= limit) return;
+            if (!open.length) { found++; return; }
+            // fill the slot with the fewest choices first
+            let best = -1, bestC = null;
+            for (let o = 0; o < open.length; o++) {
+                const i = open[o];
+                const c = kinds.filter(x => pool.get(x.k) > 0 && fits(i, x));
+                if (!c.length) return;
+                if (!bestC || c.length < bestC.length) { best = o; bestC = c; if (c.length === 1) break; }
+            }
+            const i = open[best];
+            open.splice(best, 1);
+            for (const x of bestC) {
+                pool.set(x.k, pool.get(x.k) - 1);
+                cells[i] = x;
+                search();
+                cells[i] = null;
+                pool.set(x.k, pool.get(x.k) + 1);
+                if (found >= limit) break;
+            }
+            open.splice(best, 0, i);
+        };
+        search();
+        // No separate pair check: every filling uses exactly the wheel's tiles,
+        // so when the answer's pairs are all unique, so are any filling's.
+        return found;
+    }
+
+    // Empty up to `want` slots of the answer, keeping exactly one solution
+    function carveHoles(answer, n, want) {
+        const holes = [];
+        for (const pos of shuffle([...Array(n * n).keys()])) {
+            if (holes.length >= want) break;
+            holes.push(pos);
+            if (countSolutions(answer, holes, n) !== 1) holes.pop();
+        }
+        return holes;
+    }
+
     function updateHud() {
         const li = levelInfo(progress.points);
         document.getElementById('levelDisplay').innerText = li.L;
@@ -2459,9 +2712,11 @@
         colors = ALL_COLORS.slice(0, N);
         shapes = ALL_SHAPES.slice(0, N);
         totalTime = params.time;
-        timeLeft = totalTime;
+        timeLeft = clockMax = totalTime;
+        rushLeft = 0;
+        rightTimes = [];
+        rewarded = new Set();
         document.getElementById('timerDisplay').classList.remove('extended', 'wizard');
-        spentBeforeReset = 0;
         extended = false;
         wizardUsed = false;
         updateTimerUI();
@@ -2481,38 +2736,35 @@
         const cells = N * N;
         solution = generateValidBoard(N);
         wandLines = new Set();
-        const order = shuffle([...Array(cells).keys()]);
-        const missingPos = order.slice(0, params.missing);
+        // Only as many empty slots as keep the answer the only one. Small boards
+        // late in their band can't be emptied that far, so their count and clock shrink.
+        const missingPos = carveHoles(solution, N, params.missing);
+        if (missingPos.length < params.missing) {
+            params.missing = missingPos.length;
+            params.time = boardTime(params.missing, params.t);
+            totalTime = timeLeft = clockMax = params.time;
+            updateTimerUI();
+        }
+        const holeSet = new Set(missingPos);
 
         boardState = Array(cells).fill(null);
         trayState = [];
         let idCounter = 1;
-
-        order.forEach((pos, i) => {
+        const singles = [];
+        for (let pos = 0; pos < cells; pos++) {
             const item = { ...solution[pos], id: 't_' + idCounter++ };
-            if (i < params.missing) {
-                trayState.push(item);
+            if (holeSet.has(pos)) {
+                singles.push({ item, pos });
             } else {
                 item.locked = true;
                 boardState[pos] = item;
             }
-        });
-
-        // Scrambled: some of the missing tiles start on the board, in a wrong slot.
-        const s = Math.min(params.scrambled, missingPos.length - 1);
-        if (s > 0) {
-            const from = missingPos.slice(0, s);
-            // Rotate them among their own slots, or (one tile) put it in another empty slot
-            const to = s >= 2 ? [...from.slice(1), from[0]] : [missingPos[1]];
-            from.forEach((p, k) => {
-                const want = solution[p];
-                const idx = trayState.findIndex(t => t.color === want.color && t.shape === want.shape);
-                boardState[to[k]] = trayState.splice(idx, 1)[0];
-            });
         }
+        dealSpecials(singles);
+        trayState = [...singles.map(x => x.item), ...trayState];
 
         // Roughly the fewest moves a perfect player needs
-        minSteps = params.missing;
+        minSteps = trayState.length;
 
         // Stingy on purpose: a wizard hides under one empty slot only every few boards,
         // never in the first two, and not while three are already collected.
@@ -2521,7 +2773,7 @@
             progress.sinceWizard++;
             const due = progress.sinceWizard >= WIZ_MAX_GAP
                 || (progress.sinceWizard >= WIZ_MIN_GAP && Math.random() < WIZ_CHANCE);
-            const empty = missingPos.filter(p => !boardState[p]); // scrambled tiles already sit in some slots
+            const empty = missingPos.filter(p => !boardState[p]);
             if (due && empty.length) {
                 const pos = empty[Math.floor(Math.random() * empty.length)];
                 wiz = { pos, color: solution[pos].color, shape: solution[pos].shape, found: false };
@@ -2531,6 +2783,7 @@
         }
 
         planWrecks();
+        document.querySelectorAll('.time-bonus').forEach(el => el.remove());
 
         shuffle(trayState);
         initialSnap = snapshot();
@@ -2541,6 +2794,93 @@
         render(true);
         setPaused(false);
         if (golden) { toast(t('goldenT'), t('goldenS')); Sound.coin(); }
+        introduceSpecials();
+    }
+
+    /* ============================
+       Special tiles in the wheel
+
+       Pair: two tiles stuck together, side by side, one above the other or
+       corner to corner, just as they sit in the answer. They go down
+       together, into their one place; a tap on either of their slots puts them.
+       Mystery: a dark question mark. What it is shows only once it is in its
+       right place. With every pair unique you can still work it out: it is
+       the one tile no other wheel tile is.
+       Filler: a tile with a +1 badge. Put it right and the right tile for an
+       empty slot next to it (any of the eight ways) jumps from the wheel too.
+       ============================ */
+    const FILLER_FROM_LEVEL = 3;
+    const PAIR_FROM_LEVEL = 4;
+    const MYSTERY_FROM_LEVEL = 6;
+
+    function neighbours(i) {
+        const r = Math.floor(i / N), c = i % N, out = [];
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+            if (!dr && !dc) continue;
+            const rr = r + dr, cc = c + dc;
+            if (rr >= 0 && rr < N && cc >= 0 && cc < N) out.push(rr * N + cc);
+        }
+        return out;
+    }
+
+    // singles: [{item, pos}] for every empty slot. Pairs leave it and go to trayState;
+    // mystery and filler tiles are marked in place.
+    function dealSpecials(singles) {
+        const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+        const kindKey = x => x.color + '|' + x.shape;
+        const kindCount = {};
+        singles.forEach(({ item }) => { kindCount[kindKey(item)] = (kindCount[kindKey(item)] || 0) + 1; });
+        const holeAt = new Map(singles.map(x => [x.pos, x]));
+
+        let pairs = 0;
+        if (level >= PAIR_FROM_LEVEL) pairs = (N >= 5 ? 1 : 0) + (Math.random() < 0.6 ? 1 : 0);
+        for (let k = 0; k < pairs && singles.length >= 4; k++) {
+            const options = [];
+            singles.forEach(a => neighbours(a.pos).forEach(p => {
+                const b = holeAt.get(p);
+                // a 6×6 board can hold the same tile twice; a pair only takes tiles that are one of a kind
+                if (b && a.pos < b.pos && singles.includes(b)
+                    && kindCount[kindKey(a.item)] === 1 && kindCount[kindKey(b.item)] === 1) options.push([a, b]);
+            }));
+            if (!options.length) break;
+            const [a, b] = pick(options);
+            singles.splice(singles.indexOf(a), 1);
+            singles.splice(singles.indexOf(b), 1);
+            trayState.push({
+                id: a.item.id + '+' + b.item.id,
+                pair: [{ ...a.item, home: a.pos }, { ...b.item, home: b.pos }],
+            });
+        }
+
+        // Without unique pairs (6×6) a hidden tile could be anything, so no mystery there
+        let mysteries = 0;
+        if (level >= MYSTERY_FROM_LEVEL && params.unique) mysteries = N >= 5 ? 2 : 1;
+        const plain = () => singles.filter(x => !x.item.mystery && !x.item.filler);
+        for (let k = 0; k < mysteries && plain().length >= 3; k++) pick(plain()).item.mystery = true;
+
+        if (level >= FILLER_FROM_LEVEL && Math.random() < 0.5) {
+            const options = plain().filter(x => neighbours(x.pos).some(p => singles.some(o => o !== x && o.pos === p)));
+            if (options.length && singles.length >= 3) pick(options).item.filler = true;
+        }
+    }
+
+    // The first board with a new kind of tile explains it once
+    function introduceSpecials() {
+        const has = f => trayState.some(f);
+        [['pairSeen', x => x.pair, 'pairT', 'pairS'],
+         ['mysterySeen', x => x.mystery, 'mysteryT', 'mysteryS'],
+         ['fillerSeen', x => x.filler, 'fillerT', 'fillerS']].forEach(([flag, test, tk, sk], i) => {
+            if (progress[flag] || !has(test)) return;
+            progress[flag] = true;
+            saveProgress();
+            setTimeout(() => toast(t(tk), t(sk)), 400 + i * 900);
+        });
+    }
+
+    // Is this tile the answer's tile for that slot?
+    function isRight(item, index) {
+        const want = solution[index];
+        return !!(item && want && item.color === want.color && item.shape === want.shape);
     }
 
     /* ============================
@@ -2550,6 +2890,56 @@
         const tile = document.createElement('div');
         tile.className = 'tile' + (isSelected ? ' selected' : '') + (data.locked ? ' locked-tile' : '');
 
+        if (data.pair) {
+            // The two halves sit as they do on the board: the grid inherits the
+            // page's direction, so in Hebrew its first column is on the right, like the board's
+            tile.classList.add('pair-tile');
+            const [a, b] = data.pair;
+            const ra = Math.floor(a.home / N), ca = a.home % N, rb = Math.floor(b.home / N), cb = b.home % N;
+            const rows = ra === rb ? 1 : 2, cols = ca === cb ? 1 : 2;
+            const mini = document.createElement('div');
+            mini.className = 'pair-grid';
+            mini.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            mini.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            const r0 = Math.min(ra, rb), c0 = Math.min(ca, cb);
+            [[a, ra, ca], [b, rb, cb]].forEach(([part, r, c]) => {
+                const cell = document.createElement('div');
+                cell.className = 'pair-cell';
+                cell.style.gridRow = String(r - r0 + 1);
+                cell.style.gridColumn = String(c - c0 + 1);
+                cell.appendChild(createShape(part));
+                mini.appendChild(cell);
+            });
+            tile.appendChild(mini);
+            return tile;
+        }
+        if (data.mystery) {
+            tile.classList.add('mystery-tile');
+            const q = document.createElement('div');
+            q.className = 'shape mystery-q';
+            q.innerText = '?';
+            tile.appendChild(q);
+        } else {
+            tile.appendChild(createShape(data));
+        }
+        if (data.filler) {
+            tile.classList.add('filler-tile');
+            const badge = document.createElement('div');
+            badge.className = 'filler-badge';
+            badge.innerText = '+1';
+            tile.appendChild(badge);
+        }
+
+        if (data.locked) {
+            const lock = document.createElement('div');
+            lock.innerHTML = `<svg class="lock-svg" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
+            tile.appendChild(lock.firstChild);
+        }
+        return tile;
+    }
+
+    // The tile's colour and shape (or picture)
+    function createShape(data) {
         let shape;
         if (style === 'animals') {
             const NS = 'http://www.w3.org/2000/svg';
@@ -2565,14 +2955,7 @@
             shape.className = 'shape ' + data.shape;
             shape.style.backgroundColor = data.color; // inline so clip-path shapes are coloured
         }
-        tile.appendChild(shape);
-
-        if (data.locked) {
-            const lock = document.createElement('div');
-            lock.innerHTML = `<svg class="lock-svg" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
-            tile.appendChild(lock.firstChild);
-        }
-        return tile;
+        return shape;
     }
 
     function render(silent = false) {
@@ -2623,7 +3006,7 @@
             if (item) {
                 const isSel = selectedSource === 'board' && selectedIndex === index;
                 const tile = createTileElement(item, isSel);
-                if (popIndex === index) tile.classList.add('pop');
+                if (popIndex === index || popMore.includes(index)) tile.classList.add('pop');
                 if (!item.locked) {
                     tile.dataset.src = 'board';
                     tile.dataset.index = index;
@@ -2650,6 +3033,7 @@
             grid.append(row, col);
         }
         popIndex = null;
+        popMore = [];
 
         checkWizard(); // before validateState, so the winning move can reveal one too
         validateState(silent);
@@ -2996,9 +3380,12 @@
             return out;
         };
         boardState = turn(boardState);
+        // a pair in the wheel turns with the board: its halves' slots move, and so does how they sit
+        const turnPairs = tray => tray.forEach(x => x.pair && x.pair.forEach(p => { p.home = turnIdx(p.home); }));
+        turnPairs(trayState);
         // Undo and reset go back to the same layout, turned
-        undoStack.forEach(s => { s.board = turn(s.board); });
-        if (initialSnap) initialSnap.board = turn(initialSnap.board);
+        undoStack.forEach(s => { s.board = turn(s.board); turnPairs(s.tray); });
+        if (initialSnap) { initialSnap.board = turn(initialSnap.board); turnPairs(initialSnap.tray); }
         solution = turn(solution);
         if (wiz) wiz.pos = turnIdx(wiz.pos);
         popIndex = null;
@@ -3020,7 +3407,7 @@
 
     // Hidden too: five quick taps on the clock send a goblin now, on any level
     let clockTaps = { count: 0, at: 0 };
-    document.getElementById('timerDisplay').addEventListener('click', () => {
+    document.getElementById('clockBar').addEventListener('click', () => {
         const now = performance.now();
         clockTaps = { count: now - clockTaps.at < 800 ? clockTaps.count + 1 : 1, at: now };
         if (clockTaps.count < 5) return;
@@ -3191,6 +3578,7 @@
        ============================ */
     // Where a tray tile belongs: a slot of the answer it fits that isn't already right
     function wandTarget(item) {
+        if (!item || item.pair) return -1; // a pair is too heavy to throw
         const fits = [];
         solution.forEach((want, i) => {
             const b = boardState[i];
@@ -3262,7 +3650,7 @@
             const dest = tIdx >= 0 ? wandTarget(trayState[tIdx]) : -1;
             if (dest < 0) { render(true); return; }
             pushUndo();
-            const placed = trayState.splice(tIdx, 1)[0];
+            const placed = plainTile(trayState.splice(tIdx, 1)[0]);
             if (boardState[dest]) trayState.push(boardState[dest]);
             boardState[dest] = placed;
             popIndex = dest;
@@ -3284,10 +3672,13 @@
     /* ============================
        Undo & reset
        ============================ */
+    // a pair's halves are copied too, so a board turn can move each copy's homes on its own
+    const copyTrayItem = x => x.pair ? { ...x, pair: x.pair.map(p => ({ ...p })) } : { ...x };
+
     function snapshot() {
         return {
             board: boardState.map(x => x && { ...x }),
-            tray: trayState.map(x => ({ ...x })),
+            tray: trayState.map(copyTrayItem),
         };
     }
 
@@ -3298,7 +3689,7 @@
 
     function restore(snap) {
         boardState = snap.board.map(x => x && { ...x });
-        trayState = snap.tray.map(x => ({ ...x }));
+        trayState = snap.tray.map(copyTrayItem);
         clearSelection();
     }
 
@@ -3325,9 +3716,9 @@
                 pushUndo(); // so an accidental reset can be undone
                 restore(initialSnap);
                 // A fresh clock — but the time already spent still counts toward
-                // stars and the level, so a reset cannot buy an "easy" win.
-                spentBeforeReset += totalTime - timeLeft;
+                // stars (boardSecs keeps ticking across resets), so a reset cannot buy an "easy" win.
                 timeLeft = totalTime;
+                clockMax = totalTime;
                 updateTimerUI();
                 wheelAngle = null;
                 Sound.back();
@@ -3341,29 +3732,90 @@
     /* ============================
        Moves (shared by tap and drag)
        ============================ */
+    // Only a right tile goes down: anything else bounces back to where it came from
+    // (and still counts as a move, so mistakes cost a little on stars)
     function placeFromTray(id, index) {
         const tIdx = trayState.findIndex(t => t.id === id);
         if (tIdx < 0 || boardState[index]?.locked) return false;
+        const item = trayState[tIdx];
+
+        if (item.pair) {
+            // A tap on either half's slot puts both
+            const ok = item.pair.some(p => p.home === index)
+                && item.pair.every(p => !boardState[p.home] && isRight(p, p.home));
+            if (!ok) return wrongMove(index);
+            pushUndo();
+            trayState.splice(tIdx, 1);
+            item.pair.forEach(p => { boardState[p.home] = plainTile(p); });
+            steps++;
+            popIndex = item.pair[0].home;
+            popMore = [item.pair[1].home];
+            Sound.drop();
+            buzz(8);
+            rightPlaced(item.pair.map(p => p.id));
+            return true;
+        }
+
+        if (boardState[index] || !isRight(item, index)) return wrongMove(index);
         pushUndo();
-        const item = trayState.splice(tIdx, 1)[0];
-        if (boardState[index]) trayState.push(boardState[index]); // occupant goes back
-        boardState[index] = item;
+        trayState.splice(tIdx, 1);
+        const placed = plainTile(item);
+        boardState[index] = placed;
         steps++;
         popIndex = index;
         Sound.drop();
         buzz(8);
+        const ids = [placed.id];
+        if (item.filler) {
+            const extra = fillNext(index);
+            if (extra) ids.push(extra.id);
+        }
+        rightPlaced(ids);
         return true;
+    }
+
+    // A tile as it sits on the board: no wheel-only marks
+    function plainTile(item) {
+        const { mystery, filler, home, ...tile } = item;
+        return tile;
+    }
+
+    // A filler just went down at index: the right tile for one empty slot next
+    // to it jumps from the wheel too (a pair's half stays with its pair)
+    function fillNext(index) {
+        const options = [];
+        neighbours(index).forEach(p => {
+            if (boardState[p]) return;
+            const k = trayState.findIndex(x => !x.pair && isRight(x, p));
+            if (k >= 0) options.push([p, k]);
+        });
+        if (!options.length) return null;
+        const [p, k] = options[Math.floor(Math.random() * options.length)];
+        const tile = plainTile(trayState.splice(k, 1)[0]);
+        boardState[p] = tile;
+        popMore.push(p);
+        const slot = document.querySelector(`.slot[data-index="${p}"]`);
+        if (slot) { const c = centreOf(slot); sparkle(c.x, c.y, 10, c.w * 0.7); }
+        setTimeout(() => Sound.coin(), 120);
+        return tile;
+    }
+
+    // A wrong move: the slot shakes (after the render that may follow) and it costs a move
+    function wrongMove(index) {
+        steps++;
+        requestAnimationFrame(() => rejectMove(document.querySelector(`.slot[data-index="${index}"]`)));
+        return false;
     }
 
     function moveOnBoard(from, to) {
         if (from === to) return false;
         if (boardState[to]?.locked || boardState[from]?.locked) return false;
+        if (boardState[to] || !isRight(boardState[from], to)) return wrongMove(to);
         pushUndo();
-        const hadOccupant = !!boardState[to];
         [boardState[from], boardState[to]] = [boardState[to], boardState[from]];
         steps++;
         popIndex = to;
-        hadOccupant ? Sound.swap() : Sound.drop();
+        Sound.drop();
         buzz(8);
         return true;
     }
@@ -3562,8 +4014,9 @@
         ghost.className = 'drag-ghost';
         ghost.style.width = size + 'px';
         ghost.style.height = size + 'px';
-        const shape = drag.el.querySelector('.shape').cloneNode(true);
-        ghost.appendChild(shape);
+        // the whole face: a pair's two halves, a mystery's question mark, a filler's badge
+        ['pair-tile', 'mystery-tile', 'filler-tile'].forEach(c => { if (drag.el.classList.contains(c)) ghost.classList.add(c); });
+        [...drag.el.children].filter(c => !c.classList.contains('lock-svg')).forEach(c => ghost.appendChild(c.cloneNode(true)));
         document.body.appendChild(ghost);
         drag.ghost = ghost;
         drag.el.classList.add('drag-origin');
@@ -3944,7 +4397,8 @@
         updateToolButtons();
 
         const stats = {
-            timeFrac: Math.min(1, (spentBeforeReset + totalTime - timeLeft) / totalTime),
+            // seconds actually played on this board, across resets, extra time and time bonuses
+            timeFrac: Math.min(1, boardSecs / totalTime),
             efficiency: steps > 0 ? Math.min(1, minSteps / steps) : 1,
         };
         const perf = performance01(stats);
@@ -3974,7 +4428,7 @@
         }
         saveProgress();
 
-        const usedSec = spentBeforeReset + totalTime - timeLeft;
+        const usedSec = boardSecs;
         const placed = N * N - boardState.filter(Boolean).length;
         const burstMs = won ? burstBoard() : 0;
 

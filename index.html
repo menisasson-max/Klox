@@ -394,8 +394,26 @@
             color: var(--success);
             text-shadow: 0 1px 2px var(--shadow);
             animation: bonusUp 1.1s ease-out forwards;
+            direction: ltr; /* "−5s" / "+10s" keep the sign first in Hebrew too */
+            white-space: nowrap;
         }
         .time-bonus.big { color: var(--gold); font-size: 1.25rem; }
+        .time-bonus.minus { color: var(--danger); animation-name: bonusDown; }
+        @keyframes bonusDown {
+            0% { opacity: 0; transform: translate(-50%, -120%) scale(1.3); }
+            20% { opacity: 1; transform: translate(-50%, -60%) scale(1.1); }
+            100% { opacity: 0; transform: translate(-50%, 60%) scale(0.9); }
+        }
+        /* A wrong move: the clock bar flashes red and jolts as 5 seconds drop off */
+        .clock.hit { animation: clockHit 0.5s ease; }
+        .clock.hit .clock-fill { box-shadow: inset 0 0 0 30px color-mix(in srgb, var(--danger) 55%, transparent); transition: width 0.25s ease-out; }
+        @keyframes clockHit {
+            0%, 100% { transform: translateX(0); border-color: var(--border-color); }
+            15% { transform: translateX(-4px); border-color: var(--danger); }
+            35% { transform: translateX(4px); border-color: var(--danger); }
+            55% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
         @keyframes bonusUp {
             0% { opacity: 0; transform: translate(-50%, -20%) scale(0.7); }
             20% { opacity: 1; transform: translate(-50%, -80%) scale(1.1); }
@@ -2358,8 +2376,8 @@
         const bar = document.getElementById('clockBar');
         const r = bar.getBoundingClientRect();
         const el = document.createElement('div');
-        el.className = 'time-bonus' + (secs >= RUSH_BONUS ? ' big' : '');
-        el.innerText = '+' + secs + t('secShort');
+        el.className = 'time-bonus' + (secs < 0 ? ' minus' : secs >= RUSH_BONUS ? ' big' : '');
+        el.innerHTML = (secs < 0 ? '−' + -secs : '+' + secs) + '<bdi>' + t('secShort') + '</bdi>';
         el.style.left = (r.left + r.width / 2) + 'px';
         el.style.top = r.top + 'px';
         document.body.appendChild(el);
@@ -2381,10 +2399,14 @@
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                // the free extra time is offered once per board; wizards can keep it going
-                if (extended && !progress.wizards) endGame(false); else offerExtraTime();
+                outOfTime();
             }
         }, 1000);
+    }
+
+    // the free extra time is offered once per board; wizards can keep it going
+    function outOfTime() {
+        if (extended && !progress.wizards) endGame(false); else offerExtraTime();
     }
 
     const EXTRA_SECONDS = 30;
@@ -3859,7 +3881,10 @@
             return true;
         }
 
-        if (boardState[index] || !isRight(item, index)) return wrongMove(index);
+        if (boardState[index] || !isRight(item, index)) {
+            if (item.mystery) item.missed = true; // its minute is only for getting it right first time
+            return wrongMove(index);
+        }
         pushUndo();
         trayState.splice(tIdx, 1);
         const placed = plainTile(item);
@@ -3873,8 +3898,9 @@
             const extra = fillNext(index);
             if (extra) ids.push(extra.id);
         }
-        // A question mark you worked out yourself: a whole minute and a party
-        if (item.mystery && !rewarded.has(placed.id)) {
+        // A question mark you worked out yourself, right on the first try: a whole
+        // minute and a party. After a miss it earns the usual 10 seconds.
+        if (item.mystery && !item.missed && !rewarded.has(placed.id)) {
             rewarded.add(placed.id);
             ids.shift();
             mysteryCracked(index);
@@ -3960,7 +3986,7 @@
 
     // A tile as it sits on the board: no wheel-only marks
     function plainTile(item) {
-        const { mystery, filler, home, ...tile } = item;
+        const { mystery, filler, home, missed, ...tile } = item;
         return tile;
     }
 
@@ -3985,9 +4011,22 @@
     }
 
     // A wrong move: the slot shakes (after the render that may follow) and it costs a move
+    // A wrong move also costs 5 seconds off the clock, and the bar shows it
+    const WRONG_PENALTY = 5;
     function wrongMove(index) {
         steps++;
         requestAnimationFrame(() => rejectMove(document.querySelector(`.slot[data-index="${index}"]`)));
+        timeLeft = Math.max(0, timeLeft - WRONG_PENALTY);
+        updateTimerUI();
+        floatBonus(-WRONG_PENALTY);
+        const bar = document.getElementById('clockBar');
+        bar.classList.remove('hit'); void bar.offsetWidth; bar.classList.add('hit');
+        clearTimeout(bar._hit);
+        bar._hit = setTimeout(() => bar.classList.remove('hit'), 600);
+        if (timeLeft <= 0 && !gameOver && !isPaused) {
+            clearInterval(timerInterval);
+            outOfTime();
+        }
         return false;
     }
 

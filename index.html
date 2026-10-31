@@ -1888,6 +1888,7 @@
             wandWizT: '🪄🧙 מטה קסם: גמדון!', wandWizS: 'אין סימן שאלה בגלגל, אז המטה הביא לך גמדון. כשהזמן נגמר הוא נותן עוד דקה',
             mysteryWinT: '❓🎉 פיצחת את סימן השאלה!', mysteryWinS: 'עוד דקה שלמה על השעון!', mysteryWinBig: '+1 דקה!',
             goblinT: '👺 שדון!', goblinS: 'מרמה 10 שדונים יכולים לבעוט אריח שהנחת בחזרה לגלגל. ברמת קושי גבוהה הם באים יותר',
+            diffResetQ: 'לשנות רמת קושי?', diffResetM: 'זה יאפס את ההתקדמות והרמה. בטוח?',
             zenMode: '🧘 מצב זן', zenNote: 'בלי שעון, תמיד 7×7, בלי הפתעות ובלי נקודות', zenRank: 'מצב זן', zenDone: 'כל הכבוד! 🎊',
             difficulty: 'רמת קושי', difficultyNote: 'כמה הורסים מגיעים, מרמה 10 · בזן: כמה משבצות ריקות', easy: 'קל', medium: 'בינוני', hard: 'קשה',
             extendedNote: '⏳ נפתר עם זמן נוסף — 0 נקודות', tiles: '🧩 אריחים', timeLeft: '⏱ זמן שנותר',
@@ -1950,6 +1951,7 @@
             wandWizT: '🪄🧙 Magic wand: a wizard!', wandWizS: 'No question mark in the wheel, so the wand brought you a wizard. When time runs out he gives another minute',
             mysteryWinT: '❓🎉 You cracked the question mark!', mysteryWinS: 'A whole extra minute on the clock!', mysteryWinBig: '+1 min!',
             goblinT: '👺 A goblin!', goblinS: 'From level 10 goblins can kick a tile you placed back to the wheel. Harder settings bring more of them',
+            diffResetQ: 'Change difficulty?', diffResetM: 'This resets your progress and level. Are you sure?',
             zenMode: '🧘 Zen mode', zenNote: 'No clock, always 7×7, no surprises, no points', zenRank: 'Zen mode', zenDone: 'Well done! 🎊',
             difficulty: 'Difficulty', difficultyNote: 'How often wreckers come, from level 10 · In zen: how many slots are empty', easy: 'Easy', medium: 'Medium', hard: 'Hard',
             extendedNote: '⏳ Solved on extra time — 0 points', tiles: '🧩 Tiles', timeLeft: '⏱ Time left',
@@ -2696,13 +2698,31 @@
         Sound.select();
         refreshSettings();
     });
+    // Changing difficulty: in zen it just deals a new board at the new difficulty;
+    // in the normal game it starts the climb over, so it asks first
     $id('segDiff').addEventListener('click', (e) => {
         const b = e.target.closest('button');
-        if (!b || !WRECK_RATE[b.dataset.v]) return;
-        difficulty = b.dataset.v;
-        store.set('klox_difficulty', difficulty);
+        if (!b || !WRECK_RATE[b.dataset.v] || b.dataset.v === difficulty) return;
+        const next = b.dataset.v;
+        const apply = () => { difficulty = next; store.set('klox_difficulty', difficulty); };
         Sound.select();
-        refreshSettings();
+        if (zen) {
+            apply();
+            closeSettings(false);
+            initLevel();
+            return;
+        }
+        closeSettings(false);
+        showDialog(t('diffResetQ'), t('diffResetM'), [
+            { label: t('yesReset'), cls: 'btn-danger', action: () => {
+                apply();
+                progress = freshProgress();
+                level = 1;
+                saveProgress();
+                initLevel();
+            } },
+            { label: t('cancel'), cls: 'btn-secondary', action: () => openSettings(true) },
+        ]);
     });
     $id('swSound').addEventListener('click', () => {
         setSound(!Sound.enabled);

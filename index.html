@@ -244,6 +244,7 @@
         .status-bar .stat { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
         .status-bar .stat b { color: var(--text-main); font-variant-numeric: tabular-nums; }
         .status-bar .stat.streak b { color: var(--warning); }
+        .status-bar .stat.wins b { color: var(--gold); }
         .status-bar .stat.bump { animation: pop 0.4s ease; }
 
         .timer {
@@ -398,7 +399,15 @@
             white-space: nowrap;
         }
         .time-bonus.big { color: var(--gold); font-size: 1.25rem; }
-        .time-bonus.minus { color: var(--danger); animation-name: bonusDown; }
+        /* a white pill with a dark edge: "−5s" has to read on the red bar it drops over */
+        .time-bonus.minus {
+            color: #b3261e; background: #fff; border: 2px solid #1d1b20;
+            border-radius: 999px; padding: 1px 9px; text-shadow: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+            animation-name: bonusDown;
+        }
+        /* bonus seconds past the clock's cap, turned into points */
+        .time-bonus.gems { color: var(--gold); font-size: 1.2rem; animation-duration: 1.3s; }
         @keyframes bonusDown {
             0% { opacity: 0; transform: translate(-50%, -120%) scale(1.3); }
             20% { opacity: 1; transform: translate(-50%, -60%) scale(1.1); }
@@ -1345,7 +1354,7 @@
             pointer-events: none;
         }
         /* Zen: no clock, no score, nothing collected; the board gets the room */
-        body.zen .clock, body.zen .goal-strip, body.zen #xpStat, body.zen #streakStat, body.zen .wiz-stash { display: none; }
+        body.zen .clock, body.zen .goal-strip, body.zen #xpStat, body.zen #streakStat, body.zen #winStat, body.zen .wiz-stash { display: none; }
         body.zen #levelBadge { visibility: hidden; }
         body.zen .board-wrapper { --wiz-strip: 0px; }
         .shout.zen { --shout-dark: #065f46; --shout-glow: rgba(16, 185, 129, 0.9); }
@@ -1576,7 +1585,8 @@
     <div class="status-bar">
         <span class="stat"><span data-i18n="board">לוח</span> <b id="sizeDisplay">3×3</b></span>
         <span class="stat streak" id="streakStat" title="ימים ברצף" data-i18n-title="streakTitle">🔥 <b id="streakDisplay">0</b></span>
-        <span class="stat" id="xpStat" title="נקודות" data-i18n-title="points">⭐ <b id="xpDisplay">0</b></span>
+        <span class="stat wins" id="winStat" title="ניצחונות ברצף" data-i18n-title="winStreakTitle">⚡ <b id="winStreakDisplay">0</b></span>
+        <span class="stat" id="xpStat" title="נקודות" data-i18n-title="points">💎 <b id="xpDisplay">0</b></span>
     </div>
 
     <!-- Goal strip -->
@@ -1863,7 +1873,7 @@
     const STRINGS = {
         he: {
             appName: 'קלוקס', a_settings: 'הגדרות', resume: 'המשך', a_pause: 'השהה/המשך', a_theme: 'מצב כהה/בהיר', a_sound: 'צלילים',
-            level: 'רמה', board: 'לוח', streakTitle: 'ימים ברצף', points: 'נקודות',
+            level: 'רמה', board: 'לוח', streakTitle: 'ימים ברצף', winStreakTitle: 'ניצחונות ברצף', points: 'נקודות',
             chipRows: 'שורות שונות', chipCols: 'עמודות שונות', chipUnique: 'זוגות ייחודיים',
             undo: 'בטל מהלך', resetBoard: 'אפס לוח', spinWheel: '↔ סובב את הגלגל', left: '{n} נותרו',
             trayEmpty: 'המגש ריק — גרור לכאן אריח כדי להחזיר אותו',
@@ -1876,29 +1886,30 @@
             resetAllQ: 'לאפס הכול?', resetAllM: 'הרמה והנקודות יחזרו להתחלה.\nאי אפשר לבטל את זה.',
             yesReset: 'כן, לאפס', cancel: 'ביטול',
             resetBoardQ: 'לאפס את הלוח?', resetBoardM: 'כל האריחים שהנחת יחזרו לגלגל\nוהשעון יתחיל מחדש.',
-            timeUp: 'הזמן נגמר! ⏰', extraQ: 'להוסיף עוד {s} שניות? (פעם אחת בלוח)\nאם תפתור עכשיו — הלוח ייחשב, אבל בלי נקודות.',
+            timeUp: 'הזמן נגמר! ⏰', extraQ: 'להוסיף עוד {s} שניות? (פעם אחת בלוח)\nאם תפתור עכשיו — הלוח ייחשב, בחצי נקודות.',
             trayLeft: '\nנשארו {n} אריחים במגש.', moreSecs: '⏳ עוד {s} שניות', noFinish: 'לא, סיים את הלוח',
             wizMinute: '🧙 גמדון: עוד דקה (יש לך {n})', wizAgain: 'הזמן נגמר שוב!\nגמדון נותן עוד דקה.',
-            wizHint: '\n🧙 גמדון נותן דקה שלמה — הנקודות נשמרות, בלי בונוס זמן.',
+            wizHint: '\n🧙 גמדון נותן דקה שלמה — והנקודות נשמרות.',
             wizFoundT: '🧙 מצאת גמדון!', wizFoundS: 'הוא מחכה לך למעלה. כשהזמן נגמר — גמדון נותן עוד דקה',
             wizStashT: '🧙 גמדונים: {n}', wizStashS: 'כשהזמן נגמר, כל גמדון נותן עוד דקה',
             goldenT: '✨ לוח זהב!', goldenS: 'הנקודות על הלוח הזה כפולות',
             turnT: '🔄 הלוח הסתובב!', turnS: 'מרמה 10 הלוח יכול להסתובב באמצע. הצורות נשארות ישרות, אבל המקומות שלהן זזים',
             wandT: '🪄 מטה קסם!', wandS: 'סיימת שורה ועמודה נכונות במהלך אחד, אז אריח סימן שאלה מהגלגל עף למקום הנכון שלו',
             wandWizT: '🪄🧙 מטה קסם: גמדון!', wandWizS: 'אין סימן שאלה בגלגל, אז המטה הביא לך גמדון. כשהזמן נגמר הוא נותן עוד דקה',
-            mysteryWinT: '❓🎉 פיצחת את סימן השאלה!', mysteryWinS: 'עוד דקה שלמה על השעון!', mysteryWinBig: '+1 דקה!',
+            mysteryWinT: '❓🎉 פיצחת את סימן השאלה!', mysteryWinS: 'עוד 20 שניות על השעון!', mysteryWinBig: '+20 שניות!',
             goblinT: '👺 שדון!', goblinS: 'מרמה 10 שדונים יכולים לבעוט אריח שהנחת בחזרה לגלגל. ברמת קושי גבוהה הם באים יותר',
             diffResetQ: 'לשנות רמת קושי?', diffResetM: 'זה יאפס את ההתקדמות והרמה. בטוח?',
             zenMode: '🧘 מצב זן', zenNote: 'בלי שעון, תמיד 7×7, בלי הפתעות ובלי נקודות', zenRank: 'מצב זן', zenDone: 'כל הכבוד! 🎊',
             difficulty: 'רמת קושי', difficultyNote: 'כמה הורסים מגיעים, מרמה 10 · בזן: כמה משבצות ריקות', easy: 'קל', medium: 'בינוני', hard: 'קשה',
-            extendedNote: '⏳ נפתר עם זמן נוסף — 0 נקודות', tiles: '🧩 אריחים', timeLeft: '⏱ זמן שנותר',
+            extendedNote: '⏳ נפתר עם זמן נוסף — חצי נקודות', tiles: '🧩 אריחים',
+            starsRow: '{s} כוכבים', streakRow: '⚡ {n} ברצף', newSizeRow: '🆕 גודל לוח חדש', overflowRow: '💎 מעבר לשעון המלא',
             goldenX2: '✨ לוח זהב ×2', dailyRow: '🎯 יעד יומי', total: 'סה״כ', zeroPts: '0 נקודות',
             boardOpened: 'לוח {n}×{n} נפתח!', newLevel: 'רמה חדשה!',
             boardOpenedT: 'לוח {n}×{n} נפתח! 🎉', levelUpT: 'עלית רמה! 🚀', perfectT: 'מושלם! 🧩', solvedT: 'פתרת! 🧩',
-            stepsSecs: '{s} צעדים · {t} שניות', extendedHint: 'בפעם הבאה בלי זמן נוסף — ותקבל נקודות',
+            stepsSecs: '{s} צעדים · {t} שניות', extendedHint: 'בפעם הבאה בלי זמן נוסף — ותקבל נקודות מלאות',
             starsHint: 'עוד קצת יותר מהר — ושלושה כוכבים שלך', skippedT: 'דילגת על הלוח', easierNext: 'הלוח הבא יהיה קצת יותר קל.',
             nearMiss1: 'כמעט! חסר רק אריח אחד.', nearMiss2: 'כמעט! חסרו רק שני אריחים.',
-            timeUpM: 'לא הספקת הפעם. הלוח הבא יהיה קצת יותר קל.', winStreak: '🔥 {n} ניצחונות ברצף',
+            timeUpM: 'לא הספקת הפעם. הלוח הבא יהיה קצת יותר קל.', winStreak: '⚡ {n} ניצחונות ברצף',
             toBoard: 'ללוח ה־{n}×{n}', nextBoard: 'ללוח הבא',
             dailyDoneT: '🎯 יעד יומי הושלם!', dailyDoneS: 'נתראה מחר — אל תשבור את הרצף 🔥',
             streakT: '🔥 רצף של {n} ימים', streakS: 'נצח לוח אחד היום כדי לשמור עליו',
@@ -1915,10 +1926,10 @@
             ach_streak5: 'רצף 5', ach_streak5_d: '5 ניצחונות ברצף', ach_streak10: 'בלתי ניתן לעצירה', ach_streak10_d: '10 ניצחונות ברצף',
             ach_speed: 'ברק', ach_speed_d: 'סיימת ברבע מהזמן', ach_golden: 'נגיעת זהב', ach_golden_d: 'פתרת לוח זהב',
             ach_daily: 'יעד יומי', ach_daily_d: '{n} לוחות ביום', ach_days3: '3 ימים ברצף', ach_days3_d: 'שיחקת 3 ימים רצופים',
-            ach_days7: 'שבוע שלם', ach_days7_d: '7 ימים רצופים', ach_xp1000: '10,000 נקודות', ach_xp1000_d: 'צברת 10,000 ⭐',
+            ach_days7: 'שבוע שלם', ach_days7_d: '7 ימים רצופים', ach_xp1000: '10,000 נקודות', ach_xp1000_d: 'צברת 10,000 💎',
             ach_peak8: 'פסגה', ach_peak8_d: 'הגעת לרמה 30',
             rollShout: 'זמן התהפכות!', spinShout: 'סופר סיבוב!', goblinShout: 'שדון שובב!',
-            secShort: 'ש׳', rushOn: '⚡ ×3 · {s}', rushT: '⚡ טורבו!',
+            secShort: 'ש׳', rushOn: '💨 ×{x} · {s}', rushT: '💨 טורבו!',
             rushS: '3 אריחים נכונים ב־3 שניות! ב־{s} השניות הקרובות כל אריח נכון מוסיף {b} שניות',
             pairT: '🔗 זוג!', pairS: 'שני אריחים דבוקים. הם נכנסים יחד, בדיוק כמו שהם מסודרים — גם באלכסון',
             mysteryT: '❓ אריח מסתורין', mysteryS: 'מה מסתתר מאחורי סימן השאלה? רק המקום הנכון שלו יגלה',
@@ -1926,7 +1937,7 @@
         },
         en: {
             appName: 'Klox', a_settings: 'Settings', resume: 'Resume', a_pause: 'Pause/Resume', a_theme: 'Dark/Light', a_sound: 'Sound',
-            level: 'Level', board: 'Board', streakTitle: 'Days in a row', points: 'Points',
+            level: 'Level', board: 'Board', streakTitle: 'Days in a row', winStreakTitle: 'Wins in a row', points: 'Points',
             chipRows: 'Rows differ', chipCols: 'Columns differ', chipUnique: 'Unique pairs',
             undo: 'Undo', resetBoard: 'Reset board', spinWheel: '↔ Spin the wheel', left: '{n} left',
             trayEmpty: 'The tray is empty — drag a tile here to put it back',
@@ -1939,29 +1950,30 @@
             resetAllQ: 'Reset everything?', resetAllM: 'Your level and points go back to the start.\nThis can’t be undone.',
             yesReset: 'Yes, reset', cancel: 'Cancel',
             resetBoardQ: 'Reset the board?', resetBoardM: 'Every tile you placed goes back to the wheel\nand the clock starts over.',
-            timeUp: 'Time’s up! ⏰', extraQ: 'Add {s} more seconds? (once per board)\nIf you solve it now it counts, but earns no points.',
+            timeUp: 'Time’s up! ⏰', extraQ: 'Add {s} more seconds? (once per board)\nIf you solve it now it counts, for half the points.',
             trayLeft: '\n{n} tiles left in the tray.', moreSecs: '⏳ {s} more seconds', noFinish: 'No, end the board',
             wizMinute: '🧙 Wizard: one more minute ({n} left)', wizAgain: 'Time’s up again!\nA wizard gives you another minute.',
-            wizHint: '\n🧙 A wizard gives a full minute — you keep your points, minus the time bonus.',
+            wizHint: '\n🧙 A wizard gives a full minute — and you keep your points.',
             wizFoundT: '🧙 You found a wizard!', wizFoundS: 'He’s waiting up top. When time runs out, a wizard gives you another minute',
             wizStashT: '🧙 Wizards: {n}', wizStashS: 'When time runs out, each wizard gives another minute',
             goldenT: '✨ Golden board!', goldenS: 'Points on this board are doubled',
             turnT: '🔄 The board turned!', turnS: 'From level 10 the board can turn mid-game. The pictures stay upright, but their places move',
             wandT: '🪄 Magic wand!', wandS: 'You finished a right row and column in one move, so a question-mark tile flew to its right place',
             wandWizT: '🪄🧙 Magic wand: a wizard!', wandWizS: 'No question mark in the wheel, so the wand brought you a wizard. When time runs out he gives another minute',
-            mysteryWinT: '❓🎉 You cracked the question mark!', mysteryWinS: 'A whole extra minute on the clock!', mysteryWinBig: '+1 min!',
+            mysteryWinT: '❓🎉 You cracked the question mark!', mysteryWinS: '20 more seconds on the clock!', mysteryWinBig: '+20 sec!',
             goblinT: '👺 A goblin!', goblinS: 'From level 10 goblins can kick a tile you placed back to the wheel. Harder settings bring more of them',
             diffResetQ: 'Change difficulty?', diffResetM: 'This resets your progress and level. Are you sure?',
             zenMode: '🧘 Zen mode', zenNote: 'No clock, always 7×7, no surprises, no points', zenRank: 'Zen mode', zenDone: 'Well done! 🎊',
             difficulty: 'Difficulty', difficultyNote: 'How often wreckers come, from level 10 · In zen: how many slots are empty', easy: 'Easy', medium: 'Medium', hard: 'Hard',
-            extendedNote: '⏳ Solved on extra time — 0 points', tiles: '🧩 Tiles', timeLeft: '⏱ Time left',
+            extendedNote: '⏳ Solved on extra time — half points', tiles: '🧩 Tiles',
+            starsRow: '{s} Stars', streakRow: '⚡ {n} in a row', newSizeRow: '🆕 New board size', overflowRow: '💎 Clock overflow',
             goldenX2: '✨ Golden board ×2', dailyRow: '🎯 Daily goal', total: 'Total', zeroPts: '0 points',
             boardOpened: '{n}×{n} board unlocked!', newLevel: 'New level!',
             boardOpenedT: '{n}×{n} board unlocked! 🎉', levelUpT: 'Level up! 🚀', perfectT: 'Perfect! 🧩', solvedT: 'Solved! 🧩',
-            stepsSecs: '{s} moves · {t} seconds', extendedHint: 'Next time without extra time — and you’ll score points',
+            stepsSecs: '{s} moves · {t} seconds', extendedHint: 'Next time without extra time — and you’ll score full points',
             starsHint: 'A little faster — and three stars are yours', skippedT: 'Board skipped', easierNext: 'The next board will be a little easier.',
             nearMiss1: 'So close! Just one tile missing.', nearMiss2: 'So close! Just two tiles missing.',
-            timeUpM: 'Not this time. The next board will be a little easier.', winStreak: '🔥 {n} wins in a row',
+            timeUpM: 'Not this time. The next board will be a little easier.', winStreak: '⚡ {n} wins in a row',
             toBoard: 'To the {n}×{n} board', nextBoard: 'Next board',
             dailyDoneT: '🎯 Daily goal done!', dailyDoneS: 'See you tomorrow — don’t break the streak 🔥',
             streakT: '🔥 {n}-day streak', streakS: 'Win one board today to keep it',
@@ -1978,10 +1990,10 @@
             ach_streak5: 'Streak of 5', ach_streak5_d: '5 wins in a row', ach_streak10: 'Unstoppable', ach_streak10_d: '10 wins in a row',
             ach_speed: 'Lightning', ach_speed_d: 'Finished in a quarter of the time', ach_golden: 'Golden touch', ach_golden_d: 'Solved a golden board',
             ach_daily: 'Daily goal', ach_daily_d: '{n} boards in a day', ach_days3: '3 days in a row', ach_days3_d: 'Played 3 days running',
-            ach_days7: 'A full week', ach_days7_d: '7 days running', ach_xp1000: '10,000 points', ach_xp1000_d: 'Earned 10,000 ⭐',
+            ach_days7: 'A full week', ach_days7_d: '7 days running', ach_xp1000: '10,000 points', ach_xp1000_d: 'Earned 10,000 💎',
             ach_peak8: 'Summit', ach_peak8_d: 'Reached level 30',
             rollShout: 'ROLL OVER TIME', spinShout: 'SUPER SPIN', goblinShout: 'Naughty Goblin!',
-            secShort: 's', rushOn: '⚡ ×3 · {s}', rushT: '⚡ Rush!',
+            secShort: 's', rushOn: '💨 ×{x} · {s}', rushT: '💨 Rush!',
             rushS: '3 right tiles in 3 seconds! For the next {s} seconds every right tile adds {b} seconds',
             pairT: '🔗 A pair!', pairS: 'Two tiles stuck together. They go in together, just as they sit — diagonals too',
             mysteryT: '❓ Mystery tile', mysteryS: 'What hides behind the question mark? Only its right place will show',
@@ -2146,11 +2158,12 @@
     // What fraction of the board you place yourself, from the start of a size to its end
     const MISSING_FRAC = { 3: [0.34, 0.95], 4: [0.35, 0.8], 5: [0.3, 0.64], 6: [0.25, 0.56], 7: [0.22, 0.46] };
 
-    // The clock is where a size gets harder: seconds per tile fall from 10 to 3
-    // as you climb through it. Every right tile also adds 10 seconds back, so
-    // that is 20 down to 13 a tile in all.
+    // The clock is where a size gets harder: seconds per empty slot fall from
+    // 14 to 6 as you climb through it (t runs 0 → 1 inside the size). Every
+    // right tile also adds 4 seconds back, so that is 18 down to 10 a tile in
+    // all — most of the time is on the clock from the start, not earned back.
     function boardTime(missing, t) {
-        return Math.round(20 + missing * (10 - 7 * t));
+        return Math.round(20 + missing * (14 - 8 * t));
     }
 
     function levelParams(L) {
@@ -2187,12 +2200,26 @@
     /* ============================
        Progress: points and levels
 
-       Every solved board earns points: 50 for each tile you placed and 3 for
-       each second left on the clock (doubled on a golden board). Points only
-       add up, and the level is read off the total. Each level costs more than
-       the one before, so the early ones come almost every board and later
-       ones take several good boards. A fast solve leaves more seconds and so
-       climbs faster — "too easy, jump ahead" falls out of the scoring.
+       Points (💎) are the only currency. A solved board pays 50 for each
+       empty slot it had, and then multiplies:
+         × the board's stars (⭐ 1 → ×1, 2 → ×1.3, 3 → ×1.6),
+         × 2 on a golden board,
+         × the win streak (⚡): +10% for every win in a row after the first,
+           this one included, up to ×1.5,
+         × 1.5 on the first 5 boards won on a newly reached board size, so the
+           first boards of a bigger size (fewer empty slots, as the size starts
+           easy) never pay less than the last boards of the smaller one.
+       On top come the clock's overflow points (a bonus second that would push
+       the clock past its cap becomes 3 💎, see the timer) and the daily-goal
+       bonus. Solving on the 30 bought seconds pays half the tile points; a
+       wizard's minute costs nothing.
+
+       Stars are the one signal for how well a board went: time used against
+       par (half the starting clock) and how many moves went wrong. Fast and
+       clean is three stars, and so is more points — "too easy, jump ahead"
+       falls out of the scoring. Points only add up, and the level is read
+       off the total. Each level costs more than the one before, so the early
+       ones come almost every board and later ones take several good boards.
 
        The level sets the board on the 1–10.25 difficulty scale above, a quarter
        step per level: 3×3 for levels 1–2, 4×4 from 3, 5×5 from 8, 6×6 from
@@ -2206,7 +2233,10 @@
     const DAILY_GOAL = 5;
     const DAILY_BONUS = 250;
     const POINTS_PER_TILE = 50;
-    const POINTS_PER_SECOND = 3;
+    const STAR_MULT = [1, 1, 1.3, 1.6];       // by stars won
+    const STREAK_STEP = 0.1, STREAK_MAX = 1.5; // ×(1 + 0.1·(wins in a row − 1)), at most ×1.5
+    const NEW_SIZE_MULT = 1.5, NEW_SIZE_BOARDS = 5;
+    const EXTRA_TIME_SHARE = 0.5;             // tile points left after buying the 30 seconds
     const DIFF_PER_LEVEL = 0.25;
 
     // Points from level L to L+1: 1,000 at level 1, ~2,150 at 10, ~4,000 at 20, ~9,450 at 40
@@ -2248,6 +2278,10 @@
             dayStreak: 0, lastWinDay: null, today: { date: null, wins: 0 },
             achievements: [],
             wizards: 0, sinceWizard: 0, wizSeen: false,
+            // ⭐ per-board ratings: all stars ever won, how many boards got 1/2/3
+            // stars, and the best rating at each player level
+            starsTotal: 0, starBoards: [0, 0, 0], bestStars: {},
+            newSizeLeft: 0, // wins left on the ×1.5 "new board size" bonus
         };
     }
 
@@ -2260,6 +2294,12 @@
             const saved = JSON.parse(store.get(PROGRESS_KEY));
             if (saved && typeof saved === 'object') Object.assign(base, saved);
         } catch (e) {}
+        // Saves from before stars were kept lack these (or could hold junk): start them fresh
+        const fresh = freshProgress();
+        if (!Number.isFinite(base.starsTotal)) base.starsTotal = fresh.starsTotal;
+        if (!Array.isArray(base.starBoards) || base.starBoards.length !== 3) base.starBoards = fresh.starBoards;
+        if (!base.bestStars || typeof base.bestStars !== 'object' || Array.isArray(base.bestStars)) base.bestStars = fresh.bestStars;
+        if (!Number.isFinite(base.newSizeLeft)) base.newSizeLeft = 0;
         return base;
     })();
     let level = levelInfo(progress.points).L;
@@ -2284,9 +2324,12 @@
         return (progress.lastWinDay === dayKey() || progress.lastWinDay === yesterdayKey()) ? progress.dayStreak : 0;
     }
 
+    // 0 → 1: mostly speed against par, some for clean moves. Using no more than
+    // par (half the starting clock) is full speed; the whole clock is none.
+    // Wrong moves count squared, so two or three of them cost the third star.
     function performance01(stats) {
-        // mostly speed, some move efficiency — this now only sets the stars
-        return 0.6 * (1 - stats.timeFrac) + 0.4 * stats.efficiency;
+        const speed = Math.max(0, Math.min(1, 2 * (1 - stats.timeFrac)));
+        return 0.6 * speed + 0.4 * stats.efficiency * stats.efficiency;
     }
 
     /* ============================
@@ -2307,11 +2350,15 @@
     }
 
     function starsFor(perf) {
-        return perf >= 0.72 ? 3 : perf >= 0.45 ? 2 : 1;
+        return perf >= 0.85 ? 3 : perf >= 0.45 ? 2 : 1;
+    }
+
+    function streakMult(winStreak) {
+        return Math.min(STREAK_MAX, 1 + STREAK_STEP * Math.max(0, winStreak - 1));
     }
 
     // Called once per won board. Adds the board's points and returns the breakdown.
-    function grantRewards(stars, stats, secondsLeft, extendedSolve) {
+    function grantRewards(stars, stats, overflow, extendedSolve) {
         const newAch = [];
         progress.failStreak = 0;
         progress.winStreak++;
@@ -2327,16 +2374,28 @@
         progress.today.wins++;
         const dailyJustDone = progress.today.wins === DAILY_GOAL;
 
-        // Points: 50 per tile placed + 3 per second left; golden doubles both.
-        // Solving on bought time earns none — that is what "no level gain" means now.
+        // Stars are kept: a running total, a count per rating, the best at this level
+        progress.starsTotal += stars;
+        progress.starBoards[stars - 1]++;
+        progress.bestStars[level] = Math.max(progress.bestStars[level] || 0, stars);
+
+        // Points (see "Progress" above). Each multiplier's row shows only what it
+        // adds, rounded, so the rows always sum to the total exactly.
         const tiles = params.missing;
-        // A wizard's minute keeps the tile points but not the time bonus.
-        const secs = (extendedSolve || wizardUsed) ? 0 : Math.max(0, secondsLeft);
-        const tilePts = extendedSolve ? 0 : tiles * POINTS_PER_TILE;
-        const timePts = secs * POINTS_PER_SECOND;
-        const goldPts = golden && !extendedSolve ? tilePts + timePts : 0;
-        const dailyBonus = dailyJustDone && !extendedSolve ? DAILY_BONUS : 0;
-        const total = tilePts + timePts + goldPts + dailyBonus;
+        const perTile = extendedSolve ? POINTS_PER_TILE * EXTRA_TIME_SHARE : POINTS_PER_TILE;
+        const tilePts = tiles * perTile;
+        let run = tilePts;
+        const step = (mult) => { const next = Math.round(run * mult); const d = next - run; run = next; return d; };
+        const starX = STAR_MULT[stars];
+        const starPts = step(starX);
+        const goldPts = golden ? step(2) : 0;
+        const streakX = streakMult(progress.winStreak);
+        const streakPts = streakX > 1 ? step(streakX) : 0;
+        const newSize = progress.newSizeLeft > 0 && N === progress.maxN;
+        if (newSize) progress.newSizeLeft--;
+        const newSizePts = newSize ? step(NEW_SIZE_MULT) : 0;
+        const dailyBonus = dailyJustDone ? DAILY_BONUS : 0;
+        const total = run + overflow + dailyBonus;
         progress.points += total;
 
         unlockAchievement('first', newAch);
@@ -2351,7 +2410,11 @@
         if (progress.points >= 10000) unlockAchievement('xp1000', newAch);
         if (levelInfo(progress.points).L >= 30) unlockAchievement('peak8', newAch);
 
-        return { tiles, tilePts, secs, timePts, goldPts, dailyBonus, total, dailyJustDone, newAch, extendedSolve };
+        return {
+            tiles, perTile, tilePts, stars, starX, starPts, goldPts,
+            winStreak: progress.winStreak, streakX, streakPts, newSize, newSizePts,
+            overflow, dailyBonus, total, dailyJustDone, newAch, extendedSolve,
+        };
     }
 
     /* ============================
@@ -2380,8 +2443,8 @@
     let autoTimer = null;
     let undoStack = [];        // snapshots before each move
     let initialSnap = null;    // the board as dealt, for "reset board"
-    let extended = false;      // the player bought extra time: solving still counts, but earns no points
-    let wizardUsed = false;    // a wizard's minute was spent on this board: no time bonus
+    let extended = false;      // the player bought extra time: solving still counts, for half the tile points
+    let overflowPts = 0;       // points from bonus seconds that hit the clock's cap on this board
     let wiz = null;            // {pos, color, shape, found}: a wizard hiding under one empty slot's right tile
     let wizInFlight = 0;       // found wizards still flying to the stash
     let wrecks = [];           // [{at, kind}]: board seconds at which a wrecker comes, soonest first
@@ -2400,14 +2463,23 @@
     let timeLeft = totalTime;
     let timerInterval = null;
     let isPaused = false;
-    let clockMax = totalTime;  // what a full clock bar stands for; time bonuses can stretch it
+    let clockMax = totalTime;  // what a full clock bar stands for: always the cap, so the bar never changes length
 
-    /* Time bonuses. Every tile you put in its right place adds 10 seconds to
+    /* Time bonuses. Every tile you put in its right place adds 4 seconds to
        the clock (each tile once a board, so taking one off and putting it back
        earns nothing). Three right tiles inside 3 seconds start a rush: for
-       the next 10 seconds every right tile adds 30 seconds instead. */
-    const RIGHT_BONUS = 10;
-    const RUSH_BONUS = 30;
+       the next 10 seconds every right tile adds 8 seconds instead. A question
+       mark worked out by hand adds 20. A wrong move takes 5 off.
+
+       The clock has a hard cap: 1.2 × the board's starting clock. Bonus
+       seconds that would go past it are not lost — each one becomes 3 points
+       (💎), shown as a gold "+N 💎" over the bar and paid with the board. The
+       30 bought seconds and a wizard's minute also stop at the cap, but what
+       they would have added past it is simply not given (a rescue, not a prize). */
+    const RIGHT_BONUS = 4;
+    const RUSH_BONUS = 8;
+    const CLOCK_CAP = 1.2;     // × the starting clock
+    const OVERFLOW_PTS = 3;    // points per bonus second past the cap
     const RUSH_COUNT = 3;
     const RUSH_WINDOW_MS = 3000;
     const RUSH_SECONDS = 10;
@@ -2426,12 +2498,30 @@
         el.innerText = formatTime(timeLeft);
         const danger = timeLeft <= Math.min(30, Math.floor(totalTime / 4));
         el.classList.toggle('danger', danger);
-        clockMax = Math.max(clockMax, timeLeft);
+        clockMax = Math.max(clockMax, timeLeft); // only a safety net: timeLeft never passes the cap
         const bar = document.getElementById('clockBar');
         bar.classList.toggle('danger', danger && !rushLeft);
         bar.classList.toggle('rush', rushLeft > 0);
         document.getElementById('clockFill').style.width = (100 * Math.max(0, timeLeft) / clockMax).toFixed(2) + '%';
-        document.getElementById('clockRush').innerText = rushLeft > 0 ? t('rushOn', { s: rushLeft }) : '';
+        document.getElementById('clockRush').innerText = rushLeft > 0 ? t('rushOn', { s: rushLeft, x: RUSH_BONUS / RIGHT_BONUS }) : '';
+    }
+
+    function clockCap() {
+        return Math.round(CLOCK_CAP * totalTime);
+    }
+
+    // Add bonus seconds up to the cap; what does not fit turns into points
+    function addBonusTime(secs) {
+        if (zen) return;
+        const fit = Math.max(0, Math.min(secs, clockCap() - timeLeft));
+        const over = secs - fit;
+        timeLeft += fit;
+        updateTimerUI();
+        if (fit > 0) floatBonus(fit);
+        if (over > 0) {
+            overflowPts += over * OVERFLOW_PTS;
+            floatGems(over * OVERFLOW_PTS, fit > 0);
+        }
     }
 
     // A right tile (or two, or a filler's pair) just landed: add time, maybe start a rush
@@ -2447,9 +2537,7 @@
             rightTimes.push(now);
         });
         rightTimes = rightTimes.slice(-RUSH_COUNT);
-        timeLeft += bonus;
-        updateTimerUI();
-        floatBonus(bonus);
+        addBonusTime(bonus);
         // The last piece finishes the board: straight to the win, no rush
         if (boardState.every(Boolean)) return;
         if (!rushLeft && rightTimes.length === RUSH_COUNT && now - rightTimes[0] < RUSH_WINDOW_MS) {
@@ -2462,7 +2550,7 @@
         }
     }
 
-    // "+10s" rises from the clock bar
+    // "+4s" rises from the clock bar ("−5s" drops, a white pill that reads on the red bar)
     function floatBonus(secs) {
         const bar = document.getElementById('clockBar');
         const r = bar.getBoundingClientRect();
@@ -2475,6 +2563,20 @@
         setTimeout(() => el.remove(), 1100);
         const tm = document.getElementById('timerDisplay');
         tm.classList.remove('bump'); void tm.offsetWidth; tm.classList.add('bump');
+    }
+
+    // Seconds past the cap, turned into points: a gold "+N 💎" over the bar
+    // (a little to one side when a "+Ns" rises at the same moment)
+    function floatGems(pts, beside) {
+        const r = document.getElementById('clockBar').getBoundingClientRect();
+        const el = document.createElement('div');
+        el.className = 'time-bonus gems';
+        el.innerHTML = '+' + pts + ' 💎';
+        el.style.left = (r.left + r.width / 2 + (beside ? 64 : 0)) + 'px';
+        el.style.top = r.top + 'px';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1300);
+        Sound.coin();
     }
 
     function startTimer() {
@@ -2505,7 +2607,7 @@
     const WIZ_SECONDS = 60;
 
     // Out of time: offer 30 more seconds, once per board. Solving after that still
-    // counts as a solve (streaks, daily goal) but earns no points.
+    // counts as a solve (streaks, daily goal) and pays half the tile points.
     function offerExtraTime() {
         cancelDrag();
         setPaused(true);
@@ -2513,14 +2615,13 @@
         const left = trayState.length;
         const buttons = [];
 
-        // Spend a collected wizard: a full minute, points kept (minus the time bonus)
+        // Spend a collected wizard: a full minute (never past the cap), points kept
         if (progress.wizards > 0) {
             buttons.push({ label: t('wizMinute', { n: progress.wizards }), cls: 'btn-wizard', action: () => {
                 progress.wizards--;
                 saveProgress();
                 renderStash();
-                wizardUsed = true;
-                timeLeft = clockMax = WIZ_SECONDS;
+                timeLeft = Math.min(WIZ_SECONDS, clockCap());
                 updateTimerUI();
                 document.getElementById('timerDisplay').classList.add('wizard');
                 setPaused(false);
@@ -2530,7 +2631,7 @@
         if (!extended) {
             buttons.push({ label: t('moreSecs', { s: EXTRA_SECONDS }), cls: 'btn-primary', action: () => {
                 extended = true;
-                timeLeft = clockMax = EXTRA_SECONDS;
+                timeLeft = Math.min(EXTRA_SECONDS, clockCap());
                 updateTimerUI();
                 document.getElementById('timerDisplay').classList.add('extended');
                 setPaused(false);
@@ -2639,7 +2740,7 @@
     function refreshSettings() {
         const li = levelInfo(progress.points);
         $id('setLevel').innerText = li.L;
-        $id('setPoints').innerText = progress.points.toLocaleString();
+        $id('setPoints').innerText = '💎 ' + progress.points.toLocaleString();
         $id('setNext').innerText = (li.need - li.into).toLocaleString();
 
         $id('segStyle').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === style));
@@ -2907,6 +3008,7 @@
         document.getElementById('rankTitle').innerText = zen ? t('zenRank') : rankFor(difficultyFor(li.L));
         document.getElementById('sizeDisplay').innerText = `${N}×${N}`;
         document.getElementById('streakDisplay').innerText = liveDayStreak();
+        document.getElementById('winStreakDisplay').innerText = progress.winStreak;
         document.getElementById('xpDisplay').innerText = progress.points.toLocaleString();
 
         // Goal gradient: how far into this level, always visible
@@ -2939,13 +3041,14 @@
         colors = ALL_COLORS.slice(0, N);
         shapes = ALL_SHAPES.slice(0, N);
         totalTime = params.time;
-        timeLeft = clockMax = totalTime;
+        timeLeft = totalTime;
+        clockMax = clockCap();
+        overflowPts = 0;
         rushLeft = 0;
         rightTimes = [];
         rewarded = new Set();
         document.getElementById('timerDisplay').classList.remove('extended', 'wizard');
         extended = false;
-        wizardUsed = false;
         updateTimerUI();
 
         // Variable reward: one board in eight is golden and pays double
@@ -2969,7 +3072,8 @@
         if (missingPos.length < params.missing) {
             params.missing = missingPos.length;
             params.time = boardTime(params.missing, params.t);
-            totalTime = timeLeft = clockMax = params.time;
+            totalTime = timeLeft = params.time;
+            clockMax = clockCap();
             updateTimerUI();
         }
         const holeSet = new Set(missingPos);
@@ -3146,11 +3250,11 @@
             q.className = 'shape mystery-q';
             q.innerText = '?';
             tile.appendChild(q);
-            // worth a minute while it is still on its first try
+            // worth 20 seconds while it is still on its first try
             if (!data.missed) {
                 const mb = document.createElement('div');
                 mb.className = 'mq-badge';
-                mb.innerText = '+1:00';
+                mb.innerText = '+0:20';
                 tile.appendChild(mb);
             }
         } else {
@@ -4094,7 +4198,7 @@
                 // A fresh clock — but the time already spent still counts toward
                 // stars (boardSecs keeps ticking across resets), so a reset cannot buy an "easy" win.
                 timeLeft = totalTime;
-                clockMax = totalTime;
+                clockMax = clockCap();
                 updateTimerUI();
                 wheelAngle = null;
                 Sound.back();
@@ -4133,7 +4237,7 @@
         }
 
         if (boardState[index] || !isRight(item, index)) {
-            if (item.mystery) item.missed = true; // its minute is only for getting it right first time
+            if (item.mystery) item.missed = true; // its 20 seconds are only for getting it right first time
             return wrongMove(index);
         }
         pushUndo();
@@ -4149,8 +4253,8 @@
             const extra = fillNext(index);
             if (extra) ids.push(extra.id);
         }
-        // A question mark you worked out yourself, right on the first try: a whole
-        // minute and a party. After a miss it earns the usual 10 seconds.
+        // A question mark you worked out yourself, right on the first try: 20
+        // seconds and a party. After a miss it earns the usual 4 seconds.
         if (item.mystery && !item.missed && !rewarded.has(placed.id)) {
             rewarded.add(placed.id);
             ids.shift();
@@ -4161,12 +4265,11 @@
     }
 
     /* A question-mark tile put in its right place by hand (not by the wand):
-       +1 minute on the clock and the biggest party in the game. */
-    const MYSTERY_BONUS = 60;
+       +20 seconds on the clock (past the cap they turn into points) and the
+       biggest party in the game. */
+    const MYSTERY_BONUS = 20;
     function mysteryCracked(index) {
-        timeLeft += MYSTERY_BONUS;
-        updateTimerUI();
-        floatBonus(MYSTERY_BONUS);
+        addBonusTime(MYSTERY_BONUS);
         Sound.jackpot();
         buzz([30, 40, 30, 40, 60, 40, 120]);
         // after the render that puts the tile down
@@ -4669,14 +4772,15 @@
         const row = (id, label, pts) => `<div class="score-row" id="${id}"><span>${label}</span><b class="num" id="${id}Pts">${pts}</b></div>`;
         let html = '<div class="score">';
         if (r) {
-            if (r.extendedSolve) {
-                html += `<div class="score-note">${t('extendedNote')}</div>`;
-            } else {
-                html += row('scTiles', `${t('tiles')} <bdi dir="ltr" class="num">${r.tiles} × ${POINTS_PER_TILE}</bdi>`, 0);
-                html += row('scTime', `${t('timeLeft')} <b class="num" id="scClock">${formatTime(r.secs)}</b>`, 0);
-                if (r.goldPts) html += row('scGold', t('goldenX2'), 0);
-                if (r.dailyBonus) html += row('scDaily', t('dailyRow'), 0);
-            }
+            const x = (m) => ` <bdi dir="ltr" class="num">×${m}</bdi>`;
+            if (r.extendedSolve) html += `<div class="score-note">${t('extendedNote')}</div>`;
+            html += row('scTiles', `${t('tiles')} <bdi dir="ltr" class="num">${r.tiles} × ${r.perTile}</bdi>`, 0);
+            html += row('scStars', t('starsRow', { s: '⭐'.repeat(r.stars) }) + x(r.starX), 0);
+            if (r.goldPts) html += row('scGold', t('goldenX2'), 0);
+            if (r.streakPts) html += row('scStreak', t('streakRow', { n: r.winStreak }) + x(r.streakX), 0);
+            if (r.newSizePts) html += row('scNewSize', t('newSizeRow') + x(NEW_SIZE_MULT), 0);
+            if (r.overflow) html += row('scOver', t('overflowRow'), 0);
+            if (r.dailyBonus) html += row('scDaily', t('dailyRow'), 0);
             html += `<div class="score-total"><span>${t('total')}</span><b class="num"><bdi dir="ltr" id="scTotal">+0</bdi></b></div>`;
         } else {
             html += `<div class="score-note">${t('zeroPts')}</div>`;
@@ -4692,8 +4796,8 @@
     let scoreAnimId = 0;
     const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-    // Count the board's points into the bar: tiles one by one, then the clock
-    // running down (3 points a second), then the bonuses. Crossing a level
+    // Count the board's points into the bar: tiles one by one, then each
+    // multiplier's share and the bonuses, row by row. Crossing a level
     // fills the bar, plays the level-up show, and starts it again from empty.
     async function animateScore(startPoints, r) {
         const id = ++scoreAnimId;
@@ -4733,37 +4837,22 @@
         };
 
         await sleep(450);
-        if (!alive() || !r || r.extendedSolve) return;
+        if (!alive() || !r) return;
 
         for (let i = 0; i < r.tiles; i++) {
             $('scTiles').classList.add('on');
-            await add('scTiles', POINTS_PER_TILE);
+            await add('scTiles', r.perTile);
             if (!alive()) return;
             Sound.pop(i, r.tiles);
             await sleep(Math.max(55, Math.min(150, 900 / r.tiles)));
             if (!alive()) return;
         }
-        await sleep(200);
 
-        // the clock runs down; about 1.5s whatever the time left
-        $('scTime').classList.add('on');
-        let secs = r.secs;
-        const chunk = Math.max(1, Math.ceil(secs / 45));
-        while (secs > 0) {
-            const d = Math.min(chunk, secs);
-            secs -= d;
-            $('scClock').innerText = formatTime(secs);
-            await add('scTime', d * POINTS_PER_SECOND);
-            if (!alive()) return;
-            Sound.click();
-            await sleep(32);
-            if (!alive()) return;
-        }
-
-        for (const [rowId, amount] of [['scGold', r.goldPts], ['scDaily', r.dailyBonus]]) {
-            if (!amount) continue;
+        for (const [rowId, amount] of scoreSteps(r)) {
             await sleep(200);
+            if (!alive()) return;
             $(rowId).classList.add('on');
+            if (!amount) continue; // a 1-star ×1 row: shown, adds nothing
             for (let k = 0; k < 10; k++) {
                 // whole-number tenths that add up exactly to the amount
                 await add(rowId, Math.round(amount * (k + 1) / 10) - Math.round(amount * k / 10));
@@ -4775,12 +4864,18 @@
         $('scTotal').closest('.score-total').classList.add('done');
     }
 
+    // The rows after the tiles, in the order they count up
+    function scoreSteps(r) {
+        return [['scStars', r.starPts], ['scGold', r.goldPts], ['scStreak', r.streakPts],
+            ['scNewSize', r.newSizePts], ['scOver', r.overflow], ['scDaily', r.dailyBonus]]
+            .filter(([id, n]) => n || id === 'scStars');
+    }
+
     // How long animateScore will run, so auto-continue waits for it
     function scoreAnimMs(r, levelsGained) {
-        if (!r || r.extendedSolve) return 500;
-        return 450 + r.tiles * Math.max(55, Math.min(150, 900 / r.tiles)) + 200
-            + Math.ceil(r.secs / Math.max(1, Math.ceil(r.secs / 45))) * 32
-            + (r.goldPts ? 600 : 0) + (r.dailyBonus ? 600 : 0)
+        if (!r) return 500;
+        return 450 + r.tiles * Math.max(55, Math.min(150, 900 / r.tiles))
+            + scoreSteps(r).reduce((ms, [, n]) => ms + 200 + (n ? 400 : 0), 0)
             + levelsGained * 3400;
     }
 
@@ -4900,7 +4995,7 @@
         progress.played++;
         let reward = null;
         if (won) {
-            reward = grantRewards(stars, stats, timeLeft, extended);
+            reward = grantRewards(stars, stats, overflowPts, extended);
         } else {
             progress.winStreak = 0;
             progress.failStreak++;
@@ -4913,6 +5008,7 @@
         const unlockedN = nextN > progress.maxN ? nextN : null;
         if (unlockedN) {
             progress.maxN = nextN;
+            progress.newSizeLeft = NEW_SIZE_BOARDS;
             const extra = [];
             unlockAchievement('size' + nextN, extra);
             if (reward) reward.newAch.push(...extra);

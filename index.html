@@ -1681,12 +1681,40 @@
             box-shadow: 0 3px 8px var(--shadow);
         }
         .map-you.boss { background: #9333ea; }
-        /* 🧍 the traveller: stands beside your level and walks on after a level-up (#37) */
-        .map-hero { position: absolute; z-index: 5; width: 40px; height: 40px; margin: -34px 0 0 -20px; pointer-events: none;
-            font-size: 2rem; line-height: 40px; text-align: center; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.35)); }
-        .map-hero span { display: inline-block; }
-        .map-hero.walking span { animation: heroStep 0.32s ease-in-out infinite alternate; }
-        @keyframes heroStep { from { transform: translateY(0) rotate(-6deg); } to { transform: translateY(-7px) rotate(6deg); } }
+        /* 🐱 Kloxy, the traveller: a little explorer cat in the game's own sprite style.
+           Stands beside your level; after a level-up walks the path to the new one (#37) */
+        .map-hero { position: absolute; z-index: 6; width: 54px; height: 54px; margin: -46px 0 0 -27px; pointer-events: none;
+            filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.3)); }
+        .map-hero svg { width: 100%; height: 100%; overflow: visible; }
+        .map-hero .hero-body { transform-origin: 50% 90%; animation: heroIdle 2.4s ease-in-out infinite; }
+        .map-hero.walking .hero-body { animation: heroBob 0.3s ease-in-out infinite alternate; }
+        .map-hero .leg { transform-box: fill-box; transform-origin: 50% 0; }
+        .map-hero.walking .leg-a { animation: heroLeg 0.3s ease-in-out infinite alternate; }
+        .map-hero.walking .leg-b { animation: heroLeg 0.3s ease-in-out infinite alternate-reverse; }
+        .map-hero.cheer .hero-body { animation: heroJump 0.45s ease-out 2; }
+        .map-hero .tail { transform-box: fill-box; transform-origin: 0% 100%; animation: heroTail 1.2s ease-in-out infinite alternate; }
+        @keyframes heroIdle { 0%, 100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(-1.5px) scaleY(1.02); } }
+        @keyframes heroBob { from { transform: translateY(0) rotate(-4deg); } to { transform: translateY(-6px) rotate(4deg); } }
+        @keyframes heroLeg { from { transform: rotate(-28deg); } to { transform: rotate(28deg); } }
+        @keyframes heroJump { 0% { transform: translateY(0); } 45% { transform: translateY(-18px) scale(1.06); } 100% { transform: translateY(0); } }
+        @keyframes heroTail { from { transform: rotate(-12deg); } to { transform: rotate(14deg); } }
+        .map-hero .bubble { position: absolute; bottom: 100%; left: 50%; transform: translate(-50%, -6px) scale(0); transform-origin: 50% 100%;
+            background: var(--bg-surface); color: var(--text-main); font-size: 0.78rem; font-weight: 900; white-space: nowrap;
+            padding: 4px 10px; border-radius: 999px; box-shadow: 0 3px 10px var(--shadow); transition: transform 0.25s cubic-bezier(.3,1.6,.5,1); }
+        .map-hero.cheer .bubble { transform: translate(-50%, -6px) scale(1); }
+        /* the road just walked draws itself in gold */
+        .map-new { animation: roadDraw var(--walk-ms, 1s) ease-in-out forwards; }
+        @keyframes roadDraw { to { stroke-dashoffset: 0; } }
+        /* the level he walks to waits, then pops open when he gets there */
+        .map-node.pending { animation: none; filter: grayscale(0.9) brightness(1.05); opacity: 0.75; }
+        .map-node.arrived { animation: nodeArrive 0.6s cubic-bezier(.3,1.6,.5,1), nodePulse 1.5s ease-in-out 0.6s infinite; }
+        @keyframes nodeArrive { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }
+        .map-you.later { opacity: 0; transition: opacity 0.3s; }
+        /* scenery from the game's own pictures, a few per level, by chapter */
+        .map-deco { position: absolute; z-index: 1; width: 30px; height: 30px; margin: -15px 0 0 -15px; pointer-events: none; opacity: 0.5; }
+        .map-deco svg { width: 100%; height: 100%; }
+        .map-skip { position: absolute; left: 50%; bottom: 74px; transform: translateX(-50%); z-index: 8; font-size: 0.75rem; color: var(--text-muted);
+            background: var(--bg-surface); padding: 4px 12px; border-radius: 999px; box-shadow: 0 2px 6px var(--shadow); pointer-events: none; }
         .map-cap { position: absolute; left: 50%; transform: translate(-50%, -50%); z-index: 2; text-align: center; color: var(--text-muted); font-size: 0.8rem; font-weight: 700; }
         .map-cap b { display: block; font-size: 1.8rem; color: var(--gold); }
         .map-foot { flex-shrink: 0; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: var(--bg-surface); border-top: 1px solid var(--border-color); }
@@ -2541,7 +2569,7 @@
             journey: '🗺️ המסע', journeyT: 'מפת המסע', toMap: '🗺️ למפה', mapPlay: '▶ שחק ברמה {n}',
             ch0: 'אחו', ch1: 'גינה', ch2: 'כפר', ch3: 'עיר', ch4: 'הר', ch5: 'פסגה',
             chRange: 'לוח {n}×{n} · רמות \u2066{a}–{b}\u2069', chEndless: 'לוח {n}×{n} · מרמה {a}, בלי סוף',
-            mapYou: 'אתה כאן', mapYouBoss: '👑 רמת בוס', mapCap: 'הדרך ממשיכה…', mapBossTap: '👑 לוח בוס ברמה {n}',
+            mapYou: 'אתה כאן', mapArrive: 'רמה {n}! 🎉', mapYouBoss: '👑 רמת בוס', mapCap: 'הדרך ממשיכה…', mapBossTap: '👑 לוח בוס ברמה {n}',
             chestT: '🎁 תיבת ה{c}', chestTap: '🎁 תיבה מחכה — הקש עליה', chestLockedT: '🔒 התיבה נפתחת ברמה {n}',
             chestGems: '💎 +{n} לבזבוז', chestBoosts: '🎁 בוסטרים במתנה: {b}', chestUnlock: '✨ חדש באוסף: {x}',
             chestUse: '✨ השתמש עכשיו', chestOk: 'יופי!', chestWaitT: '🎁 תיבות מחכות במפה!', chestWaitS: 'הקש על 🗺️ כדי לפתוח אותן',
@@ -2677,7 +2705,7 @@
             journey: '🗺️ Journey', journeyT: 'Journey map', toMap: '🗺️ To the map', mapPlay: '▶ Play level {n}',
             ch0: 'Meadow', ch1: 'Garden', ch2: 'Village', ch3: 'City', ch4: 'Mountain', ch5: 'Summit',
             chRange: '{n}×{n} board · levels {a}–{b}', chEndless: '{n}×{n} board · level {a} on, endless',
-            mapYou: 'You are here', mapYouBoss: '👑 Boss level', mapCap: 'The path goes on…', mapBossTap: '👑 Boss board at level {n}',
+            mapYou: 'You are here', mapArrive: 'Level {n}! 🎉', mapYouBoss: '👑 Boss level', mapCap: 'The path goes on…', mapBossTap: '👑 Boss board at level {n}',
             chestT: '🎁 {c} chest', chestTap: '🎁 A chest is waiting — tap it', chestLockedT: '🔒 This chest opens at level {n}',
             chestGems: '💎 +{n} to spend', chestBoosts: '🎁 Free boosters: {b}', chestUnlock: '✨ New in your collection: {x}',
             chestUse: '✨ Use it now', chestOk: 'Great!', chestWaitT: '🎁 Chests are waiting on the map!', chestWaitS: 'Tap 🗺️ to open them',
@@ -4186,9 +4214,39 @@
     function mapX(L) { return 50 + 28 * Math.sin((L - 1) * 0.95); } // % across the track
     // where the traveller stands at a level: beside its node, on the outer side of the path's swing
     function heroX(L) { const x = mapX(L); return x < 50 ? x - 13 : x + 13; }
-    const HERO_STEP_MS = 650; // walking time per level
+    const HERO_STEP_MS = 750; // walking time per level
+    const HERO_SVG = `<svg viewBox="0 0 100 100"><g class="hero-body">
+        <path class="tail" d="M70 74 Q92 70 88 46" stroke="#f59e0b" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <rect class="leg leg-a" x="36" y="80" width="10" height="16" rx="5" fill="#d97706"/>
+        <rect class="leg leg-b" x="54" y="80" width="10" height="16" rx="5" fill="#d97706"/>
+        <rect x="64" y="54" width="18" height="24" rx="6" fill="#7c4dff"/><rect x="66" y="58" width="14" height="6" rx="3" fill="#a78bfa"/>
+        <ellipse cx="50" cy="70" rx="22" ry="16" fill="#f59e0b"/>
+        <path d="M22 44 L26 12 L44 28 Z" fill="#f59e0b" stroke="#f59e0b" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M78 44 L74 12 L56 28 Z" fill="#f59e0b" stroke="#f59e0b" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M30 34 L31 22 L39 29 Z" fill="#fff" opacity=".55"/><path d="M70 34 L69 22 L61 29 Z" fill="#fff" opacity=".55"/>
+        <ellipse cx="50" cy="46" rx="28" ry="23" fill="#fbbf24"/>
+        <path d="M24 26 Q50 2 76 26 Q50 20 24 26 Z" fill="#16a34a"/><ellipse cx="50" cy="26" rx="31" ry="5" fill="#15803d"/>
+        <path d="M66 20 L80 8" stroke="#dc2626" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="40" cy="45" rx="4" ry="5" fill="#1e293b"/><ellipse cx="60" cy="45" rx="4" ry="5" fill="#1e293b"/>
+        <circle cx="41.3" cy="43" r="1.4" fill="#fff"/><circle cx="61.3" cy="43" r="1.4" fill="#fff"/>
+        <path d="M46 53 L54 53 L50 57 Z" fill="#fff"/>
+        <path d="M44 59 Q50 63 56 59" stroke="#1e293b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <circle cx="31" cy="54" r="4" fill="#fb7185" opacity=".55"/><circle cx="69" cy="54" r="4" fill="#fb7185" opacity=".55"/>
+    </g></svg>`;
+    // each chapter's scenery, from the game's own pictures
+    const MAP_DECO = [
+        ['flower', 'butterfly', 'mushroom', 'leaf'],
+        ['flower', 'tree', 'butterfly', 'apple'],
+        ['house', 'tree', 'cat', 'flower'],
+        ['house', 'car', 'umbrella', 'cloud'],
+        ['tree', 'snowflake', 'cloud', 'mushroom'],
+        ['moon', 'snowflake', 'cloud', 'leaf'],
+    ];
+    const DECO_HUE = ['#16a34a', '#ec4899', '#f97316', '#3b82f6', '#8b5cf6', '#eab308', '#ef4444', '#0ea5e9'];
 
-    function renderMap() {
+    // walkFrom: the level Kloxy is about to walk from (the road from there and
+    // the level he walks to are drawn waiting for him)
+    function renderMap(walkFrom = null) {
         const L = levelInfo(progress.points).L;
         const last = Math.max(L + 7, CHAPTER_START[CHAPTER_START.length - 1] + 7);
         const nodes = [], bands = [];
@@ -4215,12 +4273,15 @@
             return `C${px} ${my} ${x} ${my} ${x} ${yy}`;
         }).join(' ');
         const cur = nodes.findIndex(n => n.L === L);
-        const walked = curve(pts.slice(0, cur + 1));
+        const fromIdx = walkFrom ? Math.max(0, nodes.findIndex(n => n.L === walkFrom)) : cur;
+        const walked = curve(pts.slice(0, fromIdx + 1));
+        const fresh = fromIdx < cur ? curve(pts.slice(fromIdx, cur + 1)) : '';
         const ahead = curve(pts.slice(cur));
         const svg = `<svg class="map-svg" style="height:${H}px" viewBox="0 0 100 ${H}" preserveAspectRatio="none">
             <path d="${curve(pts)}" fill="none" stroke="var(--bg-surface)" stroke-width="16" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity=".9"/>
             <path d="${ahead}" fill="none" stroke="var(--border-highlight)" stroke-width="4" stroke-dasharray="2 10" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-            ${cur > 0 ? `<path d="${walked}" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>` : ''}
+            ${fromIdx > 0 ? `<path d="${walked}" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>` : ''}
+            ${fresh ? `<path class="map-new" d="${fresh}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>` : ''}
         </svg>`;
 
         let html = '';
@@ -4237,20 +4298,36 @@
                 + (twist ? `<em>${escHtml(twist)}</em>` : '') + `</div>`;
         });
         html += svg;
+        // scenery: two little pictures per level, away from the path, placed the same every time
+        nodes.forEach(nd => {
+            const x = mapX(nd.L), set = MAP_DECO[nd.c] || MAP_DECO[0];
+            [0, 1].forEach(k => {
+                const r = Math.abs(Math.sin(nd.L * 12.9898 + k * 78.233) * 43758.5453) % 1;
+                const out = x < 50 ? -1 : 1; // the outer side of the swing (Kloxy stands at ±13)
+                const dx = k ? -out * (34 + r * 10) : out * (28 + r * 8);
+                const left = Math.max(6, Math.min(94, x + dx));
+                const pic = set[Math.floor(r * set.length + k) % set.length];
+                html += `<div class="map-deco" style="left:${left}%;top:${top(nd.y) + (k ? 30 : -24) * (0.6 + r * 0.5)}px;color:${DECO_HUE[(nd.L + k * 3) % DECO_HUE.length]}">`
+                    + `<svg viewBox="0 0 100 100"><use href="#p-${pic}"/></svg></div>`;
+            });
+        });
         nodes.forEach(nd => {
             const ch = CHAPTERS[nd.c];
             const state = nd.L < L ? 'done' : nd.L === L ? 'current' : 'locked';
             const isBoss = isBossLevel(nd.L);
             const beaten = progress.bosses.includes(nd.L);
-            const cls = ['map-node', state, isBoss ? 'boss' : '', isBoss && state === 'done' && !beaten ? 'missed' : ''].join(' ');
+            const cls = ['map-node', state, isBoss ? 'boss' : '', isBoss && state === 'done' && !beaten ? 'missed' : '',
+                fresh && state === 'current' ? 'pending' : ''].join(' ');
             const st = progress.bestStars[nd.L] || 0;
             const stars = state === 'done' && st ? `<span class="nstars">${'⭐'.repeat(st)}</span>` : '';
             html += `<button class="${cls}" data-level="${nd.L}" style="--ch:${ch.hue};left:${mapX(nd.L)}%;top:${top(nd.y)}px">`
                 + (isBoss ? `<span class="crown">👑</span>` : '') + `${nd.L}${stars}</button>`;
             if (state === 'current') {
-                html += `<div class="map-hero" id="mapHero" style="left:${heroX(nd.L)}%;top:${top(nd.y)}px"><span>🚶</span></div>`;
+                const hl = fresh ? walkFrom : nd.L, hn = nodes.find(n => n.L === hl) || nd;
+                html += `<div class="map-hero" id="mapHero" style="left:${heroX(hl)}%;top:${top(hn.y)}px">`
+                    + `<div class="bubble">${escHtml(t('mapArrive', { n: L }))}</div>${HERO_SVG}</div>`;
                 const bossNow = isBoss && !beaten;
-                html += `<div class="map-you${bossNow ? ' boss' : ''}" style="left:${mapX(nd.L)}%;top:${top(nd.y) - (isBoss ? 56 : 40)}px">${escHtml(bossNow ? t('mapYouBoss') : t('mapYou'))}</div>`;
+                html += `<div class="map-you${bossNow ? ' boss' : ''}${fresh ? ' later' : ''}" style="left:${mapX(nd.L)}%;top:${top(nd.y) - (isBoss ? 56 : 40)}px">${escHtml(bossNow ? t('mapYouBoss') : t('mapYou'))}</div>`;
             }
             // the chapter's chest, beside its first level, on the side away from the path's swing
             if (ch.chest && nd.L === CHAPTER_START[nd.c]) {
@@ -4288,29 +4365,70 @@
 
     // milestone: opened by the win screen (a new chapter) — its chest opens by
     // itself, and onDone (the next board) runs when the map is closed
-    // The traveller walks from level `fromL` up to your level, node by node
+    // Kloxy walks from level `fromL` up to your level, node by node: the road
+    // draws itself in gold behind him, the camera follows, and when he gets
+    // there the level pops open and he cheers. Returns how long that takes.
+    let mapAuto = false, mapAutoTimer = null;
     function walkHero(fromL) {
         const hero = $id('mapHero');
         const L = levelInfo(progress.points).L;
         if (!hero || !(fromL < L)) return 0;
-        const at = lv => {
-            const n = $id('mapTrack').querySelector(`.map-node[data-level="${lv}"]`);
-            return n ? { left: heroX(lv) + '%', top: n.style.top } : null;
-        };
+        const track = $id('mapTrack'), sc = $id('mapScroll');
         const stops = [];
-        for (let lv = fromL; lv <= L; lv++) { const p = at(lv); if (p) stops.push(p); }
+        for (let lv = fromL; lv <= L; lv++) {
+            const n = track.querySelector(`.map-node[data-level="${lv}"]`);
+            if (n) stops.push({ left: heroX(lv) + '%', top: n.style.top });
+        }
         if (stops.length < 2) return 0;
-        const ms = HERO_STEP_MS * (stops.length - 1);
-        // face the way he walks: the emoji looks left, so flip him when heading right
-        const face = parseFloat(stops[stops.length - 1].left) > parseFloat(stops[0].left) ? -1 : 1;
-        hero.querySelector('span').style.scale = `${face} 1`;
-        hero.classList.add('walking');
-        const anim = hero.animate(stops.map(p => ({ left: p.left, top: p.top })), { duration: ms, easing: 'ease-in-out', fill: 'both' });
-        anim.onfinish = () => { hero.classList.remove('walking'); Sound.select(); };
-        return ms;
+        const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const ms = calm ? 300 : HERO_STEP_MS * (stops.length - 1);
+        const lead = calm ? 0 : 500; // a moment to see where he stands first
+        // he is drawn facing right; flip him when he heads left
+        const face = parseFloat(stops[stops.length - 1].left) < parseFloat(stops[0].left) ? -1 : 1;
+        hero.querySelector('svg').style.scale = `${face} 1`;
+        const road = track.querySelector('.map-new');
+        if (road) { road.style.setProperty('--walk-ms', ms + 'ms'); road.style.animationDelay = lead + 'ms'; }
+        // the camera starts on him and follows him up the map
+        const y0 = parseFloat(stops[0].top), y1 = parseFloat(stops[stops.length - 1].top);
+        const camAt = y => Math.max(0, y - sc.clientHeight * 0.55);
+        sc.scrollTop = camAt(y0);
+        setTimeout(() => {
+            if (!mapOpen) return;
+            hero.classList.add('walking');
+            const anim = hero.animate(stops.map(p => ({ left: p.left, top: p.top })), { duration: ms, easing: 'ease-in-out', fill: 'both' });
+            const t0 = performance.now();
+            const follow = now => {
+                if (!mapOpen) return;
+                const f = Math.min(1, (now - t0) / ms);
+                const e = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+                sc.scrollTop = camAt(y0 + (y1 - y0) * e);
+                if (f < 1) requestAnimationFrame(follow);
+            };
+            requestAnimationFrame(follow);
+            anim.onfinish = () => {
+                if (!mapOpen) return;
+                hero.classList.remove('walking');
+                hero.classList.add('cheer');
+                const node = track.querySelector(`.map-node[data-level="${L}"]`);
+                node?.classList.remove('pending');
+                node?.classList.add('arrived');
+                if (node) {
+                    const r = node.getBoundingClientRect();
+                    sparkle(r.left + r.width / 2, r.top + r.height / 2, 16, 70);
+                    if (!calm) confettiAt(r.left + r.width / 2, r.top + r.height / 2, 24);
+                }
+                Sound.levelUp();
+                buzz([20, 30, 20]);
+            };
+        }, lead);
+        return lead + ms;
     }
 
-    function openMap({ milestone = false, onDone = null, fromL = null } = {}) {
+    // milestone: opened by the win screen — its chest opens by itself, and
+    // onDone (the next board) runs when the map is closed. auto: opened at a
+    // level-up — Kloxy walks, and the map closes by itself when he is done
+    // (after the chest, if one opened). A tap anywhere skips ahead.
+    function openMap({ milestone = false, onDone = null, fromL = null, auto = false } = {}) {
         if (mapOpen) return;
         if (!milestone) {
             if (gameOver || tutorial || (zen && !daily)) return;
@@ -4320,24 +4438,33 @@
         }
         mapDone = onDone;
         mapOpen = true;
+        mapAuto = auto;
+        clearTimeout(mapAutoTimer);
         flushToasts(); // news from the board behind stays there
         $id('mapPlay').innerText = milestone ? t('mapPlay', { n: levelInfo(progress.points).L }) : t('continue');
-        renderMap();
+        const L = levelInfo(progress.points).L;
+        renderMap(fromL && fromL < L ? fromL : null);
         $id('mapView').classList.add('open');
+        $id('mapView').classList.toggle('auto', auto);
         scrollMapToCurrent(false);
         const walkMs = fromL ? walkHero(fromL) : 0;
         if (milestone) {
-            const c = chapterOf(levelInfo(progress.points).L);
+            const c = chapterOf(L);
+            const chestNow = chestReady(c) && !!$id('mapTrack').querySelector(`.map-chest[data-chest="${c}"]`);
             setTimeout(() => {
                 const el = $id('mapTrack').querySelector(`.map-chest[data-chest="${c}"]`);
                 if (mapOpen && el && chestReady(c)) openChest(c, el);
             }, 650 + walkMs);
+            // no chest to open: off to the next board once he has cheered
+            if (auto && !chestNow) mapAutoTimer = setTimeout(() => { if (mapOpen && mapAuto) closeMap(); }, walkMs + 1600);
         }
     }
 
     function closeMap() {
         if (!mapOpen) return;
         mapOpen = false;
+        mapAuto = false;
+        clearTimeout(mapAutoTimer);
         chestBusy = false;
         flushToasts(); // the map's own news stays on the map
         $id('mapView').classList.remove('open');
@@ -4392,6 +4519,8 @@
         const close = () => {
             box.classList.remove('show');
             chestBusy = false;
+            // a level-up's map goes on to the next board by itself once the prize is seen
+            if (mapAuto) { mapAutoTimer = setTimeout(() => { if (mapOpen) closeMap(); }, 500); return; }
             renderMap();
             updateHud();
         };
@@ -4400,6 +4529,13 @@
     }
 
     $id('mapBtn').addEventListener('click', () => { Sound.select(); openMap(); });
+    // a level-up's walk: a tap on the map skips ahead to the next board (not while a chest is opening)
+    $id('mapScroll').addEventListener('pointerdown', (e) => {
+        if (!mapAuto || chestBusy) return;
+        e.preventDefault();
+        e.stopPropagation();
+        closeMap();
+    }, true);
     $id('mapClose').addEventListener('click', () => { Sound.select(); closeMap(); });
     $id('mapPlay').addEventListener('click', () => { Sound.select(); closeMap(); });
     $id('mapTrack').addEventListener('click', (e) => {
@@ -7778,7 +7914,7 @@
             const chapterHit = !daily && !zen && (endInfo.L > startInfo.L
                 || (chapterOf(endInfo.L) > chapterOf(startInfo.L) && chestReady(chapterOf(endInfo.L))));
             const buttons = [chapterHit
-                ? { label: t('toMap'), cls: 'btn-primary', action: () => openMap({ milestone: true, onDone: initLevel, fromL: startInfo.L }) }
+                ? { label: t('nextBoard'), cls: 'btn-primary', action: () => openMap({ milestone: true, onDone: initLevel, fromL: startInfo.L, auto: true }) }
                 : { label: unlockedN ? t('toBoard', { n: unlockedN }) : t('nextBoard'), cls: 'btn-primary', action: initLevel }];
             const dailyDate = daily && daily.date;
             if (dailyDate) buttons.push({ label: t('share'), cls: 'btn-secondary', stay: true, action: () => shareDaily(dailyDate) });

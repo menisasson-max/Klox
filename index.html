@@ -2454,7 +2454,7 @@
             resetBoardQ: 'לאפס את הלוח?', resetBoardM: 'כל האריחים שהנחת יחזרו לגלגל\nוהשעון יתחיל מחדש.',
             timeUp: 'הזמן נגמר! ⏰', extraQ: 'להוסיף עוד {s} שניות? (פעם אחת בלוח)\nאם תפתור עכשיו — הלוח ייחשב, בחצי נקודות.',
             trayLeft: '\nנשארו {n} אריחים בגלגל.', moreSecs: '⏳ עוד {s} שניות', noFinish: 'לא, סיים את הלוח',
-            wizMinute: '🧙 גמדון: עוד דקה (יש לך {n})', wizAgain: 'הזמן נגמר שוב!\nגמדון נותן עוד דקה.',
+            wizMinute: '🧙 גמדון: עוד דקה (יש לך {n})', wizAgain: 'הזמן נגמר שוב!\nגמדון נותן עוד דקה.', wizOffer: 'גמדון נותן עוד דקה — והנקודות נשמרות.',
             wizHint: '\n🧙 גמדון נותן דקה שלמה — והנקודות נשמרות.',
             wizFoundT: '🧙 מצאת גמדון!', wizFoundS: 'הוא מחכה לך למעלה. הקש עליו בכל רגע — או כשהזמן נגמר — לעוד דקה',
             wizStashT: '🧙 גמדונים: {n}', wizStashS: 'הקש על הגמדונים בכל רגע: כל אחד מוסיף דקה לשעון',
@@ -2526,7 +2526,7 @@
             shieldGob: '🛡️ המגן עצר שדון!', shieldTurn: '🛡️ המגן עצר את הסיבוב!', shieldShout: 'נחסם!',
             bonkShout: 'השדון גורש!', bonkT: '👊 גירשת שדון!', bonkS: 'הוא לא בעט באף אריח — ועוד {s} שניות על השעון',
             wizFullT: '🧙 השעון מלא', wizFullS: 'שמור את הגמדון לרגע שהזמן אוזל',
-            hardQ: '💪 לוח קשה?', hardM: 'יותר משבצות ריקות ופחות זמן לכל אחת — והנקודות על הלוח כפולות.\nאו לוח רגיל, כרגיל.',
+            hardQ: '💪 לוח קשה?', hardM: 'יותר משבצות ריקות ושעון של 10 דקות — והנקודות על הלוח כפולות.\nאו לוח רגיל, כרגיל.',
             hardYes: '💪 כן, \u2066×2\u2069 💎', hardNo: 'לוח רגיל', hardT: '💪 לוח קשה', hardS: 'הנקודות על הלוח הזה כפולות', hardX2: '💪 לוח קשה \u2066×2\u2069',
             newBest: '⏱ שיא זמן חדש ל־{n}×{n}!',
             recSizes: '📏 לפי גודל לוח', recDaily: '📅 החידה היומית', recAch: '🏅 הישגים {n}/{t}',
@@ -2590,7 +2590,7 @@
             resetBoardQ: 'Reset the board?', resetBoardM: 'Every tile you placed goes back to the wheel\nand the clock starts over.',
             timeUp: 'Time’s up! ⏰', extraQ: 'Add {s} more seconds? (once per board)\nIf you solve it now it counts, for half the points.',
             trayLeft: '\n{n} tiles left on the wheel.', moreSecs: '⏳ {s} more seconds', noFinish: 'No, end the board',
-            wizMinute: '🧙 Wizard: one more minute ({n} left)', wizAgain: 'Time’s up again!\nA wizard gives you another minute.',
+            wizMinute: '🧙 Wizard: one more minute ({n} left)', wizAgain: 'Time’s up again!\nA wizard gives you another minute.', wizOffer: 'A wizard gives you another minute — and you keep your points.',
             wizHint: '\n🧙 A wizard gives a full minute — and you keep your points.',
             wizFoundT: '🧙 You found a wizard!', wizFoundS: 'He’s waiting up top. Tap him any time — or when time runs out — for another minute',
             wizStashT: '🧙 Wizards: {n}', wizStashS: 'Tap the wizards any time: each adds a minute to the clock',
@@ -2662,7 +2662,7 @@
             shieldGob: '🛡️ Your shield stopped a goblin!', shieldTurn: '🛡️ Your shield stopped the turn!', shieldShout: 'BLOCKED!',
             bonkShout: 'Goblin bonked!', bonkT: '👊 Goblin bonked!', bonkS: 'He kicked nothing — and {s} more seconds on the clock',
             wizFullT: '🧙 The clock is full', wizFullS: 'Save the wizard for when time runs low',
-            hardQ: '💪 A hard board?', hardM: 'More empty slots and less time for each — and the board pays double.\nOr a normal board, as usual.',
+            hardQ: '💪 A hard board?', hardM: 'More empty slots and a 10-minute clock — and the board pays double.\nOr a normal board, as usual.',
             hardYes: '💪 Yes, ×2 💎', hardNo: 'Normal board', hardT: '💪 Hard board', hardS: 'Points on this board are doubled', hardX2: '💪 Hard board ×2',
             newBest: '⏱ New best time on {n}×{n}!',
             recSizes: '📏 By board size', recDaily: '📅 Daily puzzle', recAch: '🏅 Achievements {n}/{t}',
@@ -3463,9 +3463,10 @@
         }, 1000);
     }
 
-    // the free extra time is offered once per board; wizards can keep it going
+    // Out of time: the board is lost, unless a collected 🧙 wizard buys a
+    // minute more. The free +30 s button is gone (Meni, #27).
     function outOfTime() {
-        if (extended && (!progress.wizards || daily)) endGame(false); else offerExtraTime();
+        if (!progress.wizards || daily) endGame(false); else offerExtraTime();
     }
 
     const EXTRA_SECONDS = 30;
@@ -3494,22 +3495,12 @@
                 Sound.coin();
             } });
         }
-        if (!extended) {
-            buttons.push({ label: t('moreSecs', { s: EXTRA_SECONDS }), cls: 'btn-primary', action: () => {
-                extended = true;
-                timeLeft = Math.min(EXTRA_SECONDS, clockCap());
-                updateTimerUI();
-                document.getElementById('timerDisplay').classList.add('extended');
-                setPaused(false);
-                Sound.coin();
-            } });
-        }
         buttons.push({ label: t('noFinish'), cls: 'btn-secondary', action: () => {
             endGame(false);   // sets gameOver first, so un-pausing below does not restart the clock
             setPaused(false);
         } });
 
-        const msg = (extended ? t('wizAgain') : t('extraQ', { s: EXTRA_SECONDS }) + (progress.wizards && !daily ? t('wizHint') : ''))
+        const msg = t('wizOffer')
             + (left ? t('trayLeft', { n: left }) : '');
         showDialog(t('timeUp'), msg, buttons);
     }
@@ -4565,6 +4556,7 @@
     const HARD_EVERY = 5;
     const HARD_STEP = 1.0;
     const HARD_EXTRA_EMPTY = 0.08;
+    const HARD_CLOCK = 600;     // a 💪 ×2 board gets a flat 10 minutes (Meni, #27)
     const HARD_MULT = 2;
 
     function hardOfferDue() {
@@ -5051,7 +5043,7 @@
         params = tutorial ? TUT_PARAMS
             : daily ? dailyParams(daily.date)
             : zen ? zenParams()
-            : hard ? hardParams()
+            : hard ? { ...hardParams(), time: HARD_CLOCK }
             : boss && boss.kind === 'empty' ? hardParams(BOSS_STEP, BOSS_EXTRA_EMPTY)
             : levelParams(boardDifficulty());
         params = { ...params };
@@ -5101,7 +5093,7 @@
         const missingPos = tutorial ? [...TUT_HOLES] : carveHoles(solution, N, params.missing);
         if (missingPos.length < params.missing) {
             params.missing = missingPos.length;
-            params.time = boardTime(params.missing, params.t);
+            params.time = hard ? HARD_CLOCK : boardTime(params.missing, params.t);
             totalTime = timeLeft = params.time;
             clockMax = clockCap();
             updateTimerUI();
@@ -7749,7 +7741,9 @@
             // unplayed puzzle is offered next to "next board"
             // A new chapter of the journey reached on this board: on to the map,
             // where its chest opens, and the next board from there
-            const chapterHit = !daily && chapterOf(endInfo.L) > chapterOf(startInfo.L) && chestReady(chapterOf(endInfo.L));
+            // ...and after every level-up too, so the journey is seen as it grows (Meni, #27)
+            const chapterHit = !daily && !zen && (endInfo.L > startInfo.L
+                || (chapterOf(endInfo.L) > chapterOf(startInfo.L) && chestReady(chapterOf(endInfo.L))));
             const buttons = [chapterHit
                 ? { label: t('toMap'), cls: 'btn-primary', action: () => openMap({ milestone: true, onDone: initLevel }) }
                 : { label: unlockedN ? t('toBoard', { n: unlockedN }) : t('nextBoard'), cls: 'btn-primary', action: initLevel }];

@@ -1600,6 +1600,125 @@
         .ach-item small { display: block; font-weight: 500; font-size: 0.7rem; color: var(--text-muted); }
         .ach-item.locked { background: var(--bg-slot); border-color: var(--border-color); color: var(--text-muted); filter: grayscale(1); opacity: 0.75; }
 
+        /* Board themes from the collection: only the board's frame and the page
+           behind it change; the slots and tiles keep their colours, so every
+           tile reads the same on any theme. Mixed with the theme's own surface,
+           so they work light and dark. */
+        .bt-mint { --board-bg: linear-gradient(160deg, color-mix(in srgb, #34d399 30%, var(--bg-surface)), color-mix(in srgb, #a3e635 22%, var(--bg-surface))); --page-tint: color-mix(in srgb, #34d399 12%, var(--bg-base)); }
+        .bt-ocean { --board-bg: linear-gradient(160deg, color-mix(in srgb, #38bdf8 32%, var(--bg-surface)), color-mix(in srgb, #6366f1 26%, var(--bg-surface))); --page-tint: color-mix(in srgb, #38bdf8 12%, var(--bg-base)); }
+        .bt-sunset { --board-bg: linear-gradient(160deg, color-mix(in srgb, #fb923c 32%, var(--bg-surface)), color-mix(in srgb, #f472b6 28%, var(--bg-surface))); --page-tint: color-mix(in srgb, #fb923c 12%, var(--bg-base)); }
+        .board-container { background: var(--board-bg, var(--bg-surface)); }
+        body { background: var(--page-tint, var(--bg-base)); }
+
+        /* Boss board: a purple frame with a crown */
+        .board-container.boss {
+            border: 2px solid #a855f7;
+            box-shadow: 0 0 22px rgba(168, 85, 247, 0.45), 0 10px 30px var(--shadow);
+        }
+        .shout.boss { --shout-dark: #581c87; --shout-glow: rgba(168, 85, 247, 0.95); }
+        .shout.boss b { color: #f5d0fe; }
+
+        /* The 🗺️ button in the status bar; a dot when a chest waits on the map */
+        .map-btn { position: relative; padding: 2px 7px; }
+        .map-btn i { position: absolute; top: -3px; inset-inline-end: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--danger); display: none; }
+        .map-btn.chest i { display: block; animation: pulse 1.2s infinite; }
+        body.zen .map-btn, body.tut .map-btn { display: none; }
+
+        /* Journey map: a full-screen winding path, level 1 at the bottom */
+        .map-view { position: fixed; inset: 0; z-index: 120; display: none; flex-direction: column; background: var(--bg-base); }
+        .map-view.open { display: flex; animation: lvlFadeIn 0.25s ease; }
+        .map-head {
+            display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+            background: var(--bg-surface); border-bottom: 1px solid var(--border-color); flex-shrink: 0;
+        }
+        .map-head h2 { font-size: 1.2rem; font-weight: 800; flex: 1; }
+        .map-head .map-gems { font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
+        .map-scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; position: relative; }
+        .map-track { position: relative; width: 100%; max-width: 500px; margin: 0 auto; }
+        .map-band { position: absolute; left: 0; right: 0; background: linear-gradient(to top, color-mix(in srgb, var(--ch) 22%, var(--bg-base)), color-mix(in srgb, var(--ch) 8%, var(--bg-base))); }
+        .map-svg { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; overflow: visible; }
+        .map-banner {
+            position: absolute; left: 50%; transform: translate(-50%, -50%); z-index: 2;
+            background: var(--bg-surface); border: 2px solid var(--ch); border-radius: 18px;
+            padding: 5px 16px; text-align: center; white-space: nowrap; box-shadow: 0 4px 12px var(--shadow);
+        }
+        .map-banner b { display: block; font-size: 1.05rem; font-weight: 900; }
+        .map-banner small { font-size: 0.72rem; color: var(--text-muted); }
+        .map-node {
+            position: absolute; z-index: 3; width: 50px; height: 50px; margin: -25px 0 0 -25px;
+            border-radius: 50%; border: 3px solid; display: flex; align-items: center; justify-content: center;
+            font: inherit; font-weight: 900; font-size: 1.05rem; padding: 0; cursor: pointer;
+            font-variant-numeric: tabular-nums;
+        }
+        .map-node.done { background: var(--ch); color: #fff; border-color: color-mix(in srgb, var(--ch) 65%, #000); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
+        .map-node.locked { background: var(--bg-slot); color: var(--text-muted); border-color: var(--border-color); }
+        .map-node.current {
+            width: 64px; height: 64px; margin: -32px 0 0 -32px; font-size: 1.35rem;
+            background: var(--bg-surface); color: var(--text-main); border-color: var(--ch); border-width: 4px;
+            animation: nodePulse 1.5s ease-in-out infinite;
+        }
+        @keyframes nodePulse {
+            0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ch) 60%, transparent); transform: scale(1); }
+            50% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--ch) 0%, transparent); transform: scale(1.06); }
+        }
+        .map-node.boss.done, .map-node.boss.locked { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
+        .map-node .crown { position: absolute; top: -21px; left: 50%; transform: translateX(-50%); font-size: 1.15rem; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3)); }
+        .map-node.locked .crown, .map-node.missed .crown { filter: grayscale(1); opacity: 0.6; }
+        .map-node .nstars { position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; white-space: nowrap; letter-spacing: -1px; }
+        .map-you {
+            position: absolute; z-index: 4; transform: translate(-50%, -100%); white-space: nowrap; pointer-events: none;
+            background: var(--accent); color: #fff; font-size: 0.72rem; font-weight: 800; padding: 3px 9px; border-radius: 999px;
+            box-shadow: 0 3px 8px var(--shadow);
+        }
+        .map-you.boss { background: #9333ea; }
+        .map-cap { position: absolute; left: 50%; transform: translate(-50%, -50%); z-index: 2; text-align: center; color: var(--text-muted); font-size: 0.8rem; font-weight: 700; }
+        .map-cap b { display: block; font-size: 1.8rem; color: var(--gold); }
+        .map-foot { flex-shrink: 0; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: var(--bg-surface); border-top: 1px solid var(--border-color); }
+        .map-foot .btn { margin: 0 auto; display: block; max-width: 420px; }
+
+        /* A chapter chest beside the chapter's first level */
+        .map-chest { position: absolute; z-index: 3; width: 58px; height: 58px; margin: -29px 0 0 -29px; padding: 0; border: none; background: none; cursor: pointer; }
+        .map-chest svg { width: 100%; height: 100%; overflow: visible; display: block; }
+        .map-chest.locked { filter: grayscale(1); opacity: 0.5; }
+        .map-chest.ready { animation: chestBob 1.2s ease-in-out infinite; }
+        .map-chest.ready::before {
+            content: ''; position: absolute; inset: -14px; border-radius: 50%; z-index: -1;
+            background: radial-gradient(closest-side, rgba(253, 224, 71, 0.75), transparent);
+            animation: wizHalo 1.4s ease-in-out infinite;
+        }
+        .map-chest.opened { opacity: 0.8; }
+        .chest-lid { transition: transform 0.45s cubic-bezier(.3,1.6,.5,1); transform-box: fill-box; transform-origin: 0% 100%; }
+        .map-chest.opened .chest-lid, .map-chest.opening .chest-lid { transform: translate(-4px, -10px) rotate(-32deg); }
+        .map-chest.shaking { animation: chestShake 0.7s linear; }
+        @keyframes chestBob { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-4px) rotate(-4deg); } 75% { transform: translateY(-4px) rotate(4deg); } }
+        @keyframes chestShake {
+            0%, 100% { transform: rotate(0) scale(1); } 15% { transform: rotate(-9deg) scale(1.1); } 30% { transform: rotate(9deg) scale(1.15); }
+            45% { transform: rotate(-12deg) scale(1.2); } 60% { transform: rotate(12deg) scale(1.25); } 80% { transform: rotate(-6deg) scale(1.3); }
+        }
+        .chest-card { position: absolute; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; background: var(--overlay); backdrop-filter: blur(3px); }
+        .chest-card.show { display: flex; }
+        .chest-card .modal-content { max-width: 340px; }
+        .chest-card .score-row { opacity: 1; color: var(--text-main); }
+
+        /* Collection: tile sets and board themes, in Settings */
+        .col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .col-item {
+            display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 12px;
+            background: var(--bg-slot); border: 2px solid transparent; color: var(--text-main); font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+        }
+        .col-item.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-slot)); }
+        .col-item.locked { color: var(--text-muted); cursor: default; }
+        .col-item.locked .col-prev { filter: grayscale(1); opacity: 0.45; }
+        .col-item small { font-size: 0.66rem; font-weight: 500; color: var(--text-muted); }
+        .col-prev { display: flex; gap: 2px; height: 26px; align-items: center; justify-content: center; }
+        .col-prev .mini { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: var(--bg-surface); --s: 70%; }
+        .col-prev .mini .shape.animal { width: 92%; height: 92%; }
+        .col-board { width: 64px; height: 26px; border-radius: 8px; border: 1px solid var(--border-highlight); background: var(--board-bg, var(--bg-surface)); display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; }
+        .col-board i { background: color-mix(in srgb, var(--bg-slot) 55%, transparent); border-radius: 3px; }
+        .chest-prev { justify-content: center; margin: 2px 0 12px; height: 34px; }
+        .chest-prev .mini { width: 32px; height: 32px; }
+        .chest-prev .col-board { width: 96px; height: 34px; }
+
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; transition: none !important; }
         }
@@ -1675,6 +1794,99 @@
             <rect x="85" y="53" width="8" height="6" rx="2" fill="#fff"/>
             <circle cx="27" cy="76" r="11" fill="#1e293b"/><circle cx="73" cy="76" r="11" fill="#1e293b"/>
             <circle cx="27" cy="76" r="4.5" fill="#fff"/><circle cx="73" cy="76" r="4.5" fill="#fff"/>
+        </symbol>
+        <!-- Food (a collection set): toast, apple, pizza, ice cream, donut, sweet,
+             banana. Like the first set, each outline is its own family - a
+             slab, a round with a stem, a wedge, a scoop on a cone, a ring, a
+             wrapped sweet, a crescent - so they differ at a glance, not by detail. -->
+        <symbol id="p-toast" viewBox="0 0 100 100">
+            <path d="M20 50 Q8 46 10 32 Q14 12 50 12 Q86 12 90 32 Q92 46 80 50 L80 88 Q80 94 74 94 L26 94 Q20 94 20 88 Z" fill="currentColor"/>
+            <path d="M30 52 Q21 48 22 37 Q26 24 50 24 Q74 24 78 37 Q79 48 70 52 L70 80 Q70 84 66 84 L34 84 Q30 84 30 80 Z" fill="#fff" opacity=".4"/>
+            <rect x="38" y="44" width="24" height="18" rx="3" fill="#fff"/>
+        </symbol>
+        <symbol id="p-apple" viewBox="0 0 100 100">
+            <path d="M50 30 C34 18 8 24 9 52 C10 80 30 98 50 89 C70 98 90 80 91 52 C92 24 66 18 50 30 Z" fill="currentColor"/>
+            <path d="M50 30 Q50 16 55 6" stroke="#1e293b" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M56 18 Q70 3 86 11 Q74 27 56 18 Z" fill="currentColor"/>
+            <ellipse cx="28" cy="48" rx="6" ry="11" fill="#fff" opacity=".55" transform="rotate(20 28 48)"/>
+        </symbol>
+        <symbol id="p-pizza" viewBox="0 0 100 100">
+            <path d="M7 22 Q50 4 93 22 L53 94 Q50 99 47 94 Z" fill="currentColor"/>
+            <path d="M9 22 Q50 6 91 22" stroke="#1e293b" stroke-opacity=".3" stroke-width="9" fill="none" stroke-linecap="round"/>
+            <circle cx="38" cy="38" r="7.5" fill="#fff" opacity=".75"/><circle cx="63" cy="40" r="6.5" fill="#fff" opacity=".75"/><circle cx="50" cy="62" r="6" fill="#fff" opacity=".75"/>
+        </symbol>
+        <symbol id="p-icecream" viewBox="0 0 100 100">
+            <path d="M24 50 L50 99 L76 50 Z" fill="currentColor"/>
+            <path d="M24 50 L50 99 L76 50 Z" fill="#1e293b" opacity=".3"/>
+            <path d="M30 62 L70 62 M37 76 L63 76" stroke="#fff" stroke-opacity=".55" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="50" cy="31" r="30" fill="currentColor"/>
+            <path d="M20 38 Q22 58 31 51 Q38 62 47 53 Q56 64 63 51 Q72 60 80 38 Z" fill="currentColor"/>
+            <ellipse cx="36" cy="19" rx="8" ry="5" fill="#fff" opacity=".6"/>
+        </symbol>
+        <symbol id="p-donut" viewBox="0 0 100 100">
+            <path fill-rule="evenodd" d="M7 50 A43 43 0 1 0 93 50 A43 43 0 1 0 7 50 Z M36 50 A14 14 0 1 0 64 50 A14 14 0 1 0 36 50 Z" fill="currentColor"/>
+            <path d="M26 30 l6 4 M64 22 l-3 6 M76 50 l6 3 M28 66 l-2 6 M52 78 l7 -2 M44 18 l7 1 M74 72 l-5 -4 M16 48 l2 -6" stroke="#fff" stroke-width="4.5" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="p-candy" viewBox="0 0 100 100">
+            <path d="M32 50 L6 26 Q0 50 6 74 Z" fill="currentColor" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M68 50 L94 26 Q100 50 94 74 Z" fill="currentColor" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M12 40 L22 46 M12 60 L22 54 M88 40 L78 46 M88 60 L78 54" stroke="#1e293b" stroke-opacity=".35" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="25" fill="currentColor"/>
+            <path d="M37 32 Q51 50 40 70 M55 26 Q68 48 59 74" stroke="#fff" stroke-opacity=".65" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="p-banana" viewBox="0 0 100 100">
+            <path d="M11 20 Q3 80 52 93 Q85 100 97 71 Q84 73 66 67 Q42 57 36 20 Q24 11 11 20 Z" fill="currentColor"/>
+            <rect x="15" y="9" width="11" height="15" rx="3" fill="#1e293b" opacity=".6"/>
+            <path d="M24 36 Q28 66 58 80" stroke="#fff" stroke-opacity=".55" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        </symbol>
+        <!-- Nature (a collection set): cloud, flower, leaf, snowflake, mushroom,
+             butterfly, moon - again seven different outlines -->
+        <symbol id="p-cloud" viewBox="0 0 100 100">
+            <g fill="currentColor"><circle cx="32" cy="54" r="20"/><circle cx="56" cy="42" r="26"/><circle cx="78" cy="58" r="16"/><rect x="12" y="54" width="80" height="24" rx="12"/></g>
+            <path d="M40 34 Q46 24 58 24" stroke="#fff" stroke-opacity=".65" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M30 86 l-3 8 M52 86 l-3 8 M74 86 l-3 8" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="p-flower" viewBox="0 0 100 100">
+            <path d="M50 62 L50 96" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+            <path d="M50 86 Q62 70 78 74 Q66 92 50 86 Z" fill="currentColor"/>
+            <g fill="currentColor"><circle cx="50" cy="20" r="15"/><circle cx="68" cy="33" r="15"/><circle cx="61" cy="55" r="15"/><circle cx="39" cy="55" r="15"/><circle cx="32" cy="33" r="15"/></g>
+            <circle cx="50" cy="39" r="11" fill="#fff"/><circle cx="50" cy="39" r="5" fill="#1e293b" opacity=".5"/>
+        </symbol>
+        <symbol id="p-leaf" viewBox="0 0 100 100">
+            <path d="M16 84 Q8 30 60 14 Q84 8 93 8 Q95 40 82 62 Q60 96 16 84 Z" fill="currentColor"/>
+            <path d="M16 84 L5 95" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+            <path d="M18 82 Q50 50 86 16" stroke="#fff" stroke-opacity=".65" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+            <path d="M38 62 L34 42 M54 46 L52 28 M44 56 L64 62 M60 40 L78 44" stroke="#fff" stroke-opacity=".5" stroke-width="3.5" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="p-snowflake" viewBox="0 0 100 100">
+            <g stroke="currentColor" stroke-width="8" stroke-linecap="round" fill="none">
+                <path d="M50 6 V94 M12 28 L88 72 M12 72 L88 28"/>
+                <path d="M38 12 L50 24 L62 12 M38 88 L50 76 L62 88"/>
+                <path d="M13 42 L28 37 L23 22 M87 58 L72 63 L77 78"/>
+                <path d="M13 58 L28 63 L23 78 M87 42 L72 37 L77 22"/>
+            </g>
+            <circle cx="50" cy="50" r="8" fill="#fff"/>
+        </symbol>
+        <symbol id="p-mushroom" viewBox="0 0 100 100">
+            <path d="M36 56 L33 89 Q33 96 41 96 L59 96 Q67 96 67 89 L64 56 Z" fill="currentColor"/>
+            <path d="M36 56 L33 89 Q33 96 41 96 L59 96 Q67 96 67 89 L64 56 Z" fill="#fff" opacity=".55"/>
+            <path d="M5 58 Q6 10 50 8 Q94 10 95 58 Q50 66 5 58 Z" fill="currentColor"/>
+            <circle cx="29" cy="36" r="8" fill="#fff"/><circle cx="56" cy="24" r="8.5" fill="#fff"/><circle cx="75" cy="44" r="6.5" fill="#fff"/><circle cx="47" cy="48" r="5" fill="#fff"/>
+        </symbol>
+        <symbol id="p-butterfly" viewBox="0 0 100 100">
+            <g fill="currentColor">
+                <ellipse cx="28" cy="34" rx="23" ry="21" transform="rotate(-20 28 34)"/><ellipse cx="72" cy="34" rx="23" ry="21" transform="rotate(20 72 34)"/>
+                <ellipse cx="33" cy="70" rx="16" ry="18" transform="rotate(20 33 70)"/><ellipse cx="67" cy="70" rx="16" ry="18" transform="rotate(-20 67 70)"/>
+            </g>
+            <circle cx="26" cy="32" r="7" fill="#fff" opacity=".7"/><circle cx="74" cy="32" r="7" fill="#fff" opacity=".7"/>
+            <rect x="45.5" y="24" width="9" height="62" rx="4.5" fill="#1e293b"/>
+            <path d="M48 26 Q42 12 34 8 M52 26 Q58 12 66 8" stroke="#1e293b" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="p-moon" viewBox="0 0 100 100">
+            <path d="M58 6 A44 44 0 1 0 94 70 A36 36 0 1 1 58 6 Z" fill="currentColor"/>
+            <path d="M80 12 L83 20 L91 21 L85 26 L87 34 L80 30 L73 34 L75 26 L69 21 L77 20 Z" fill="currentColor"/>
+            <path d="M24 46 Q30 52 36 46" stroke="#1e293b" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+            <circle cx="28" cy="60" r="4" fill="#fff" opacity=".5"/>
         </symbol>
         <!-- the little wizard that hides under a tile; fixed colours, not currentColor -->
         <symbol id="p-wizard" viewBox="0 0 100 100">
@@ -1772,6 +1984,7 @@
         <span class="stat wins" id="winStat" title="ניצחונות ברצף" data-i18n-title="winStreakTitle">⚡ <b id="winStreakDisplay">0</b></span>
         <span class="stat" id="xpStat" title="נקודות" data-i18n-title="points">💎 <b id="xpDisplay">0</b></span>
         <button class="daily-btn" id="dailyBtn" title="החידה היומית" data-i18n-title="dailyPuzzle">📅<b id="dailyMark"></b></button>
+        <button class="daily-btn map-btn" id="mapBtn" title="מפת המסע" data-i18n-title="journeyT">🗺️<i></i></button>
     </div>
 
     <!-- Goal strip -->
@@ -1877,6 +2090,13 @@
             </div>
         </div>
 
+        <div class="set-section" data-i18n="collection">🎨 אוסף</div>
+        <div class="set-group" style="padding: 8px;">
+            <div class="col-grid" id="colTiles"></div>
+            <div class="col-grid" id="colBoards" style="margin-top: 6px;"></div>
+            <div class="daily-meta" style="margin: 6px 2px 0; font-size: 0.72rem;" data-i18n="colNote">נפתחים בתיבות של פרקי המסע. הכללים לא משתנים.</div>
+        </div>
+
         <div class="set-section" data-i18n="language">שפה</div>
         <div class="set-group">
             <div class="set-row">
@@ -1950,6 +2170,20 @@
         <div id="recBody"></div>
         <button class="btn btn-primary" id="recDone" data-i18n="continue">המשך לשחק</button>
     </div>
+</div>
+
+<!-- Journey map -->
+<div class="map-view" id="mapView" role="dialog" aria-labelledby="mapTitle">
+    <div class="map-head">
+        <h2 id="mapTitle" data-i18n="journey">🗺️ המסע</h2>
+        <span class="map-gems" id="mapGems"></span>
+        <button class="icon-btn set-close" id="mapClose" aria-label="סגור" data-i18n-aria="close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+    </div>
+    <div class="map-scroll" id="mapScroll"><div class="map-track" id="mapTrack"></div></div>
+    <div class="map-foot"><button class="btn btn-primary" id="mapPlay"></button></div>
+    <div class="chest-card" id="chestCard"></div>
 </div>
 
 <!-- Modal Dialog -->
@@ -2187,6 +2421,24 @@
             recSizes: '📏 לפי גודל לוח', recDaily: '📅 החידה היומית', recAch: '🏅 הישגים {n}/{t}',
             recTotal: '⭐ {s} כוכבים · {b} לוחות מושלמים', recDailySum: 'רצף {s} · שיא {b} · נפתרו {w} מתוך {p}',
             recBestT: 'זמן שיא', recNone: '—',
+            journey: '🗺️ המסע', journeyT: 'מפת המסע', toMap: '🗺️ למפה', mapPlay: '▶ שחק ברמה {n}',
+            ch0: 'אחו', ch1: 'גינה', ch2: 'כפר', ch3: 'עיר', ch4: 'הר', ch5: 'פסגה',
+            chRange: 'לוח {n}×{n} · רמות \u2066{a}–{b}\u2069', chEndless: 'לוח {n}×{n} · מרמה {a}, בלי סוף',
+            mapYou: 'אתה כאן', mapYouBoss: '👑 רמת בוס', mapCap: 'הדרך ממשיכה…', mapBossTap: '👑 לוח בוס ברמה {n}',
+            chestT: '🎁 תיבת ה{c}', chestTap: '🎁 תיבה מחכה — הקש עליה', chestLockedT: '🔒 התיבה נפתחת ברמה {n}',
+            chestGems: '💎 +{n} לבזבוז', chestBoosts: '🎁 בוסטרים במתנה: {b}', chestUnlock: '✨ חדש באוסף: {x}',
+            chestUse: '✨ השתמש עכשיו', chestOk: 'יופי!', chestWaitT: '🎁 תיבות מחכות במפה!', chestWaitS: 'הקש על 🗺️ כדי לפתוח אותן',
+            freeBoost: '🎁 בחינם',
+            bossQ: '👑 לוח בוס!', bossM: 'רמה {n} · הנקודות \u2066×1.5\u2069\n\n{h}\nשום הפתעה אחרת לא תבוא על הלוח הזה.', bossGo: '⚔️ קדימה!',
+            bossEmpty: '🧩 יותר משבצות ריקות ופחות זמן לכל אחת. בלי לוח זהב.',
+            bossGoblin1: '👺 שדון בדרך! הקש עליו כשהוא נכנס — והוא בורח.', bossGoblin2: '👺👺 שני שדונים בדרך! הקש עליהם כשהם נכנסים — והם בורחים.',
+            bossTurn: '🔄 הלוח יסתובב פעם אחת באמצע. הציורים נשארים ישרים — רק המקומות זזים.',
+            bossT: '👑 לוח בוס \u2066×1.5\u2069', bossShout: 'בוס!', bossRow: '👑 לוח בוס', bossBeatT: '👑 ניצחת את הבוס!',
+            collection: '🎨 אוסף', colNote: 'נפתחים בתיבות של פרקי המסע. הכללים לא משתנים.', colLocked: '🔒 תיבת ה{c}',
+            set_shapes: '🔷 צורות', set_animals: '🐱 ציורים', set_food: '🍎 אוכל', set_nature: '🌸 טבע',
+            bt_classic: '⬜ קלאסי', bt_mint: '🌿 מנטה', bt_ocean: '🌊 אוקיינוס', bt_sunset: '🌅 שקיעה',
+            p_toast: 'טוסט', p_apple: 'תפוח', p_pizza: 'פיצה', p_icecream: 'גלידה', p_donut: 'דונאט', p_candy: 'סוכרייה', p_banana: 'בננה',
+            p_cloud: 'ענן', p_flower: 'פרח', p_leaf: 'עלה', p_snowflake: 'פתית שלג', p_mushroom: 'פטרייה', p_butterfly: 'פרפר', p_moon: 'ירח',
         },
         en: {
             appName: 'Klox', a_settings: 'Settings', resume: 'Resume', a_pause: 'Pause/Resume', a_theme: 'Dark/Light', a_sound: 'Sound',
@@ -2283,6 +2535,24 @@
             recSizes: '📏 By board size', recDaily: '📅 Daily puzzle', recAch: '🏅 Achievements {n}/{t}',
             recTotal: '⭐ {s} stars · {b} perfect boards', recDailySum: 'Streak {s} · best {b} · solved {w} of {p}',
             recBestT: 'Best time', recNone: '—',
+            journey: '🗺️ Journey', journeyT: 'Journey map', toMap: '🗺️ To the map', mapPlay: '▶ Play level {n}',
+            ch0: 'Meadow', ch1: 'Garden', ch2: 'Village', ch3: 'City', ch4: 'Mountain', ch5: 'Summit',
+            chRange: '{n}×{n} board · levels {a}–{b}', chEndless: '{n}×{n} board · level {a} on, endless',
+            mapYou: 'You are here', mapYouBoss: '👑 Boss level', mapCap: 'The path goes on…', mapBossTap: '👑 Boss board at level {n}',
+            chestT: '🎁 {c} chest', chestTap: '🎁 A chest is waiting — tap it', chestLockedT: '🔒 This chest opens at level {n}',
+            chestGems: '💎 +{n} to spend', chestBoosts: '🎁 Free boosters: {b}', chestUnlock: '✨ New in your collection: {x}',
+            chestUse: '✨ Use it now', chestOk: 'Great!', chestWaitT: '🎁 Chests are waiting on the map!', chestWaitS: 'Tap 🗺️ to open them',
+            freeBoost: '🎁 Free',
+            bossQ: '👑 Boss board!', bossM: 'Level {n} · pays ×1.5\n\n{h}\nNothing else will surprise you on this board.', bossGo: '⚔️ Let’s go!',
+            bossEmpty: '🧩 More empty slots and less time for each. No golden board.',
+            bossGoblin1: '👺 The goblin is coming! Tap him as he walks in to chase him off.', bossGoblin2: '👺👺 Two goblins are coming! Tap them as they walk in to chase them off.',
+            bossTurn: '🔄 The board will turn once mid-game. The pictures stay upright — only their places move.',
+            bossT: '👑 Boss board ×1.5', bossShout: 'BOSS!', bossRow: '👑 Boss board', bossBeatT: '👑 Boss beaten!',
+            collection: '🎨 Collection', colNote: 'Unlocked by the journey’s chapter chests. The rules never change.', colLocked: '🔒 {c} chest',
+            set_shapes: '🔷 Shapes', set_animals: '🐱 Pictures', set_food: '🍎 Food', set_nature: '🌸 Nature',
+            bt_classic: '⬜ Classic', bt_mint: '🌿 Mint', bt_ocean: '🌊 Ocean', bt_sunset: '🌅 Sunset',
+            p_toast: 'toast', p_apple: 'apple', p_pizza: 'pizza', p_icecream: 'ice cream', p_donut: 'donut', p_candy: 'sweet', p_banana: 'banana',
+            p_cloud: 'cloud', p_flower: 'flower', p_leaf: 'leaf', p_snowflake: 'snowflake', p_mushroom: 'mushroom', p_butterfly: 'butterfly', p_moon: 'moon',
         },
     };
     let lang = store.get('klox_lang') === 'en' ? 'en' : 'he';
@@ -2338,12 +2608,25 @@
        Style: shapes or pictures
 
        The pictures style (stored as 'animals', the name it shipped with)
-       swaps each shape for a picture of the same colour and uses a softer,
+       swaps each shape for a picture of the same colour, from the chosen
+       picture set, and uses a softer,
        natural palette; the rules don't change. It is light-only: switching to it shows
        the light theme and hides the moon, and switching back restores whatever
        theme the player had (klox_theme is never written while in animals).
        ============================ */
-    const ANIMAL_FOR = { square: 'house', circle: 'cat', triangle: 'fish', diamond: 'tree', hexagon: 'umbrella', star: 'kid', cross: 'car' };
+    /* Which picture stands for which shape, per picture set. The first set
+       ('animals', the default) is always there; the others come from the
+       journey's chapter chests (see "Collection"). Every set has seven
+       pictures with seven different outlines, painted in the tile's colour,
+       so colour and picture still read apart; only the look changes. */
+    const PICTURE_SETS = {
+        animals: { square: 'house', circle: 'cat', triangle: 'fish', diamond: 'tree', hexagon: 'umbrella', star: 'kid', cross: 'car' },
+        food: { square: 'toast', circle: 'apple', triangle: 'pizza', diamond: 'icecream', hexagon: 'donut', star: 'candy', cross: 'banana' },
+        nature: { square: 'cloud', circle: 'flower', triangle: 'leaf', diamond: 'snowflake', hexagon: 'mushroom', star: 'butterfly', cross: 'moon' },
+    };
+    // The picture set in use (checked against what the player owns once progress loads)
+    let picSet = PICTURE_SETS[store.get('klox_picset')] ? store.get('klox_picset') : 'animals';
+    function pictureFor(shape, set = picSet) { return (PICTURE_SETS[set] || PICTURE_SETS.animals)[shape]; }
     // Pictures are the default; only a player who chose shapes gets shapes.
     let style = store.get('klox_style') === 'shapes' ? 'shapes' : 'animals';
     // How often wreckers come from level 10 (Settings → Difficulty)
@@ -2413,15 +2696,27 @@
        TOAST_MS + TOAST_GAP_MS apart). Each sits just under the clock bar (or
        under the rule chips when there is no clock), never over the level and
        points at the top. A long queue drops its oldest: news that is many
-       seconds late is no news.
+       seconds late is no news. While the journey map is open, news from the
+       board behind it is dropped; only the map's own toasts show.
        ============================ */
     const TOAST_MS = 2600;
     const TOAST_GAP_MS = 1200;
     const TOAST_QUEUE_MAX = 3;
     const toastQueue = [];
     let toastBusy = false;
+    let toastTimer = null;
 
-    function toast(title, sub = '') {
+    // Drop everything waiting and on screen (the journey map opening or closing)
+    function flushToasts() {
+        toastQueue.length = 0;
+        clearTimeout(toastTimer);
+        toastBusy = false;
+        document.querySelectorAll('#toasts .toast').forEach(el => el.remove());
+    }
+
+    // onMap: a toast about the journey map; while the map is open only those show
+    function toast(title, sub = '', onMap = false) {
+        if (mapOpen && !onMap) return;
         toastQueue.push({ title, sub });
         while (toastQueue.length > TOAST_QUEUE_MAX) toastQueue.shift();
         if (!toastBusy) nextToast();
@@ -2450,7 +2745,7 @@
             el.appendChild(s);
         }
         box.appendChild(el);
-        setTimeout(() => { el.remove(); setTimeout(nextToast, TOAST_GAP_MS); }, TOAST_MS);
+        toastTimer = setTimeout(() => { el.remove(); toastTimer = setTimeout(nextToast, TOAST_GAP_MS); }, TOAST_MS);
     }
 
     /* ============================
@@ -2468,7 +2763,7 @@
         const sh = ALL_SHAPES[n - 1];
         const colorKey = style === 'animals' && n === 7 ? 'c_brown' : NEW_COLOR_KEY[n];
         let text = t('newColor', { c: t(colorKey) }) + ' · '
-            + (style === 'animals' ? t('newPicture', { p: t('p_' + ANIMAL_FOR[sh]) }) : t('newShape', { p: t('s_' + sh) }));
+            + (style === 'animals' ? t('newPicture', { p: t('p_' + pictureFor(sh)) }) : t('newShape', { p: t('s_' + sh) }));
         if (n === 6) text += '\n' + t('note6');
         if (n === 7) text += '\n' + t('note7');
         return text;
@@ -2545,13 +2840,17 @@
        the clock past its cap becomes 3 💎, see the timer) and the daily-goal
        bonus. Solving on the 30 bought seconds pays half the tile points; a
        wizard's minute costs nothing. A hard board the player chose (see
-       "Hard board") pays × 2 on top, like a golden one.
+       "Hard board") pays × 2 on top, like a golden one, and a boss board
+       (see "Boss boards") × 1.5.
 
        Spending: points are also what boosters cost (see "Boosters"). The
        level is read off everything ever earned (progress.points, which
        only goes up); what has been spent is kept apart (progress.spent).
-       The 💎 a player sees and can spend is the balance, earned − spent,
-       never below 0. So buying a booster never lowers the level.
+       Chapter chests (see "Journey map") give 💎 too, kept apart again
+       (progress.gifts): they can be spent but are not earned, so they never
+       raise the level. The 💎 a player sees and can spend is the balance,
+       earned + gifts − spent, never below 0. So buying a booster never
+       lowers the level, and a chest never skips one.
 
        Stars are the one signal for how well a board went: time used against
        par (half the starting clock) and how many moves went wrong. Fast and
@@ -2625,6 +2924,11 @@
             shieldOn: false, // a bought 🛡️ waiting for the next goblin or turn, on any board
             starsBySize: {}, bestTime: {}, // ⭐ won and fastest win (seconds) per board size
             dailyHistory: {}, // 'YYYY-MM-DD' → today's puzzle: { won, stars, secs, mistakes, grid, n }
+            gifts: 0,        // 💎 given by chapter chests: spendable, but never part of the level
+            freeBoosts: {},  // boosters given by chests, used before any 💎 is paid: { hint: 1, ... }
+            chests: [],      // chapters (by index) whose chest has been opened
+            bosses: [],      // boss levels (5, 10, ...) whose boss board was beaten
+            unlocked: [],    // collection items given some other way than a chest (later events)
         };
     }
 
@@ -2646,9 +2950,12 @@
         // ...and saves from before boosters, records and the daily puzzle lack these
         if (!Number.isFinite(base.spent) || base.spent < 0) base.spent = 0;
         base.shieldOn = base.shieldOn === true;
-        ['starsBySize', 'bestTime', 'dailyHistory'].forEach(k => {
+        ['starsBySize', 'bestTime', 'dailyHistory', 'freeBoosts'].forEach(k => {
             if (!base[k] || typeof base[k] !== 'object' || Array.isArray(base[k])) base[k] = {};
         });
+        // ...and saves from before the journey map lack these
+        if (!Number.isFinite(base.gifts) || base.gifts < 0) base.gifts = 0;
+        ['chests', 'bosses', 'unlocked'].forEach(k => { if (!Array.isArray(base[k])) base[k] = []; });
         return base;
     })();
     let level = levelInfo(progress.points).L;
@@ -2657,9 +2964,10 @@
         store.set(PROGRESS_KEY, JSON.stringify(progress));
     }
 
-    // The 💎 the player has to spend (the level counts everything ever earned)
+    // The 💎 the player has to spend: earned plus chest gifts, less what was
+    // spent (the level counts only what was ever earned, so gifts never move it)
     function balance() {
-        return Math.max(0, progress.points - progress.spent);
+        return Math.max(0, progress.points + progress.gifts - progress.spent);
     }
 
     function dayKey(d = new Date()) {
@@ -2749,6 +3057,8 @@
         const starPts = step(starX);
         const goldPts = golden ? step(2) : 0;
         const hardPts = hard ? step(HARD_MULT) : 0;
+        const bossPts = boss ? step(BOSS_MULT) : 0;
+        if (boss && !progress.bosses.includes(boss.L)) progress.bosses.push(boss.L);
         const streakX = streakMult(progress.winStreak);
         const streakPts = streakX > 1 ? step(streakX) : 0;
         const newSize = !daily && progress.newSizeLeft > 0 && N === progress.maxN; // not on today's puzzle
@@ -2771,7 +3081,7 @@
         if (levelInfo(progress.points).L >= 30) unlockAchievement('peak8', newAch);
 
         return {
-            tiles, perTile, tilePts, stars, starX, starPts, goldPts, hardPts, newBest,
+            tiles, perTile, tilePts, stars, starX, starPts, goldPts, hardPts, bossPts, newBest,
             winStreak: progress.winStreak, streakX, streakPts, newSize, newSizePts,
             overflow, dailyBonus, total, dailyJustDone, newAch, extendedSolve,
         };
@@ -2819,6 +3129,8 @@
     let hard = false;          // this board is a hard one the player chose: × 2 points
     let hardNext = false;      // ...set just before initLevel deals it
     let hardAskedAt = -1;      // progress.played when the hard board was last offered
+    let boss = null;           // {L, kind, goblins, turns}: this board is that level's boss board
+    let bossNext = false;      // ...set by the boss announcement just before initLevel deals it
     let mistakes = 0;          // wrong moves on this board
     let missedIds = new Set(); // tiles that went somewhere wrong before they went right
     let freezeLeft = 0;        // seconds the ❄️ booster still holds the clock
@@ -3150,6 +3462,7 @@
         const de = dailyEntry(dayKey());
         $id('setDailyNote').innerText = de ? t('dailyPlayedToday') : t('dailyNotYet');
         $id('rowVibe').style.display = 'vibrate' in navigator ? '' : 'none';
+        renderCollection();
     }
 
     // reopen: back from a confirm, so the pause state from the first open still holds
@@ -3268,6 +3581,8 @@
                 progress = freshProgress();
                 level = 1;
                 saveProgress();
+                applyBoardTheme(); // themes and picture sets from chests go with the chests
+                if (!owns(picSet)) { picSet = 'animals'; render(true); }
                 initLevel();
             } },
             { label: t('cancel'), cls: 'btn-secondary', action: () => openSettings(true) },
@@ -3529,6 +3844,353 @@
     $id('recordsModal').addEventListener('click', (e) => { if (e.target.id === 'recordsModal') closeRecords(); });
 
     /* ============================
+       Journey map (🗺️)
+
+       The levels as a winding path, level 1 at the bottom, in chapters
+       named for where the board grows: each chapter starts at the first
+       level of a board size (SIZE_BANDS through difficultyFor, so it moves
+       if they do): Meadow 3×3 (levels 1–2), Garden 4×4 (3–7), Village 5×5
+       (8–17), City 6×6 (18–27), Mountain 7×7 (28–37), and the Summit from
+       38, where the scale tops out and the levels go on without end (the
+       map shows a few past the player, then "the path goes on").
+
+       A node is done (below the player's level, with its best ⭐), current
+       (it pulses; the map scrolls to it) or still to come. Every fifth
+       level wears the boss crown (see "Boss boards"); gold once beaten.
+
+       Each chapter after the first has one chest beside its first level.
+       It opens once, when tapped, after the player reaches that level: a
+       shake, the lid flies, and a card says what was in it — 💎 to spend
+       (progress.gifts, never part of the level, see "Progress"), a booster
+       or two for free (progress.freeBoosts, see "Boosters") and something
+       new for the collection. Reaching a new chapter sends the win screen
+       on to the map, where that chest opens by itself. Players who were
+       past a chapter before chests existed find its chest waiting there
+       (a dot on 🗺️ says so). The map opens from 🗺️ in the status bar,
+       pausing the board, and never in zen or the tutorial.
+       ============================ */
+    const CHAPTERS = [
+        { key: 'ch0', emoji: '🌼', hue: '#22c55e' },
+        { key: 'ch1', emoji: '🌷', hue: '#ec4899', chest: { gems: 300, boosts: { hint: 1, freeze: 1 }, unlock: 'food' } },
+        { key: 'ch2', emoji: '🏡', hue: '#f97316', chest: { gems: 600, boosts: { hint: 1, wand: 1 }, unlock: 'mint' } },
+        { key: 'ch3', emoji: '🏙️', hue: '#3b82f6', chest: { gems: 1000, boosts: { freeze: 1, shield: 1 }, unlock: 'nature' } },
+        { key: 'ch4', emoji: '⛰️', hue: '#8b5cf6', chest: { gems: 1500, boosts: { shield: 1, wand: 1 }, unlock: 'ocean' } },
+        { key: 'ch5', emoji: '🏔️', hue: '#eab308', chest: { gems: 2500, boosts: { wand: 2 }, unlock: 'sunset' } },
+    ];
+    const BOOST_ICON = { hint: '💡', freeze: '❄️', shield: '🛡️', wand: '🪄' };
+    // The first level whose difficulty reaches d
+    function firstLevelAt(d) { let L = 1; while (difficultyFor(L) < d) L++; return L; }
+    // Each chapter's first level: one per board size, then the summit
+    const CHAPTER_START = CHAPTERS.map((c, i) => firstLevelAt(i < SIZE_BANDS.length ? SIZE_BANDS[i].from : MAX_LEVEL));
+    function chapterOf(L) {
+        let c = 0;
+        CHAPTER_START.forEach((s, i) => { if (L >= s) c = i; });
+        return c;
+    }
+    function chestReady(c) {
+        return !!(CHAPTERS[c] && CHAPTERS[c].chest) && levelInfo(progress.points).L >= CHAPTER_START[c] && !progress.chests.includes(c);
+    }
+    function chestsWaiting() { return CHAPTERS.map((_, c) => c).filter(chestReady); }
+
+    /* ============================
+       Collection: tile sets and board themes
+
+       Looks only; the rules never change. Tile sets: shapes and the first
+       pictures are always there; 🍎 food and 🌸 nature come from chapter
+       chests. Board themes (the board's frame and the page behind it; the
+       slots and tiles stay as they are): classic always, 🌿 mint, 🌊 ocean
+       and 🌅 sunset from chests. What is owned is worked out from the
+       chests opened (and progress.unlocked, for anything given later some
+       other way); the choice is kept per device like the style (klox_picset,
+       klox_board) and falls back to the default if it is not owned (after
+       "reset all progress", say). Picked in Settings → Collection, or from
+       a chest's card.
+       ============================ */
+    const COLLECTION = [
+        { id: 'shapes', kind: 'tiles' }, { id: 'animals', kind: 'tiles' }, { id: 'food', kind: 'tiles' }, { id: 'nature', kind: 'tiles' },
+        { id: 'classic', kind: 'board' }, { id: 'mint', kind: 'board' }, { id: 'ocean', kind: 'board' }, { id: 'sunset', kind: 'board' },
+    ];
+    function chestFor(id) { return CHAPTERS.findIndex(c => c.chest && c.chest.unlock === id); }
+    function owns(id) {
+        const c = chestFor(id);
+        return c < 0 || progress.chests.includes(c) || progress.unlocked.includes(id);
+    }
+    let boardTheme = store.get('klox_board') || 'classic';
+    function applyBoardTheme() {
+        if (!COLLECTION.some(x => x.kind === 'board' && x.id === boardTheme) || !owns(boardTheme)) boardTheme = 'classic';
+        const root = document.documentElement;
+        COLLECTION.forEach(x => { if (x.kind === 'board') root.classList.remove('bt-' + x.id); });
+        if (boardTheme !== 'classic') root.classList.add('bt-' + boardTheme);
+    }
+    function setBoardTheme(id) {
+        if (!owns(id)) return;
+        boardTheme = id;
+        store.set('klox_board', id);
+        applyBoardTheme();
+    }
+    // A picture set the player does not own (any more) gives way to the first one
+    if (!owns(picSet)) picSet = 'animals';
+    function pickTiles(id) {
+        if (id === 'shapes') { setStyle('shapes'); return; }
+        if (!PICTURE_SETS[id] || !owns(id)) return;
+        const changed = picSet !== id;
+        picSet = id;
+        store.set('klox_picset', id);
+        if (style !== 'animals') setStyle('animals');
+        else if (changed) render(true);
+    }
+    function tilesOn(id) { return id === 'shapes' ? style === 'shapes' : style === 'animals' && picSet === id; }
+    function pickCosmetic(id) {
+        const item = COLLECTION.find(x => x.id === id);
+        if (!item || !owns(id)) return;
+        if (item.kind === 'board') setBoardTheme(id); else pickTiles(id);
+    }
+
+    // Little tiles (or a little board) to show what an item looks like
+    function miniTile(set, i) {
+        const sh = ALL_SHAPES[i], color = ALL_COLORS[i];
+        if (set === 'shapes') return `<span class="mini"><div class="shape ${sh}" style="background-color:${color}"></div></span>`;
+        return `<span class="mini"><svg class="shape animal" viewBox="0 0 100 100" style="color:${color}"><use href="#p-${pictureFor(sh, set)}"/></svg></span>`;
+    }
+    function previewHtml(id, count) {
+        const item = COLLECTION.find(x => x.id === id);
+        if (item.kind === 'board') return `<div class="col-board bt-${id}"><i></i><i></i><i></i></div>`;
+        return [...Array(count).keys()].map(i => miniTile(id, i)).join('');
+    }
+    function cosmeticName(id) {
+        const item = COLLECTION.find(x => x.id === id);
+        return t((item.kind === 'board' ? 'bt_' : 'set_') + id);
+    }
+
+    function renderCollection() {
+        const card = x => {
+            const own = owns(x.id);
+            const on = x.kind === 'board' ? boardTheme === x.id : tilesOn(x.id);
+            const lock = own ? '' : `<small>${escHtml(t('colLocked', { c: t(CHAPTERS[chestFor(x.id)].key) }))}</small>`;
+            return `<button class="col-item${on ? ' on' : ''}${own ? '' : ' locked'}" data-id="${x.id}">`
+                + `<span class="col-prev">${previewHtml(x.id, 4)}</span>${escHtml(cosmeticName(x.id))}${lock}</button>`;
+        };
+        $id('colTiles').innerHTML = COLLECTION.filter(x => x.kind === 'tiles').map(card).join('');
+        $id('colBoards').innerHTML = COLLECTION.filter(x => x.kind === 'board').map(card).join('');
+    }
+    ['colTiles', 'colBoards'].forEach(k => $id(k).addEventListener('click', (e) => {
+        const b = e.target.closest('.col-item');
+        if (!b) return;
+        if (!owns(b.dataset.id)) { Sound.nope(); return; }
+        pickCosmetic(b.dataset.id);
+        Sound.select();
+        refreshSettings();
+    }));
+
+    /* The map itself. Laid out bottom-up in px: per chapter a banner, then
+       its levels a step apart, swaying left and right; everything is placed
+       absolutely in one tall track, with the path drawn behind as SVG. */
+    const MAP_STEP = 86, MAP_BANNER = 92, MAP_PAD = 34;
+    let mapOpen = false, mapWasPaused = false, mapDone = null, chestBusy = false;
+
+    function mapX(L) { return 50 + 28 * Math.sin((L - 1) * 0.95); } // % across the track
+
+    function renderMap() {
+        const L = levelInfo(progress.points).L;
+        const last = Math.max(L + 7, CHAPTER_START[CHAPTER_START.length - 1] + 7);
+        const nodes = [], bands = [];
+        let y = MAP_PAD;
+        CHAPTERS.forEach((ch, c) => {
+            const from = CHAPTER_START[c];
+            const to = c + 1 < CHAPTERS.length ? CHAPTER_START[c + 1] - 1 : last;
+            const y0 = c ? y : 0; // the first band runs to the very bottom
+            y += MAP_BANNER;
+            const bannerY = y - MAP_BANNER / 2 + 4;
+            for (let k = from; k <= to; k++) { y += k === from ? MAP_STEP * 0.55 : MAP_STEP; nodes.push({ L: k, c, y }); }
+            y += 46;
+            bands.push({ c, y0, y1: y, bannerY, from, to });
+        });
+        const capY = y + 40;
+        const H = capY + 60;
+        const top = v => H - v; // bottom-up → top-down
+
+        // the path: a smooth curve through every node; walked part solid gold, the rest a dashed road
+        const pts = nodes.map(n => [mapX(n.L), top(n.y)]);
+        const curve = (list) => list.map(([x, yy], i) => {
+            if (!i) return `M${x} ${yy}`;
+            const [px, py] = list[i - 1], my = (py + yy) / 2;
+            return `C${px} ${my} ${x} ${my} ${x} ${yy}`;
+        }).join(' ');
+        const cur = nodes.findIndex(n => n.L === L);
+        const walked = curve(pts.slice(0, cur + 1));
+        const ahead = curve(pts.slice(cur));
+        const svg = `<svg class="map-svg" style="height:${H}px" viewBox="0 0 100 ${H}" preserveAspectRatio="none">
+            <path d="${curve(pts)}" fill="none" stroke="var(--bg-surface)" stroke-width="16" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity=".9"/>
+            <path d="${ahead}" fill="none" stroke="var(--border-highlight)" stroke-width="4" stroke-dasharray="2 10" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+            ${cur > 0 ? `<path d="${walked}" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>` : ''}
+        </svg>`;
+
+        let html = '';
+        bands.forEach(b => {
+            const ch = CHAPTERS[b.c];
+            const n = levelParams(difficultyFor(b.from)).N;
+            const range = b.c + 1 < CHAPTERS.length ? t('chRange', { n, a: b.from, b: b.to }) : t('chEndless', { n, a: b.from });
+            html += `<div class="map-band" style="--ch:${ch.hue};top:${top(b.y1)}px;height:${b.y1 - b.y0}px"></div>`;
+            html += `<div class="map-banner" style="--ch:${ch.hue};top:${top(b.bannerY)}px"><b>${ch.emoji} ${escHtml(t(ch.key))}</b><small>${escHtml(range)}</small></div>`;
+        });
+        html += svg;
+        nodes.forEach(nd => {
+            const ch = CHAPTERS[nd.c];
+            const state = nd.L < L ? 'done' : nd.L === L ? 'current' : 'locked';
+            const isBoss = isBossLevel(nd.L);
+            const beaten = progress.bosses.includes(nd.L);
+            const cls = ['map-node', state, isBoss ? 'boss' : '', isBoss && state === 'done' && !beaten ? 'missed' : ''].join(' ');
+            const st = progress.bestStars[nd.L] || 0;
+            const stars = state === 'done' && st ? `<span class="nstars">${'⭐'.repeat(st)}</span>` : '';
+            html += `<button class="${cls}" data-level="${nd.L}" style="--ch:${ch.hue};left:${mapX(nd.L)}%;top:${top(nd.y)}px">`
+                + (isBoss ? `<span class="crown">👑</span>` : '') + `${nd.L}${stars}</button>`;
+            if (state === 'current') {
+                const bossNow = isBoss && !beaten;
+                html += `<div class="map-you${bossNow ? ' boss' : ''}" style="left:${mapX(nd.L)}%;top:${top(nd.y) - (isBoss ? 56 : 40)}px">${escHtml(bossNow ? t('mapYouBoss') : t('mapYou'))}</div>`;
+            }
+            // the chapter's chest, beside its first level, on the side away from the path's swing
+            if (ch.chest && nd.L === CHAPTER_START[nd.c]) {
+                const x = mapX(nd.L), cx = x < 50 ? x + 24 : x - 24;
+                const opened = progress.chests.includes(nd.c);
+                const cs = opened ? 'opened' : chestReady(nd.c) ? 'ready' : 'locked';
+                html += `<button class="map-chest ${cs}" data-chest="${nd.c}" style="left:${cx}%;top:${top(nd.y) - 6}px" aria-label="${escHtml(t('chestT', { c: t(ch.key) }))}">${CHEST_SVG}</button>`;
+            }
+        });
+        html += `<div class="map-cap" style="top:${top(capY)}px"><b>∞</b>${escHtml(t('mapCap'))}</div>`;
+        const track = $id('mapTrack');
+        track.style.height = H + 'px';
+        track.innerHTML = html;
+        $id('mapGems').innerText = '💎 ' + balance().toLocaleString();
+    }
+
+    const CHEST_SVG = `<svg viewBox="0 0 100 100">
+        <rect x="10" y="48" width="80" height="42" rx="7" fill="#b45309"/>
+        <rect x="10" y="48" width="80" height="9" fill="#92400e"/>
+        <rect x="44" y="48" width="12" height="42" fill="#fbbf24"/>
+        <rect x="39" y="56" width="22" height="17" rx="4" fill="#fde68a" stroke="#92400e" stroke-width="2.5"/>
+        <circle cx="50" cy="64" r="3" fill="#92400e"/>
+        <g class="chest-lid"><path d="M10 50 L10 36 Q10 16 50 16 Q90 16 90 36 L90 50 Z" fill="#d97706"/>
+        <rect x="44" y="16" width="12" height="34" fill="#fbbf24"/><path d="M18 30 Q30 22 46 22" stroke="#fff" stroke-opacity=".45" stroke-width="4" fill="none" stroke-linecap="round"/></g>
+    </svg>`;
+
+    // Scroll so the current level sits a little below the middle
+    function scrollMapToCurrent(smooth) {
+        const sc = $id('mapScroll');
+        const node = sc.querySelector('.map-node.current');
+        if (!node) return;
+        const want = node.offsetTop - sc.clientHeight * 0.55;
+        sc.scrollTo({ top: Math.max(0, want), behavior: smooth ? 'smooth' : 'auto' });
+    }
+
+    // milestone: opened by the win screen (a new chapter) — its chest opens by
+    // itself, and onDone (the next board) runs when the map is closed
+    function openMap({ milestone = false, onDone = null } = {}) {
+        if (mapOpen) return;
+        if (!milestone) {
+            if (gameOver || tutorial || (zen && !daily)) return;
+            cancelDrag();
+            mapWasPaused = isPaused;
+            if (!isPaused) setPaused(true);
+        }
+        mapDone = onDone;
+        mapOpen = true;
+        flushToasts(); // news from the board behind stays there
+        $id('mapPlay').innerText = milestone ? t('mapPlay', { n: levelInfo(progress.points).L }) : t('continue');
+        renderMap();
+        $id('mapView').classList.add('open');
+        scrollMapToCurrent(false);
+        if (milestone) {
+            const c = chapterOf(levelInfo(progress.points).L);
+            setTimeout(() => {
+                const el = $id('mapTrack').querySelector(`.map-chest[data-chest="${c}"]`);
+                if (mapOpen && el && chestReady(c)) openChest(c, el);
+            }, 650);
+        }
+    }
+
+    function closeMap() {
+        if (!mapOpen) return;
+        mapOpen = false;
+        chestBusy = false;
+        flushToasts(); // the map's own news stays on the map
+        $id('mapView').classList.remove('open');
+        $id('chestCard').classList.remove('show');
+        updateHud();
+        const done = mapDone;
+        mapDone = null;
+        if (done) done();
+        else if (!mapWasPaused) setPaused(false);
+    }
+
+    // Shake, lid off, sparkles; the prize is saved first and shown on a card
+    function openChest(c, el) {
+        if (chestBusy || !chestReady(c)) return;
+        chestBusy = true;
+        const prize = CHAPTERS[c].chest;
+        progress.chests.push(c);
+        progress.gifts += prize.gems;
+        Object.entries(prize.boosts).forEach(([k, n]) => { progress.freeBoosts[k] = (progress.freeBoosts[k] || 0) + n; });
+        saveProgress();
+        el.classList.remove('ready');
+        el.classList.add('shaking');
+        Sound.rumble(0.7);
+        buzz([20, 40, 20, 40, 20]);
+        setTimeout(() => {
+            if (!mapOpen) return;
+            el.classList.remove('shaking');
+            el.classList.add('opening');
+            const r = el.getBoundingClientRect();
+            sparkle(r.left + r.width / 2, r.top + r.height / 3, 18, 70);
+            confettiAt(r.left + r.width / 2, r.top + r.height / 3, 34);
+            Sound.jackpot();
+            buzz([30, 50, 30]);
+            $id('mapGems').innerText = '💎 ' + balance().toLocaleString();
+        }, 720);
+        setTimeout(() => { if (mapOpen) showChestCard(c); }, 1500);
+    }
+
+    function showChestCard(c) {
+        const ch = CHAPTERS[c], prize = ch.chest;
+        const boosts = Object.entries(prize.boosts).map(([k, n]) => BOOST_ICON[k] + '×' + n).join(' ');
+        const row = s => `<div class="score-row"><span>${escHtml(s)}</span></div>`;
+        const box = $id('chestCard');
+        box.innerHTML = `<div class="modal-content">
+            <h2 class="modal-title">${escHtml(t('chestT', { c: t(ch.key) }))}</h2>
+            <div class="score">${row(t('chestGems', { n: prize.gems.toLocaleString() }))}${row(t('chestBoosts', { b: boosts }))}${row(t('chestUnlock', { x: cosmeticName(prize.unlock) }))}</div>
+            <div class="col-prev chest-prev">${previewHtml(prize.unlock, 7)}</div>
+            <button class="btn btn-primary" id="chestUse">${escHtml(t('chestUse'))}</button>
+            <button class="btn btn-secondary" id="chestOk">${escHtml(t('chestOk'))}</button>
+        </div>`;
+        box.classList.add('show');
+        const close = () => {
+            box.classList.remove('show');
+            chestBusy = false;
+            renderMap();
+            updateHud();
+        };
+        $id('chestUse').onclick = () => { Sound.select(); pickCosmetic(prize.unlock); close(); };
+        $id('chestOk').onclick = () => { Sound.select(); close(); };
+    }
+
+    $id('mapBtn').addEventListener('click', () => { Sound.select(); openMap(); });
+    $id('mapClose').addEventListener('click', () => { Sound.select(); closeMap(); });
+    $id('mapPlay').addEventListener('click', () => { Sound.select(); closeMap(); });
+    $id('mapTrack').addEventListener('click', (e) => {
+        const chest = e.target.closest('.map-chest');
+        if (chest) {
+            const c = +chest.dataset.chest;
+            if (chestReady(c)) openChest(c, chest);
+            else if (!progress.chests.includes(c)) toast(t('chestLockedT', { n: CHAPTER_START[c] }), '', true);
+            return;
+        }
+        const node = e.target.closest('.map-node');
+        if (node && isBossLevel(+node.dataset.level)) {
+            const L = +node.dataset.level;
+            toast(t('mapBossTap', { n: L }), bossText(bossPlan(L)), true);
+        }
+    });
+
+    /* ============================
        Boosters (bought with 💎)
 
        Four buttons beside undo and reset, each paid from the 💎 balance
@@ -3542,7 +4204,9 @@
          🪄 Wand (500): the magic wand on demand. It throws the wheel's top
             tile to its right place (another tile, if that one can't fly).
        A button is greyed, its price still showing, when the balance is
-       short or it can do nothing right now. None of them are in zen, the
+       short or it can do nothing right now. Boosters a chapter chest gave
+       (progress.freeBoosts) are used first, for nothing: the button then
+       shows 🎁 and how many are left instead of its price. None of them are in zen, the
        tutorial or today's puzzle, nor before the third board (with the
        other helpers).
        ============================ */
@@ -3589,9 +4253,9 @@
         if (!boostersOn()) return;
         const cash = balance();
         document.querySelectorAll('.boost-btn').forEach(b => {
-            const k = b.dataset.boost, price = BOOSTERS[k];
-            b.querySelector('.price').textContent = '💎' + price;
-            b.disabled = cash < price || !boosterReady(k);
+            const k = b.dataset.boost, price = BOOSTERS[k], free = progress.freeBoosts[k] || 0;
+            b.querySelector('.price').textContent = free > 0 ? '🎁' + free : '💎' + price;
+            b.disabled = (free <= 0 && cash < price) || !boosterReady(k);
             b.classList.toggle('on', (k === 'shield' && progress.shieldOn) || (k === 'freeze' && freezeLeft > 0) || (k === 'hint' && !!hintId));
         });
     }
@@ -3612,7 +4276,7 @@
         const r = btn.getBoundingClientRect();
         const el = document.createElement('div');
         el.className = 'spend';
-        el.innerText = '−' + price + ' 💎';
+        el.innerText = price ? '−' + price + ' 💎' : t('freeBoost');
         el.style.left = (r.left + r.width / 2) + 'px';
         el.style.top = r.top + 'px';
         document.body.appendChild(el);
@@ -3623,7 +4287,8 @@
 
     function buyBooster(kind, btn) {
         const price = BOOSTERS[kind];
-        if (balance() < price || !boosterReady(kind)) return;
+        const free = (progress.freeBoosts[kind] || 0) > 0; // a chest's gift goes first
+        if ((!free && balance() < price) || !boosterReady(kind)) return;
         if (kind === 'hint') {
             hintId = topTrayItem().id;
             applyHint();
@@ -3640,10 +4305,10 @@
         } else if (kind === 'wand') {
             if (!castWand(true)) return; // nothing it could throw: nothing is paid
         }
-        progress.spent += price;
+        if (free) progress.freeBoosts[kind]--; else progress.spent += price;
         saveProgress();
         updateHud();
-        floatSpend(btn, price);
+        floatSpend(btn, free ? 0 : price);
         buzz(10);
         updateTimerUI();
     }
@@ -3676,7 +4341,9 @@
        place and fewer seconds for each. It pays × 2 points, its own row on
        the win screen, and its frame is red. No deals the normal board;
        nothing is ever forced. Not in zen, the tutorial or today's puzzle,
-       nor before the third board.
+       nor before the third board. When a boss board is due (see below) the
+       boss wins: that fifth board is the boss, and the hard offer is skipped
+       until the next fifth board.
        ============================ */
     const HARD_EVERY = 5;
     const HARD_STEP = 1.0;
@@ -3685,7 +4352,7 @@
 
     function hardOfferDue() {
         return !tutorial && !zen && !dailyNext && helpersOn()
-            && (progress.played + 1) % HARD_EVERY === 0 && hardAskedAt !== progress.played;
+            && (progress.played + 1) % HARD_EVERY === 0 && hardAskedAt !== progress.played && !bossDue();
     }
 
     function offerHard() {
@@ -3699,15 +4366,86 @@
         ]);
     }
 
-    function hardParams() {
+    // A board `step` further up the scale (never into the next size) with `extra` more of it empty
+    function hardParams(step = HARD_STEP, extra = HARD_EXTRA_EMPTY) {
         const d = boardDifficulty();
         const bi = SIZE_BANDS.filter(b => b.from <= d).length - 1;
         const end = SIZE_BANDS[bi + 1] ? SIZE_BANDS[bi + 1].from - 0.01 : MAX_LEVEL;
-        const p = levelParams(Math.max(d, Math.min(end, d + HARD_STEP)));
+        const p = levelParams(Math.max(d, Math.min(end, d + step)));
         const cells = p.N * p.N;
-        p.missing = Math.min(cells, p.missing + Math.round(cells * HARD_EXTRA_EMPTY));
+        p.missing = Math.min(cells, p.missing + Math.round(cells * extra));
         p.time = boardTime(p.missing, p.t);
         return p;
+    }
+
+    /* ============================
+       Boss boards (👑)
+
+       Every fifth level (5, 10, 15, ...) has a boss. The first board the
+       player gets on that level is its boss board, announced before it is
+       dealt (a card that says exactly what will come), with a purple frame
+       and its own × 1.5 row on the win screen. A lost boss comes back as the
+       next board while the player is still on that level; once beaten, that
+       level's boards are normal again. The trouble is fixed, not left to chance:
+         level 5 (before wreckers start at 10): a step harder inside the size
+           and 6% more slots empty, so more to place and less time for each;
+         10, 20, 30, ...: a goblin is coming (two from level 30), about a
+           quarter and two thirds of the way into the clock;
+         15, 25, 35, ...: the board turns once, at about 40% of the clock
+           (and from 35 a goblin comes too).
+       Nothing else comes on a boss board: no golden board, no random turns,
+       spins or goblins. A 🛡️ shield and a bonk work on a boss's goblin as on
+       any other, and a board solved before the trouble is due never sees it.
+       Not in zen, the tutorial or today's puzzle. The journey map marks
+       each boss level with a crown (gold once beaten).
+       ============================ */
+    const BOSS_EVERY = 5;
+    const BOSS_MULT = 1.5;
+    const BOSS_STEP = 0.5;
+    const BOSS_EXTRA_EMPTY = 0.06;
+
+    function isBossLevel(L) { return L % BOSS_EVERY === 0; }
+
+    function bossPlan(L) {
+        if (L < WRECK_FROM_LEVEL) return { L, kind: 'empty', goblins: 0, turns: 0 };
+        if ((L / BOSS_EVERY) % 2 === 0) return { L, kind: 'goblin', goblins: L >= 30 ? 2 : 1, turns: 0 };
+        return { L, kind: 'turn', goblins: L >= 35 ? 1 : 0, turns: 1 };
+    }
+
+    // What the boss brings, in words (the announcement, the toast, a tap on the map)
+    function bossText(plan) {
+        const lines = [];
+        if (plan.kind === 'empty') lines.push(t('bossEmpty'));
+        if (plan.turns) lines.push(t('bossTurn'));
+        if (plan.goblins) lines.push(t(plan.goblins > 1 ? 'bossGoblin2' : 'bossGoblin1'));
+        return lines.join('\n');
+    }
+
+    function bossDue() {
+        const L = levelInfo(progress.points).L;
+        return !tutorial && !zen && !dailyNext && helpersOn() && isBossLevel(L) && !progress.bosses.includes(L);
+    }
+
+    // The card before a boss board: what is coming, then one button to start it
+    function offerBoss() {
+        const L = levelInfo(progress.points).L;
+        cancelDrag();
+        clearInterval(timerInterval);
+        gameOver = true; // nothing on screen is in play while the card is up (initLevel clears it)
+        Sound.rumble(0.8);
+        showDialog(t('bossQ'), t('bossM', { n: L, h: bossText(bossPlan(L)) }), [
+            { label: t('bossGo'), cls: 'btn-primary', action: () => { bossNext = true; initLevel(); } },
+        ]);
+    }
+
+    // The boss's fixed trouble, timed on this board's clock
+    function bossWrecks(plan) {
+        const out = [];
+        const at = f => Math.round(Math.max(10, totalTime * f));
+        if (plan.turns) out.push({ at: at(0.4), kind: 'turn' });
+        if (plan.goblins) out.push({ at: at(plan.goblins > 1 ? 0.25 : 0.3), kind: 'goblin' });
+        if (plan.goblins > 1) out.push({ at: at(0.65), kind: 'goblin' });
+        return out.sort((a, b) => a.at - b.at);
     }
 
     /* ============================
@@ -3866,6 +4604,8 @@
         const de = dailyEntry(dayKey());
         document.getElementById('dailyBtn').classList.toggle('todo', !de);
         document.getElementById('dailyMark').innerText = !de || (daily && !daily.practice && !gameOver) ? '' : de.won ? '✓' : '✗';
+        // 🗺️: a dot while a chapter chest waits to be opened
+        document.getElementById('mapBtn').classList.toggle('chest', chestsWaiting().length > 0);
 
         // Goal gradient: how far into this level, always visible
         document.getElementById('goalLabel').innerHTML =
@@ -3879,13 +4619,17 @@
     }
 
     function initLevel() {
+        // A boss level's board: announce it first (the boss wins over a hard offer)
+        if (!bossNext && bossDue()) { offerBoss(); return; }
         // Every fifth board: ask first whether it should be a hard one
         if (hardOfferDue()) { offerHard(); return; }
-        // Whatever deals next is today's puzzle or a hard board only when just asked for
+        // Whatever deals next is today's puzzle, a hard or a boss board only when just asked for
         daily = dailyNext;
         dailyNext = null;
         hard = hardNext && !daily && !zen && !tutorial;
         hardNext = false;
+        boss = bossNext && !daily && !zen && !tutorial ? bossPlan(levelInfo(progress.points).L) : null;
+        bossNext = false;
         endTurn();
         clearSelection();
         steps = 0;
@@ -3901,6 +4645,7 @@
             : daily ? dailyParams(daily.date)
             : zen ? zenParams()
             : hard ? hardParams()
+            : boss && boss.kind === 'empty' ? hardParams(BOSS_STEP, BOSS_EXTRA_EMPTY)
             : levelParams(boardDifficulty());
         params = { ...params };
         document.body.classList.toggle('zen', zen && !tutorial && !daily);
@@ -3925,10 +4670,10 @@
         updateTimerUI();
 
         // Variable reward: one board in eight is golden and pays double (from the third board)
-        golden = !noSurprises() && helpersOn() && Math.random() < 0.125;
+        golden = !noSurprises() && helpersOn() && !boss && Math.random() < 0.125;
 
         const bc = document.getElementById('boardContainer');
-        bc.className = 'board-container size-' + N + (golden ? ' golden' : '') + (hard ? ' hard' : '');
+        bc.className = 'board-container size-' + N + (golden ? ' golden' : '') + (hard ? ' hard' : '') + (boss ? ' boss' : '');
         const grid = document.getElementById('boardGrid');
         grid.style.gridTemplateColumns = `repeat(${N}, minmax(0, 1fr))`;
         grid.style.gridTemplateRows = `repeat(${N}, minmax(0, 1fr))`;
@@ -3989,6 +4734,7 @@
         }
 
         planWrecks();
+        if (boss) wrecks = bossWrecks(boss); // the boss's trouble and nothing else
         document.querySelectorAll('.time-bonus').forEach(el => el.remove());
 
         if (!tutorial) shuffle(trayState);
@@ -4002,6 +4748,7 @@
         setPaused(false);
         if (golden) { toast(t('goldenT'), t('goldenS')); Sound.coin(); }
         if (hard) toast(t('hardT'), t('hardS'));
+        if (boss) { shout(t('bossShout'), 'boss'); toast(t('bossT'), bossText(boss)); }
         if (daily) toast(daily.practice ? t('practiceT') : t('dailyToday'), daily.practice ? t('practiceS') : daily.date);
         introduceSpecials();
         if (tutorial) tutBegin();
@@ -4170,7 +4917,7 @@
             shape.setAttribute('class', 'shape animal');
             shape.style.color = data.color; // the sprite paints with currentColor
             const use = document.createElementNS(NS, 'use');
-            use.setAttribute('href', '#p-' + ANIMAL_FOR[data.shape]);
+            use.setAttribute('href', '#p-' + pictureFor(data.shape));
             shape.appendChild(use);
         } else {
             shape = document.createElement('div');
@@ -4591,7 +5338,7 @@
 
     // Each second: maybe the board rolls over now
     function maybeRoll() {
-        if (noSurprises() || level < WRECK_FROM_LEVEL || boardSecs < 8 || turnsThisBoard >= (N === 6 ? SIX_TURNS_MAX : WRECK_MAX)) return;
+        if (noSurprises() || boss || level < WRECK_FROM_LEVEL || boardSecs < 8 || turnsThisBoard >= (N === 6 ? SIX_TURNS_MAX : WRECK_MAX)) return;
         if (turnStage || goblinBusy || isPaused || gameOver || (drag && drag.mode === 'tile')) return;
         if (Math.random() >= wreckersFor(level) / Math.max(30, totalTime)) return;
         wrecks.unshift({ at: boardSecs, kind: 'turn' });
@@ -5794,6 +6541,7 @@
             html += row('scStars', t('starsRow', { s: '⭐'.repeat(r.stars) }) + x(r.starX), 0);
             if (r.goldPts) html += row('scGold', t('goldenX2'), 0);
             if (r.hardPts) html += row('scHard', t('hardX2'), 0);
+            if (r.bossPts) html += row('scBoss', t('bossRow') + x(BOSS_MULT), 0);
             if (r.streakPts) html += row('scStreak', t('streakRow', { n: r.winStreak }) + x(r.streakX), 0);
             if (r.newSizePts) html += row('scNewSize', t('newSizeRow') + x(NEW_SIZE_MULT), 0);
             if (r.overflow) html += row('scOver', t('overflowRow'), 0);
@@ -5920,7 +6668,7 @@
 
     // The rows after the tiles, in the order they count up
     function scoreSteps(r) {
-        return [['scStars', r.starPts], ['scGold', r.goldPts], ['scHard', r.hardPts], ['scStreak', r.streakPts],
+        return [['scStars', r.starPts], ['scGold', r.goldPts], ['scHard', r.hardPts], ['scBoss', r.bossPts], ['scStreak', r.streakPts],
             ['scNewSize', r.newSizePts], ['scOver', r.overflow], ['scDaily', r.dailyBonus]]
             .filter(([id, n]) => n || id === 'scStars');
     }
@@ -6121,7 +6869,7 @@
                 title = won ? t('dailySolvedT') : t('timeUp');
                 msg = won ? '' : t('dailyLostM');
             } else if (won) {
-                title = endInfo.L > startInfo.L ? t('levelUpT') : (stars === 3 ? t('perfectT') : t('solvedT'));
+                title = boss ? t('bossBeatT') : endInfo.L > startInfo.L ? t('levelUpT') : (stars === 3 ? t('perfectT') : t('solvedT'));
                 msg = t('stepsSecs', { s: steps, t: usedSec });
                 if (extended) msg += '\n' + t('extendedHint');
                 else if (stars < 3) msg += '\n' + t('starsHint');
@@ -6153,7 +6901,12 @@
             };
             // Today's puzzle gets a Share button; after any other board, an
             // unplayed puzzle is offered next to "next board"
-            const buttons = [{ label: unlockedN ? t('toBoard', { n: unlockedN }) : t('nextBoard'), cls: 'btn-primary', action: initLevel }];
+            // A new chapter of the journey reached on this board: on to the map,
+            // where its chest opens, and the next board from there
+            const chapterHit = !daily && chapterOf(endInfo.L) > chapterOf(startInfo.L) && chestReady(chapterOf(endInfo.L));
+            const buttons = [chapterHit
+                ? { label: t('toMap'), cls: 'btn-primary', action: () => openMap({ milestone: true, onDone: initLevel }) }
+                : { label: unlockedN ? t('toBoard', { n: unlockedN }) : t('nextBoard'), cls: 'btn-primary', action: initLevel }];
             const dailyDate = daily && daily.date;
             if (dailyDate) buttons.push({ label: t('share'), cls: 'btn-secondary', stay: true, action: () => shareDaily(dailyDate) });
             else if (helpersOn() && !dailyEntry(dayKey())) buttons.push({ label: t('dailyToday'), cls: 'btn-secondary', action: () => startDaily(false) });
@@ -6384,10 +7137,15 @@
     // Startup
     applyStaticText();
     applyStyleUI();
+    applyBoardTheme();
     applyThemeUI();
     applySoundUI();
     renderStash();
-    if (tutorialDue()) startTutorial(); else initLevel();
+    const firstRun = tutorialDue();
+    if (firstRun) startTutorial(); else initLevel();
+    updateHud(); // even when a hard or boss card holds the first board back
+    // Chests waiting from chapters already reached (a save from before the map, or unopened)
+    if (!firstRun && !zen && chestsWaiting().length) setTimeout(() => toast(t('chestWaitT'), t('chestWaitS')), 900);
     if (liveDayStreak() > 0 && todayWins() === 0) {
         setTimeout(() => toast(t('streakT', { n: liveDayStreak() }), t('streakS')), 600);
     }

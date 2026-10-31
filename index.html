@@ -1545,8 +1545,11 @@
         }
 
         /* Hint: the slot the wheel's top tile belongs in, and that tile */
-        .slot.hint { box-shadow: inset 0 0 0 3px var(--gold), 0 0 16px var(--gold); animation: pulse 1s infinite; }
-        .tray-slot.hinted { border-color: var(--gold); box-shadow: 0 0 14px var(--gold); }
+        /* 💡 clue in an empty slot: the colour or the shape that belongs there */
+        .slot-clue { position: absolute; inset: 3px; border: 2px dashed var(--gold); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; pointer-events: none; --clue-grey: rgba(148, 163, 184, 0.55); }
+        .slot-clue.clue-color::before { content: ''; width: 46%; height: 46%; border-radius: 50%; background: var(--clue); opacity: 0.6; box-shadow: 0 0 10px var(--clue); }
+        .slot-clue.clue-shape .shape { width: 52%; height: 52%; opacity: 0.75; }
+        .slot.hint-new { animation: pulse 0.8s 2; box-shadow: inset 0 0 0 3px var(--gold); }
 
         /* A stash with wizards in it glows: tap it for time */
         .wiz-stash.has::before {
@@ -2469,8 +2472,8 @@
             dailyDoneT: '🎯 יעד יומי הושלם!', dailyDoneS: 'נתראה מחר — אל תשבור את הרצף 🔥',
             streakT: '🔥 רצף של {n} ימים', streakS: 'נצח לוח אחד היום כדי לשמור עליו',
             newColor: 'צבע חדש: {c}', newPicture: 'ציור חדש: {p}', newShape: 'צורה חדשה: {p}',
-            note6: 'בלוח 6×6 זוגות יכולים לחזור — רק שורות ועמודות צריכות להיות שונות.',
-            note7: 'הלוח הגדול ביותר — וכל זוג שוב חייב להיות ייחודי.',
+            note6: 'בלוח 6×6 יש 7 צבעים — כל שורה ועמודה משתמשת ב־6 מהם, ואף דמות לא חוזרת.',
+            note7: 'הלוח הגדול ביותר — עכשיו כל שורה ועמודה משתמשת בכל 7 הצבעים.',
             c_yellow: 'צהוב', c_purple: 'סגול', c_orange: 'כתום', c_grey: 'אפור', c_brown: 'חום',
             p_house: 'בית', p_cat: 'חתול', p_fish: 'דג', p_tree: 'עץ', p_umbrella: 'מטרייה', p_kid: 'ילד', p_car: 'מכונית',
             s_square: 'ריבוע', s_circle: 'עיגול', s_triangle: 'משולש', s_diamond: 'מעוין', s_hexagon: 'משושה', s_star: 'כוכב', s_cross: 'פלוס',
@@ -2509,8 +2512,8 @@
             dailyUnfinished: 'לא הסתיים', practiceT: '🔁 אימון', practiceM: 'אימון — לא נחשב ולא מזכה בנקודות.',
             practiceS: 'החידה של היום שוב — הפעם זה לא נחשב', dailyBusy: '📅 אתה כבר בחידה של היום',
             dailyNotYet: 'עוד לא שיחקת היום', dailyPlayedToday: '✓ שוחקה היום', dailyToday: '📅 החידה של היום',
-            b_hint: 'רמז: איפה האריח שבראש הגלגל', b_freeze: 'הקפאה: השעון עוצר ל־10 שניות', b_shield: 'מגן: עוצר את השדון או הסיבוב הבא', b_wand: 'מטה קסם: אריח עף למקומו',
-            hintT: '💡 רמז', hintS: 'האריח שבראש הגלגל שייך למשבצת המהבהבת',
+            b_hint: 'רמז: צבע או צורה של משבצת ריקה', b_freeze: 'הקפאה: השעון עוצר ל־10 שניות', b_shield: 'מגן: עוצר את השדון או הסיבוב הבא', b_wand: 'מטה קסם: אריח עף למקומו',
+            hintT: '💡 רמז', hintS: 'המשבצת המהבהבת מראה את הצבע או את הצורה שלה — לא את שניהם',
             freezeT: '❄️ השעון קפוא!', freezeS: 'ל־{s} שניות השעון לא זז — ממשיכים לשחק',
             shieldT: '🛡️ מגן פעיל', shieldS: 'השדון או הסיבוב הבא ייעצרו (המגן נשמר גם ללוחות הבאים)',
             shieldGob: '🛡️ המגן עצר שדון!', shieldTurn: '🛡️ המגן עצר את הסיבוב!', shieldShout: 'נחסם!',
@@ -2601,8 +2604,8 @@
             dailyDoneT: '🎯 Daily goal done!', dailyDoneS: 'See you tomorrow — don’t break the streak 🔥',
             streakT: '🔥 {n}-day streak', streakS: 'Win one board today to keep it',
             newColor: 'New colour: {c}', newPicture: 'New picture: {p}', newShape: 'New shape: {p}',
-            note6: 'On 6×6, pairs may repeat — only rows and columns must differ.',
-            note7: 'The biggest board — and every pair must be unique again.',
+            note6: 'On 6×6 there are 7 colours — each row and column uses 6 of them, and no character repeats.',
+            note7: 'The biggest board — now every row and column uses all 7 colours.',
             c_yellow: 'yellow', c_purple: 'purple', c_orange: 'orange', c_grey: 'grey', c_brown: 'brown',
             p_house: 'house', p_cat: 'cat', p_fish: 'fish', p_tree: 'tree', p_umbrella: 'umbrella', p_kid: 'kid', p_car: 'car',
             s_square: 'square', s_circle: 'circle', s_triangle: 'triangle', s_diamond: 'diamond', s_hexagon: 'hexagon', s_star: 'star', s_cross: 'plus',
@@ -2641,8 +2644,8 @@
             dailyUnfinished: 'not finished', practiceT: '🔁 Practice', practiceM: 'Practice — it doesn’t count and scores no points.',
             practiceS: 'Today’s puzzle again — this one doesn’t count', dailyBusy: '📅 You’re on today’s puzzle',
             dailyNotYet: 'Not played yet today', dailyPlayedToday: '✓ Played today', dailyToday: '📅 Today’s puzzle',
-            b_hint: 'Hint: where the top tile goes', b_freeze: 'Freeze: the clock stops for 10 seconds', b_shield: 'Shield: blocks the next goblin or turn', b_wand: 'Wand: a tile flies to its place',
-            hintT: '💡 Hint', hintS: 'The wheel’s top tile belongs in the glowing slot',
+            b_hint: 'Hint: the colour or shape of an empty slot', b_freeze: 'Freeze: the clock stops for 10 seconds', b_shield: 'Shield: blocks the next goblin or turn', b_wand: 'Wand: a tile flies to its place',
+            hintT: '💡 Hint', hintS: 'The glowing slot now shows its colour or its shape — never both',
             freezeT: '❄️ Clock frozen!', freezeS: 'For {s} seconds the clock stands still — keep playing',
             shieldT: '🛡️ Shield on', shieldS: 'The next goblin or board turn is stopped (it keeps to later boards too)',
             shieldGob: '🛡️ Your shield stopped a goblin!', shieldTurn: '🛡️ Your shield stopped the turn!', shieldShout: 'BLOCKED!',
@@ -2789,7 +2792,7 @@
     function zenParams() {
         const n = zenSize();
         const missing = Math.round(ZEN_MISSING[difficulty] * n * n / 49);
-        return { N: n, t: 0, nextAt: null, missing, time: 0, guides: true, unique: n !== 6 };
+        return { N: n, t: 0, nextAt: null, missing, time: 0, guides: true, unique: true };
     }
 
     function applyStyleUI() {
@@ -2895,17 +2898,23 @@
        Board sizes
 
        The board grows with the level: 3×3 up to 7×7. Each size adds one
-       colour and one shape. 3, 4, 5 and 7 keep all three rules. 6×6 drops
-       "every pair unique": no two orthogonal 6×6 Latin squares exist (Euler's
-       36 officers), so no 6×6 board can satisfy it.
+       colour and one shape, and no character (colour + shape) ever repeats on
+       a board. 6×6 is the odd one: no two orthogonal 6×6 Latin squares exist
+       (Euler's 36 officers), so with 6 colours some pair would have to repeat.
+       It gets a 7th colour instead (each row and column uses 6 of the 7), and
+       7×7 then adds only its new shape.
        ============================ */
     const ALL_COLORS = ['var(--color-red)', 'var(--color-blue)', 'var(--color-green)', 'var(--color-yellow)', 'var(--color-purple)', 'var(--color-orange)', 'var(--color-white)'];
     const ALL_SHAPES = ['square', 'circle', 'triangle', 'diamond', 'hexagon', 'star', 'cross'];
-    const NEW_COLOR_KEY = { 4: 'c_yellow', 5: 'c_purple', 6: 'c_orange', 7: 'c_grey' };
+    const NEW_COLOR_KEY = { 4: 'c_yellow', 5: 'c_purple', 6: 'c_orange' };
+    // How many colours a size uses: N, except 6×6, which needs 7 to keep every pair unique
+    function colorCount(n) { return n === 6 ? 7 : n; }
     function newInSize(n) {
         const sh = ALL_SHAPES[n - 1];
-        const colorKey = style === 'animals' && n === 7 ? 'c_brown' : NEW_COLOR_KEY[n];
-        let text = t('newColor', { c: t(colorKey) }) + ' · '
+        const grey = t(style === 'animals' ? 'c_brown' : 'c_grey');
+        const colorText = n === 6 ? t('newColor', { c: t('c_orange') + ', ' + grey })
+            : NEW_COLOR_KEY[n] ? t('newColor', { c: t(NEW_COLOR_KEY[n]) }) : '';
+        let text = (colorText ? colorText + ' · ' : '')
             + (style === 'animals' ? t('newPicture', { p: t('p_' + pictureFor(sh)) }) : t('newShape', { p: t('s_' + sh) }));
         if (n === 6) text += '\n' + t('note6');
         if (n === 7) text += '\n' + t('note7');
@@ -2953,7 +2962,7 @@
             time: boardTime(missing, t),
             // Late in each size (from 4×4 on) the row and column frames go away
             guides: N === 3 || t < 0.75,
-            unique: N !== 6,
+            unique: true,
         };
     }
 
@@ -3246,7 +3255,7 @@
        ============================ */
     let params = levelParams(boardDifficulty());
     let N = params.N;
-    let colors = ALL_COLORS.slice(0, N);
+    let colors = ALL_COLORS.slice(0, colorCount(N));
     let shapes = ALL_SHAPES.slice(0, N);
 
     let boardState = [];   // null or {color, shape, locked, id}
@@ -3288,7 +3297,6 @@
     let mistakes = 0;          // wrong moves on this board
     let missedIds = new Set(); // tiles that went somewhere wrong before they went right
     let freezeLeft = 0;        // seconds the ❄️ booster still holds the clock
-    let hintId = null;         // the wheel tile the 💡 booster is pointing out
 
     /* ============================
        Timer
@@ -3799,7 +3807,7 @@
         const n = dailySize(date), cells = n * n;
         const [f0, f1] = MISSING_FRAC[n];
         const missing = Math.round(cells * (f0 + (f1 - f0) * DAILY_T));
-        return { N: n, t: DAILY_T, nextAt: null, missing, time: boardTime(missing, DAILY_T), guides: true, unique: n !== 6 };
+        return { N: n, t: DAILY_T, nextAt: null, missing, time: boardTime(missing, DAILY_T), guides: true, unique: true };
     }
     function dailyEntry(date) { return progress.dailyHistory[date] || null; }
 
@@ -4406,28 +4414,33 @@
         return trayState.find(x => x.id === id) || null;
     }
 
-    // Where a wheel tile goes: its slot (a pair: both of its empty slots)
-    function hintSlots(item) {
-        if (!item) return [];
-        if (item.pair) return item.pair.filter(p => !boardState[p.home]).map(p => p.home);
-        const i = wandTarget(item, true);
-        return i >= 0 ? [i] : [];
+    /* 💡 A hint is a half clue, not an answer (issue #27): it marks one empty
+       slot with either the colour or the shape that belongs there, never
+       both and never which wheel tile goes in it. The clue rides on the
+       answer (solution[i].clue), so it turns with the board, and it stays
+       until the slot is filled. */
+    function hintSlots() {
+        return boardState.map((x, i) => (!x && solution[i] && !solution[i].clue) ? i : -1).filter(i => i >= 0);
     }
-
-    // Called by render: the hinted tile and its slot glow until it leaves the wheel
-    function applyHint() {
-        document.querySelectorAll('.slot.hint').forEach(el => el.classList.remove('hint'));
-        document.querySelectorAll('.tray-slot.hinted').forEach(el => el.classList.remove('hinted'));
-        if (!hintId) return;
-        const item = trayState.find(x => x.id === hintId);
-        if (!item) { hintId = null; return; }
-        hintSlots(item).forEach(i => document.querySelector(`.slot[data-index="${i}"]`)?.classList.add('hint'));
-        document.querySelector(`#traySlots .tile[data-id="${hintId}"]`)?.closest('.tray-slot')?.classList.add('hinted');
+    function giveHint() {
+        const open = hintSlots();
+        if (!open.length) return -1;
+        const i = open[Math.floor(Math.random() * open.length)];
+        solution[i].clue = Math.random() < 0.5 ? 'color' : 'shape';
+        return i;
+    }
+    // The clue drawn in an empty slot: a soft blob of the colour, or a grey outline of the shape
+    function clueEl(want) {
+        const el = document.createElement('div');
+        el.className = 'slot-clue clue-' + want.clue;
+        if (want.clue === 'color') el.style.setProperty('--clue', want.color);
+        else el.appendChild(createShape({ color: 'var(--clue-grey)', shape: want.shape }));
+        return el;
     }
 
     function boosterReady(kind) {
         if (!boostersOn() || gameOver || isPaused || turnStage === 'turning' || !boardState.length) return false;
-        if (kind === 'hint') { const it = topTrayItem(); return !!it && it.id !== hintId && hintSlots(it).length > 0; }
+        if (kind === 'hint') return hintSlots().length > 0;
         if (kind === 'freeze') return freezeLeft === 0;
         if (kind === 'shield') return !progress.shieldOn && level >= WRECK_FROM_LEVEL;
         if (kind === 'wand') return !wandBusy && !!wandPick(true);
@@ -4442,7 +4455,7 @@
             const k = b.dataset.boost, price = BOOSTERS[k], free = progress.freeBoosts[k] || 0;
             b.querySelector('.price').textContent = free > 0 ? '🎁' + free : '💎' + price;
             b.disabled = (free <= 0 && cash < price) || !boosterReady(k);
-            b.classList.toggle('on', (k === 'shield' && progress.shieldOn) || (k === 'freeze' && freezeLeft > 0) || (k === 'hint' && !!hintId));
+            b.classList.toggle('on', (k === 'shield' && progress.shieldOn) || (k === 'freeze' && freezeLeft > 0));
         });
     }
 
@@ -4476,10 +4489,11 @@
         const free = (progress.freeBoosts[kind] || 0) > 0; // a chest's gift goes first
         if ((!free && balance() < price) || !boosterReady(kind)) return;
         if (kind === 'hint') {
-            hintId = topTrayItem().id;
-            applyHint();
+            const at = giveHint();
+            render(true);
+            document.querySelector(`.slot[data-index="${at}"]`)?.classList.add('hint-new');
             Sound.select();
-            if (!progress.hintSeen) { progress.hintSeen = true; toast(t('hintT'), t('hintS')); }
+            if (!progress.clueSeen) { progress.clueSeen = true; toast(t('hintT'), t('hintS')); }
         } else if (kind === 'freeze') {
             freezeLeft = FREEZE_SECONDS;
             Sound.wand();
@@ -4840,6 +4854,8 @@
 
     // Two N×N Latin squares (colour index, shape index). For N = 3, 4, 5, 7 they are
     // orthogonal, so every colour+shape pair appears exactly once.
+    const SIX_COLORS = [4,6,1,5,0,2, 3,5,6,4,2,0, 0,4,5,6,1,3, 5,1,4,2,3,6, 2,3,0,1,6,5, 6,0,2,3,4,1];
+    const SIX_SHAPES = [1,0,4,3,5,2, 5,2,1,0,3,4, 2,5,0,4,1,3, 4,3,2,1,0,5, 0,4,3,5,2,1, 3,1,5,2,4,0];
     function baseSquares(n) {
         const a = [], b = [];
         for (let r = 0; r < n; r++) {
@@ -4848,9 +4864,11 @@
                     a.push(r ^ c);
                     b.push(GF4_MUL[2][r] ^ c);
                 } else if (n === 6) {
-                    // No orthogonal pair exists; two independent Latin squares
-                    a.push((r + c) % 6);
-                    b.push((c - r + 6) % 6);
+                    // No orthogonal pair exists with 6 colours, so the colours
+                    // (a) come from 7: rows and columns still differ, and every
+                    // colour + shape pair is used once (found by a search).
+                    a.push(SIX_COLORS[r * 6 + c]);
+                    b.push(SIX_SHAPES[r * 6 + c]);
                 } else {
                     a.push((r + c) % n);
                     b.push((r + 2 * c) % n);
@@ -4863,18 +4881,13 @@
     // Permuting rows, columns and symbols (and transposing) keeps every rule,
     // so each board gets a fresh solution instead of the same one every time.
     function generateValidBoard(n) {
-        let [a, b] = baseSquares(n);
-        if (n === 6) {
-            // make the second square less predictable: shuffle its rows, which keeps it Latin
-            const rp = shuffle([...Array(6).keys()]);
-            b = b.map((_, i) => b[rp[Math.floor(i / 6)] * 6 + (i % 6)]);
-        }
+        const [a, b] = baseSquares(n);
         const rows = shuffle([...Array(n).keys()]);
         const cols = shuffle([...Array(n).keys()]);
         const colorMap = shuffle([...colors]);
         const shapeMap = shuffle([...shapes]);
         const transpose = rng() < 0.5;
-        const flip = rng() < 0.5;
+        const flip = n !== 6 && rng() < 0.5; // 6×6 has 7 colours but 6 shapes, so no swapping them
 
         const solution = [];
         for (let r = 0; r < n; r++) {
@@ -5031,9 +5044,8 @@
         mistakes = 0;
         missedIds = new Set();
         freezeLeft = 0;
-        hintId = null;
         N = params.N;
-        colors = ALL_COLORS.slice(0, N);
+        colors = ALL_COLORS.slice(0, colorCount(N));
         shapes = ALL_SHAPES.slice(0, N);
         totalTime = params.time;
         timeLeft = totalTime;
@@ -5196,7 +5208,7 @@
             });
         }
 
-        // Without unique pairs (6×6) a hidden tile could be anything, so no mystery there
+        // A hidden tile is only fair when every pair is unique (now every size)
         let mysteries = 0;
         if (level >= MYSTERY_FROM_LEVEL && params.unique) mysteries = 1; // never more than one in the wheel
         const plain = () => singles.filter(x => !x.item.mystery && !x.item.filler);
@@ -5264,7 +5276,7 @@
        The helpers respect them: the 🪄 wand never throws into a slot
        still chained (it picks another tile, or waits), smashes ice in one
        go, and a tile it throws onto a bomb defuses it. A filler's +1 skips
-       chained and iced slots. 💡 hint shows the tile's slot even while it
+       chained and iced slots. A 💡 clue can land on a chained slot too, while it
        is chained. A board turn takes every blocker along with its slot.
        How often: on about 45% of boards from the Garden on, 1–2 of the
        chapter's own blocker (1–3 on 6×6 and 7×7), and on 20% of boards
@@ -5660,6 +5672,7 @@
                 slot.appendChild(tile);
             } else {
                 slot.addEventListener('click', () => handleBoardClick(index, slot));
+                if (solution[index]?.clue) slot.appendChild(clueEl(solution[index]));
             }
             const blk = blockers[index];
             if (blk) {
@@ -5686,7 +5699,6 @@
         popMore = [];
 
         playBlockFx();
-        applyHint();
         checkWizard(); // before validateState, so the winning move can reveal one too
         validateState(silent);
         if (tutorial && !gameOver) tutUpdate();
@@ -6000,15 +6012,28 @@
     const SPIN_MS = 3200;
     let turnsThisBoard = 0;
 
+    /* Goblins are rare (issue #33): at most one planned goblin a board, about
+       half as often as before, never on the two boards after one that kicked,
+       never the same character twice in a board, and after an empty-board
+       miss he waits a good while before trying again. */
+    const GOBLIN_REST_BOARDS = 2; // goblin-free boards after a kick
+    const GOBLIN_RETRY_S = 12;    // nothing to kick: try again this much later
+    const GOBLIN_FRESH_S = 4;     // a tile placed this recently is left alone
+    let goblinRest = 0;
+    let goblinKicked = new Set(); // characters kicked on this board
+
     // Goblins land somewhere in the middle of the clock, spread apart
     function planWrecks() {
         wrecks = [];
         boardSecs = 0;
         turnsThisBoard = 0;
         boardDiff = difficulty;
+        goblinKicked = new Set();
         if (noSurprises()) return;
-        const mean = wreckersFor(level) / 2;
-        const count = Math.floor(mean) + (Math.random() < mean % 1 ? 1 : 0);
+        const resting = goblinRest > 0;
+        if (resting) goblinRest--;
+        const mean = Math.min(1, wreckersFor(level) / 4);
+        const count = !resting && Math.random() < mean ? 1 : 0;
         const from = Math.max(8, totalTime * 0.15), to = totalTime * 0.8;
         const span = (to - from) / Math.max(1, count);
         for (let k = 0; k < count; k++) {
@@ -6019,7 +6044,7 @@
         }
         // One goblin more on a 👺 Goblin Hunt weekend, and another in a Summit goblin week
         // (at any level: see "Weekend events" and "Seasons")
-        const extra = (huntOn() ? 1 : 0) + (seasonBoard && seasonBoard.twist === 'goblin' ? 1 : 0);
+        const extra = resting ? 0 : (huntOn() ? 1 : 0) + (seasonBoard && seasonBoard.twist === 'goblin' ? 1 : 0);
         for (let k = 0; k < extra; k++) {
             wrecks.push({ at: Math.round(Math.max(10, totalTime * (0.3 + 0.3 * k + Math.random() * 0.1))), kind: 'goblin' });
         }
@@ -6052,9 +6077,9 @@
         const w = wrecks.shift();
         if (w.kind === 'goblin') {
             // Nothing placed to kick yet: he comes back a little later
-            if (!goblinChoices().length) { wrecks.unshift({ at: boardSecs + 4, kind: 'goblin' }); return; }
+            if (!goblinChoices().length) { wrecks.unshift({ at: boardSecs + GOBLIN_RETRY_S, kind: 'goblin' }); return; }
             if (progress.shieldOn) { shieldBlock('goblin'); return; }
-            if (!goblinKick()) wrecks.unshift({ at: boardSecs + 4, kind: 'goblin' });
+            if (!goblinKick()) wrecks.unshift({ at: boardSecs + GOBLIN_RETRY_S, kind: 'goblin' });
             return;
         }
         if (N === 6 && turnsThisBoard >= SIX_TURNS_MAX) return; // calmer 6×6: this one never comes
@@ -6295,8 +6320,11 @@
 
     // Tiles a goblin could kick: placed by the player, not in hand
     function goblinChoices() {
+        const now = Date.now();
         return boardState
-            .map((x, i) => (x && !x.locked && !(drag && drag.src === 'board' && drag.index === i)) ? i : -1)
+            .map((x, i) => (x && !x.locked && !(drag && drag.src === 'board' && drag.index === i)
+                && !goblinKicked.has(x.color + '|' + x.shape)
+                && !(x.placedAt && now - x.placedAt < GOBLIN_FRESH_S * 1000)) ? i : -1)
             .filter(i => i >= 0);
     }
 
@@ -6367,6 +6395,8 @@
                 const item = boardState[at];
                 boardState[at] = null;
                 trayState.push(item);
+                goblinKicked.add(item.color + '|' + item.shape);
+                goblinRest = GOBLIN_REST_BOARDS;
                 // gone from every undo step as well, so undo can't put it back
                 undoStack.forEach(snap => {
                     const j = snap.board.findIndex(x => x && x.id === id && !x.locked);
@@ -6450,7 +6480,7 @@
        in and defuses a 💣 bomb it lands on (see "Blockers").
        ============================ */
     // Where a tray tile belongs: a slot of the answer it fits that isn't already right
-    // (never a chained one, unless anySlot: the 💡 hint shows it anyway)
+    // (never a chained one, unless anySlot)
     function wandTarget(item, anySlot = false) {
         if (!item || item.pair) return -1; // a pair is too heavy to throw
         const fits = [];
@@ -6685,6 +6715,7 @@
         pushUndo();
         trayState.splice(tIdx, 1);
         const placed = plainTile(item);
+        placed.placedAt = Date.now(); // the goblin leaves a just-placed tile alone
         boardState[index] = placed;
         steps++;
         popIndex = index;

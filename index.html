@@ -810,13 +810,6 @@
 
         .tray-slot .tile { --radius: 14px; --s: 50%; }
 
-        /* 🔨 the ice hammer: a shade that a clockwise sweep lifts while it forms */
-        .hammer-tile { position: relative; overflow: hidden; background: linear-gradient(135deg, #e0f2fe, #7dd3fc); }
-        .hammer-tile .hammer-ico { font-size: 1.9em; line-height: 1; }
-        .hammer-tile::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-            background: conic-gradient(from 0deg, transparent 0 var(--formed, 0deg), rgba(15, 23, 42, 0.72) var(--formed, 0deg) 360deg); }
-        .hammer-tile.ready::after { display: none; }
-        .hammer-tile.ready { box-shadow: 0 0 12px #38bdf8; }
         /* Special wheel tiles: a pair, a dark question mark, a filler with a +1 badge */
         .pair-grid {
             display: grid;
@@ -1515,7 +1508,16 @@
         .boost-btn:active:not(:disabled) { transform: scale(0.9); }
         .boost-btn:disabled { opacity: 0.38; filter: grayscale(1); cursor: default; }
         .boost-btn.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); opacity: 1; filter: none; }
-        body.no-boost .boosters { display: none; }
+        body.no-boost .boosters .boost-btn:not(.pick-btn) { display: none; }
+        /* ⛏️ the ice pick: earned, never bought; only shown on a board with ice */
+        .boost-btn.pick-btn { display: none; }
+        body.has-ice .boost-btn.pick-btn { display: flex; }
+        .boost-btn.pick-btn .price { color: #38bdf8; }
+        .boost-btn.pick-btn.armed { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.5); animation: pickArm 0.9s ease-in-out infinite; }
+        @keyframes pickArm { 50% { transform: scale(1.08); } }
+        body.pick-armed .slot.has-ice { box-shadow: 0 0 0 3px #38bdf8; border-radius: 8px; }
+        .blk.melting { animation: iceMelt 0.7s ease-out forwards; }
+        @keyframes iceMelt { to { opacity: 0; transform: scaleY(0.2) translateY(40%); filter: blur(2px); } }
         @media (max-height: 760px) {
             .boost-btn { height: 30px; width: 50px; }
             .boost-btn .ico { font-size: 0.85rem; }
@@ -2179,6 +2181,7 @@
             <button class="boost-btn" data-boost="freeze" title="הקפאה" data-i18n-title="b_freeze"><span class="ico">❄️</span><span class="price"></span></button>
             <button class="boost-btn" data-boost="shield" title="מגן" data-i18n-title="b_shield"><span class="ico">🛡️</span><span class="price"></span></button>
             <button class="boost-btn" data-boost="wand" title="מטה קסם" data-i18n-title="b_wand"><span class="ico">🪄</span><span class="price"></span></button>
+            <button class="boost-btn pick-btn" data-boost="pick" title="מכוש קרח" data-i18n-title="b_pick"><span class="ico">⛏️</span><span class="price"></span></button>
         </div>
     </div>
 
@@ -2586,10 +2589,13 @@
             blk_fog: 'ערפל', blk_chain: 'שרשרת', blk_ice: 'קרח', blk_bomb: 'פצצה', blkIntroT: '{i} {b}!', blkGo: 'הבנתי, קדימה!',
             blkIntro_fog: 'כמה אריחים נתונים מוסתרים בערפל.\nהנח אריח במשבצת צמודה (מעל, מתחת או לצד) — והערפל מתפזר.\nאפשר לפתור את הלוח גם בלי לראות מתחתיו.',
             blkIntro_chain: 'משבצת ריקה נעולה בשרשרת.\nהיא מקבלת אריח רק אחרי שכל שאר המשבצות בשורה שלה מלאות.\nאריח שמונח עליה לפני כן פשוט חוזר — בלי עונש.',
-            blkIntro_ice: 'משבצת ריקה קפואה.\nרק 🔨 פטיש הקרח שבגלגל שובר אותה. הוא נוצר תוך 10 שניות,\nואז שים אותו על הקרח — ואחר כך את האריח.',
-            iceBounceT: '🧊 קפוא', iceBounceS: 'שבור קודם את הקרח עם 🔨 הפטיש שבגלגל',
-            hammerT: '🔨 הפטיש מוכן!', hammerS: 'שים אותו על משבצת קפואה כדי לשבור את הקרח',
-            hammerWaitT: '🔨 הפטיש עוד נוצר', hammerWaitS: 'עוד {s} שניות',
+            blkIntro_ice: 'משבצת ריקה קפואה. יש שתי דרכים להיפטר מהקרח:\n⛏️ מכוש קרח מהכלים: מרוויחים אותו כשאריח אחד משלים שורה וטור יחד.\n💧 או שהקרח נמס כשכל המשבצות סביבו מלאות.',
+            iceBounceT: '🧊 קפוא', iceBounceS: 'שבור את הקרח עם ⛏️ המכוש, או מלא את כל המשבצות סביבו והוא יימס',
+            b_pick: 'מכוש קרח: שובר משבצת קפואה',
+            pickEarnT: '⛏️ הרווחת מכוש קרח!', pickEarnS: 'השלמת שורה וטור יחד. יש לך {n}',
+            pickArmT: '⛏️ המכוש מוכן', pickArmS: 'הקש על משבצת קפואה',
+            pickNoneT: '⛏️ אין לך מכוש', pickNoneS: 'השלם שורה וטור באריח אחד כדי להרוויח מכוש',
+            meltT: '💧 הקרח נמס!', meltS: 'כל המשבצות סביבו מלאות',
             mistakeT: '😬 שלוש טעויות ברצף', mistakeS: '−10 שניות, וזה מעיר צרות…',
             blkIntro_bomb: 'פצצה על משבצת ריקה סופרת לאחור את המהלכים שלך.\nהנח שם את האריח הנכון בזמן — היא מנוטרלת: ⁦+5⁩ שניות.\nאם היא מגיעה ל־0 — בום: ⁦−15⁩ שניות, והפצצה נעלמת.',
             bossBlk: '{i} {b} ⁦×{n}⁩ על הלוח.', chainBounceT: '⛓️ נעול בשרשרת', chainBounceS: 'מלא קודם את שאר המשבצות בשורה שלו',
@@ -2722,10 +2728,13 @@
             blk_fog: 'Fog', blk_chain: 'Chain', blk_ice: 'Ice', blk_bomb: 'Bomb', blkIntroT: '{i} {b}!', blkGo: 'Got it, go!',
             blkIntro_fog: 'Some given tiles hide under fog.\nPut a tile in a slot right next to one (above, below or beside) and the fog lifts.\nThe board can be worked out without seeing under it.',
             blkIntro_chain: 'An empty slot is chained shut.\nIt takes a tile only once every other slot in its row is filled.\nA tile put there before that just bounces back — no penalty.',
-            blkIntro_ice: 'An empty slot is iced.\nOnly the 🔨 ice hammer in the wheel breaks it. It takes 10 seconds to form,\nthen put it on the ice, and then the tile.',
-            iceBounceT: '🧊 Frozen', iceBounceS: 'Break the ice first with the 🔨 hammer in the wheel',
-            hammerT: '🔨 Hammer ready!', hammerS: 'Put it on an iced slot to break the ice',
-            hammerWaitT: '🔨 The hammer is still forming', hammerWaitS: '{s} more seconds',
+            blkIntro_ice: 'An empty slot is iced. Two ways to get rid of it:\n⛏️ an ice pick from the tools: earn one when a single tile finishes a row and a column together.\n💧 or it melts once every slot around it is filled.',
+            iceBounceT: '🧊 Frozen', iceBounceS: 'Break it with the ⛏️ ice pick, or fill every slot around it and it melts',
+            b_pick: 'Ice pick: breaks an iced slot',
+            pickEarnT: '⛏️ You earned an ice pick!', pickEarnS: 'A row and a column finished together. You have {n}',
+            pickArmT: '⛏️ Ice pick ready', pickArmS: 'Tap an iced slot',
+            pickNoneT: '⛏️ No ice pick yet', pickNoneS: 'Finish a row and a column with one tile to earn one',
+            meltT: '💧 The ice melted!', meltS: 'Every slot around it is filled',
             mistakeT: '😬 Three mistakes in a row', mistakeS: '−10 seconds, and it wakes up trouble…',
             blkIntro_bomb: 'A bomb on an empty slot counts down your moves.\nPut the right tile there in time to defuse it: +5 seconds.\nIf it reaches 0 — boom: −15 seconds, and the bomb is gone.',
             bossBlk: '{i} {b} ×{n} on the board.', chainBounceT: '⛓️ Chained', chainBounceS: 'Fill the rest of its row first',
@@ -3127,6 +3136,7 @@
             dailyHistory: {}, // 'YYYY-MM-DD' → today's puzzle: { won, stars, secs, mistakes, grid, n }
             gifts: 0,        // 💎 given by chapter chests: spendable, but never part of the level
             freeBoosts: {},  // boosters given by chests, used before any 💎 is paid: { hint: 1, ... }
+            icePicks: 0,     // ⛏️ ice picks earned (a row and a column finished by one tile), kept between boards
             chests: [],      // chapters (by index) whose chest has been opened
             bosses: [],      // boss levels (5, 10, ...) whose boss board was beaten
             unlocked: [],    // collection items given some other way than a chest: weekend event prizes
@@ -3484,7 +3494,6 @@
             // A frozen clock (❄️ booster) stands still; the seconds still count toward stars
             if (freezeLeft > 0) freezeLeft--; else timeLeft--;
             boardSecs++;
-            hammerTick();
             if (rushLeft > 0) rushLeft--;
             updateTimerUI();
             if (!freezeLeft && timeLeft > 0 && timeLeft <= 10) Sound.tick();
@@ -4626,9 +4635,13 @@
 
     function updateBoosters() {
         document.body.classList.toggle('no-boost', !boostersOn());
+        // ⛏️ earned, never bought: shows how many you have, on any board with ice
+        const pick = document.querySelector('.pick-btn');
+        pick.querySelector('.price').textContent = '×' + (progress.icePicks || 0);
+        pick.disabled = gameOver || isPaused || turnStage === 'turning' || !iceLeft();
         if (!boostersOn()) return;
         const cash = balance();
-        document.querySelectorAll('.boost-btn').forEach(b => {
+        document.querySelectorAll('.boost-btn:not(.pick-btn)').forEach(b => {
             const k = b.dataset.boost, price = BOOSTERS[k], free = progress.freeBoosts[k] || 0;
             b.querySelector('.price').textContent = free > 0 ? '🎁' + free : '💎' + price;
             b.disabled = (free <= 0 && cash < price) || !boosterReady(k);
@@ -4694,6 +4707,7 @@
         const b = e.target.closest('.boost-btn');
         if (!b || b.disabled) return;
         e.stopPropagation();
+        if (b.dataset.boost === 'pick') return usePick();
         buyBooster(b.dataset.boost, b);
     });
 
@@ -5312,8 +5326,9 @@
         rng = Math.random; // the deal is done: back to chance
         // Fog, chains, ice and bombs (none on a quiet board or today's puzzle)
         placeBlockers(noSurprises() ? {} : blockerPlan(), missingPos);
-        minSteps += blockers.filter(b => b && b.kind === 'ice').length; // a hammer blow is a move too
-        addHammer();
+        pickArmed = false;
+        pickEarned = new Set();
+        lineSnap = filledSnap();
         initialSnap = snapshot();
         undoStack = [];
         wheelAngle = null; // centre the wheel on the middle tile
@@ -5534,7 +5549,8 @@
                     blockers[at] = { kind: 'fog' };
                     continue;
                 }
-                const cands = kind !== 'chain' ? free() : free().filter(i =>
+                const cands = kind === 'ice' ? free().filter(i => !around(i).some(j => blockers[j] && (blockers[j].kind === 'ice' || blockers[j].kind === 'chain')))
+                    : kind !== 'chain' ? free() : free().filter(i =>
                     holes.some(j => j !== i && rowOf(j) === rowOf(i))
                     && !blockers.some((b, j) => b && b.kind === 'chain' && (rowOf(j) === rowOf(i) || colOf(j) === colOf(i))));
                 if (!cands.length) break;
@@ -5573,7 +5589,7 @@
     }
 
     // The right tile on ice used to crack it; now ice only breaks under the
-    // 🔨 hammer (or the 🪄 wand), so a tile on ice just bounces, no penalty.
+    // ⛏️ ice pick, the 🪄 wand or a melt, so a tile on ice just bounces, no penalty.
     function crackIce(index) {
         blockers[index].cracked = true;
         steps++;
@@ -5589,47 +5605,81 @@
         return false;
     }
 
-    /* 🔨 The ice hammer (Meni's idea, #27). A board with ice gets a hammer
-       in the wheel. It takes HAMMER_FORM_S seconds of clock to form, shown
-       by a shade that a clockwise sweep lifts off it; until then it can't be
-       used. Put it on an iced slot and the ice shatters in one blow, then it
-       forms again for the next ice. When no ice is left it is gone. It is not
-       a tile: it never counts toward winning, undo leaves it as it is, and
-       a wrong slot just bounces it, no penalty. */
-    const HAMMER_FORM_S = 10;
+    /* 🧊 Two ways out of ice (Meni, #38):
+       ⛏️ The ice pick is a tool, not a wheel tile. One is earned whenever a
+       single tile finishes its row and its column together (each slot pays
+       once per board, so taking a tile back and putting it again earns
+       nothing). Picks are kept between boards. Tap ⛏️, then the iced slot
+       (with one ice on the board, the tap breaks it straight away).
+       💧 Ice also melts by itself once every slot around it (up to 8) is
+       filled. Ice is never dealt next to another ice or a chain, so the
+       melt can always happen and no board is ever stuck. */
     let iceToldAt = null;
-    function hammerItem() { return trayState.find(x => x.hammer) || null; }
+    let pickArmed = false;
+    let pickEarned = new Set();
+    let lineSnap = null;
     function iceLeft() { return blockers.some(b => b && b.kind === 'ice' && !b.cracked); }
-    function addHammer() {
-        if (iceLeft() && !hammerItem()) trayState.push({ id: 'hammer', hammer: true, formLeft: HAMMER_FORM_S });
-    }
-    function tilesLeft() { return trayState.filter(x => !x.hammer).length; }
-    function hammerTick() {
-        const h = hammerItem();
-        if (!h || h.formLeft <= 0) return;
-        h.formLeft--;
-        const el = document.querySelector('#traySlots .hammer-tile');
-        if (el) el.style.setProperty('--formed', ((HAMMER_FORM_S - h.formLeft) / HAMMER_FORM_S * 360) + 'deg');
-        if (h.formLeft === 0) {
-            el?.classList.add('ready');
-            Sound.unlock();
-            if (!progress.hammerSeen) { progress.hammerSeen = true; saveProgress(); toast(t('hammerT'), t('hammerS')); }
+    function iceSlots() { return blockers.map((b, i) => b && b.kind === 'ice' && !b.cracked ? i : -1).filter(i => i >= 0); }
+    function tilesLeft() { return trayState.length; }
+    // The up-to-8 slots around a slot
+    function around(i) {
+        const r = rowOf(i), c = colOf(i), out = [];
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+            if (!dr && !dc) continue;
+            const rr = r + dr, cc = c + dc;
+            if (rr >= 0 && rr < N && cc >= 0 && cc < N) out.push(rr * N + cc);
         }
+        return out;
     }
-    function useHammer(index) {
-        const h = hammerItem();
-        const el = document.querySelector(`.slot[data-index="${index}"]`);
-        if (!h || h.formLeft > 0 || !iceAt(index)) {
-            requestAnimationFrame(() => rejectMove(el));
-            if (h && h.formLeft > 0) toast(t('hammerWaitT'), t('hammerWaitS', { s: h.formLeft }));
-            return false;
-        }
+    function filledSnap() { return boardState.map(Boolean); }
+    function lineFull(cells) { return cells.every(i => boardState[i]); }
+    // After each move: a slot newly filled whose row and column both just got full earns a pick
+    function checkPickEarned() {
+        const before = lineSnap;
+        lineSnap = filledSnap();
+        if (!before || before.length !== lineSnap.length || tutorial || zen) return;
+        let won = 0;
+        lineSnap.forEach((f, i) => {
+            if (!f || before[i] || pickEarned.has(i) || boardState[i]?.locked) return;
+            const r = rowOf(i), c = colOf(i);
+            const row = [...Array(N).keys()].map(k => r * N + k), col = [...Array(N).keys()].map(k => k * N + c);
+            if (!lineFull(row) || !lineFull(col)) return;
+            pickEarned.add(i);
+            won++;
+        });
+        if (!won) return;
+        progress.icePicks = (progress.icePicks || 0) + won;
+        saveProgress();
+        Sound.unlock();
+        buzz([15, 30, 15]);
+        toast(t('pickEarnT'), t('pickEarnS', { n: progress.icePicks }));
+        updateBoosters();
+    }
+    function setPickArmed(on) {
+        pickArmed = on;
+        document.body.classList.toggle('pick-armed', on);
+        document.querySelector('.pick-btn')?.classList.toggle('armed', on);
+    }
+    function usePick() {
+        if (isPaused || gameOver || turnStage === 'turning') return;
+        if (!(progress.icePicks > 0)) { toast(t('pickNoneT'), t('pickNoneS')); return; }
+        const ice = iceSlots();
+        if (!ice.length) return;
+        if (ice.length === 1) { pickIce(ice[0]); return; }
+        if (pickArmed) { setPickArmed(false); return; }
+        setPickArmed(true);
+        Sound.select();
+        toast(t('pickArmT'), t('pickArmS'));
+    }
+    function pickIce(index) {
+        setPickArmed(false);
+        if (!iceAt(index) || !(progress.icePicks > 0)) return false;
+        progress.icePicks--;
+        saveProgress();
         blockers[index] = null;
         blockFx.push(['shatter', index]);
-        steps++;
-        if (iceLeft()) h.formLeft = HAMMER_FORM_S;
-        else trayState.splice(trayState.indexOf(h), 1);
-        wheelAngle = null;
+        buzz(10);
+        render();
         return true;
     }
 
@@ -5649,11 +5699,14 @@
                 const free = chainFree(i);
                 if (free && !b.free) blockFx.push(['unchain', i]);
                 b.free = free;
+            } else if (b.kind === 'ice' && around(i).every(j => boardState[j])) {
+                // 💧 every slot around it is filled: it melts
+                blockers[i] = null;
+                blockFx.push(['melt', i]);
             }
         });
-        // no ice left (the wand smashed the last): the hammer goes too
-        const h = hammerItem();
-        if (h && !iceLeft()) trayState.splice(trayState.indexOf(h), 1);
+        document.body.classList.toggle('has-ice', iceLeft());
+        if (pickArmed && !iceLeft()) setPickArmed(false);
         const moves = steps - bombSteps;
         bombSteps = steps;
         if (moves > 0) blockers.forEach((b, i) => {
@@ -5693,6 +5746,15 @@
                 shards(c.x, c.y, what === 'crack' ? 8 : 14, c.w * 0.7);
                 Sound.crack();
                 buzz(what === 'crack' ? 12 : [10, 20, 10]);
+            } else if (what === 'melt') {
+                const ghost = document.createElement('div');
+                ghost.innerHTML = blockerHtml({ kind: 'ice' });
+                const blk = ghost.firstChild;
+                if (slot && blk) { slot.appendChild(blk); blk.classList.add('melting'); setTimeout(() => blk.remove(), 750); }
+                sparkle(c.x, c.y, 10, c.w * 0.7);
+                Sound.puff();
+                buzz(12);
+                if (!progress.meltSeen) { progress.meltSeen = true; saveProgress(); toast(t('meltT'), t('meltS')); }
             } else if (what === 'defuse') {
                 addBonusTime(BOMB_BONUS);
                 shout(t('defuseShout'), 'zen');
@@ -5773,14 +5835,6 @@
     function createTileElement(data, isSelected) {
         const tile = document.createElement('div');
         tile.className = 'tile' + (isSelected ? ' selected' : '') + (data.locked ? ' locked-tile' : '');
-
-        if (data.hammer) {
-            tile.classList.add('hammer-tile');
-            if (data.formLeft <= 0) tile.classList.add('ready');
-            tile.style.setProperty('--formed', ((HAMMER_FORM_S - data.formLeft) / HAMMER_FORM_S * 360) + 'deg');
-            tile.innerHTML = '<span class="hammer-ico">🔨</span>';
-            return tile;
-        }
 
         if (data.pair) {
             // The two halves sit as they do on the board: the grid inherits the
@@ -6822,6 +6876,7 @@
             wandCasting = true; // what the throw itself completes brings no second wand
             render();
             wandCasting = false;
+            lineSnap = filledSnap(); // a line the wand finishes earns no ⛏️
             if (!progress.wandSeen && !paid) {
                 progress.wandSeen = true;
                 saveProgress();
@@ -6881,9 +6936,7 @@
 
     function restore(snap) {
         boardState = snap.board.map(x => x && { ...x });
-        const h = hammerItem(); // the hammer is not undone: it stays as it is now
-        trayState = snap.tray.filter(x => !x.hammer).map(copyTrayItem);
-        if (h) trayState.push(h);
+        trayState = snap.tray.map(copyTrayItem);
         clearSelection();
     }
 
@@ -6933,7 +6986,6 @@
         const tIdx = trayState.findIndex(t => t.id === id);
         if (tIdx < 0 || boardState[index]?.locked) return false;
         const item = trayState[tIdx];
-        if (item.hammer) return useHammer(index);
         if (chainLocked(index)) return chainBounce(index); // right or wrong alike (see "Blockers")
 
         if (item.pair) {
@@ -6958,7 +7010,7 @@
             missedIds.add(item.id);
             return wrongMove(index);
         }
-        if (iceAt(index)) return iceBounce(index); // only the 🔨 hammer breaks ice
+        if (iceAt(index)) return iceBounce(index); // ice: ⛏️ pick it or let it melt
         pushUndo();
         trayState.splice(tIdx, 1);
         const placed = plainTile(item);
@@ -7178,6 +7230,7 @@
 
     function afterMove() {
         render();
+        checkPickEarned();
     }
 
     /* ============================
@@ -7192,6 +7245,7 @@
 
     function handleBoardClick(index, el) {
         if (isPaused || gameOver || turnStage === 'turning') return;
+        if (pickArmed) { if (!pickIce(index)) setPickArmed(false); return; }
         const item = boardState[index];
 
         if (item?.locked) {

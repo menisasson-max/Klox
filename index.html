@@ -928,6 +928,8 @@
             background: linear-gradient(180deg, #fff7ae, #fbbf24 55%, #f97316); -webkit-background-clip: text; background-clip: text; color: transparent;
             filter: drop-shadow(0 6px 18px rgba(251, 191, 36, 0.55)); animation: rpBoom 0.8s 0.25s cubic-bezier(.2, 1.6, .4, 1) both; }
         .rp-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 18px; animation: rpDrop 0.5s 0.6s both; }
+        .rp-world { display: inline-block; margin: -8px 0 16px; padding: 5px 16px; border-radius: 999px; font-weight: 900; font-size: 1.05rem;
+            background: linear-gradient(135deg, var(--w1), var(--w2)); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); animation: rpDrop 0.5s 0.75s both; }
         .rp-gifts { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 22px; }
         .rp-gift { width: 76px; padding: 10px 4px 8px; border-radius: 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(253, 224, 71, 0.5);
             display: flex; flex-direction: column; align-items: center; gap: 4px; animation: rpGift 0.5s var(--d) cubic-bezier(.2, 1.5, .4, 1) both; }
@@ -1684,8 +1686,22 @@
         .bt-mint { --board-bg: linear-gradient(160deg, color-mix(in srgb, #34d399 30%, var(--bg-surface)), color-mix(in srgb, #a3e635 22%, var(--bg-surface))); --page-tint: color-mix(in srgb, #34d399 12%, var(--bg-base)); }
         .bt-ocean { --board-bg: linear-gradient(160deg, color-mix(in srgb, #38bdf8 32%, var(--bg-surface)), color-mix(in srgb, #6366f1 26%, var(--bg-surface))); --page-tint: color-mix(in srgb, #38bdf8 12%, var(--bg-base)); }
         .bt-sunset { --board-bg: linear-gradient(160deg, color-mix(in srgb, #fb923c 32%, var(--bg-surface)), color-mix(in srgb, #f472b6 28%, var(--bg-surface))); --page-tint: color-mix(in srgb, #fb923c 12%, var(--bg-base)); }
-        .board-container { background: var(--board-bg, var(--bg-surface)); }
-        body { background: var(--page-tint, var(--bg-base)); }
+        .board-container { background: var(--board-bg, var(--world-board, var(--bg-surface))); }
+        body { background: var(--page-tint, var(--world-tint, var(--bg-base))); }
+
+        /* 🌍 Themed worlds: a new one every ten levels (see "Themed worlds").
+           On the board only a whisper of it: the frame (on the classic theme)
+           and the page take a faint tint of the world's colours, and a few of
+           its pictures float, very faint, behind everything. The slots and
+           tiles never change, so every tile reads the same in every world. */
+        :root.in-world {
+            --world-board: linear-gradient(160deg, color-mix(in srgb, var(--world) 13%, var(--bg-surface)), color-mix(in srgb, var(--world2) 10%, var(--bg-surface)));
+            --world-tint: linear-gradient(180deg, color-mix(in srgb, var(--world) 13%, var(--bg-base)), var(--bg-base) 45%, var(--bg-base) 60%, color-mix(in srgb, var(--world2) 15%, var(--bg-base)));
+        }
+        .world-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+        .world-bg span { position: absolute; line-height: 1; opacity: 0.13; filter: saturate(0.7); transform: translate(-50%, -50%) rotate(var(--r)); }
+        :root[data-theme="dark"] .world-bg span { opacity: 0.1; }
+        body.tut .world-bg { display: none; }
 
         /* Boss board: a purple frame with a crown */
         .board-container.boss {
@@ -1778,8 +1794,16 @@
         @keyframes nodeArrive { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }
         .map-you.later { opacity: 0; transition: opacity 0.3s; }
         /* scenery from the game's own pictures, a few per level, by chapter */
-        .map-deco { position: absolute; z-index: 1; width: 30px; height: 30px; margin: -15px 0 0 -15px; pointer-events: none; opacity: 0.5; }
-        .map-deco svg { width: 100%; height: 100%; }
+        .map-deco { position: absolute; z-index: 1; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.6; font-size: 26px; line-height: 1; }
+        /* each world's gate: a coloured sign across the path, where its ten levels begin */
+        .map-world {
+            position: absolute; left: 50%; transform: translate(-50%, -50%); z-index: 2; pointer-events: none;
+            background: linear-gradient(135deg, var(--ch), var(--ch2)); color: #fff; border-radius: 14px;
+            padding: 5px 16px 6px; text-align: center; white-space: nowrap; box-shadow: 0 4px 12px var(--shadow);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); border: 2px solid rgba(255, 255, 255, 0.55);
+        }
+        .map-world b { display: block; font-size: 1rem; font-weight: 900; }
+        .map-world small { display: block; font-size: 0.68rem; font-weight: 700; opacity: 0.95; }
         .map-skip { position: absolute; left: 50%; bottom: 74px; transform: translateX(-50%); z-index: 8; font-size: 0.75rem; color: var(--text-muted);
             background: var(--bg-surface); padding: 4px 12px; border-radius: 999px; box-shadow: 0 2px 6px var(--shadow); pointer-events: none; }
         .map-cap { position: absolute; left: 50%; transform: translate(-50%, -50%); z-index: 2; text-align: center; color: var(--text-muted); font-size: 0.8rem; font-weight: 700; }
@@ -2643,6 +2667,8 @@
             recBestT: 'זמן שיא', recNone: '—',
             journey: '🗺️ המסע', journeyT: 'מפת המסע', toMap: '🗺️ למפה', mapPlay: '▶ שחק ברמה {n}',
             ch0: 'אחו', ch1: 'גינה', ch2: 'כפר', ch3: 'עיר', ch4: 'הר', ch5: 'פסגה',
+            w0: 'הים', w1: 'המדבר', w2: 'יפן', w3: 'אמריקה', w4: 'הג׳ונגל', w5: 'הקוטב', w6: 'פריז', w7: 'הודו', w8: 'הספארי', w9: 'החלל',
+            worldGate: 'עולם {n} · רמות \u2066{a}–{b}\u2069', roundWorld: '✈️ התחנה הבאה: {w}!',
             chRange: 'לוח {n}×{n} · רמות \u2066{a}–{b}\u2069', chEndless: 'לוח {n}×{n} · מרמה {a}, בלי סוף',
             mapYou: 'אתה כאן', mapArrive: 'רמה {n}! 🎉', mapYouBoss: '👑 רמת בוס', mapCap: 'הדרך ממשיכה…', mapBossTap: '👑 לוח בוס ברמה {n}',
             chestT: '🎁 תיבת ה{c}', chestTap: '🎁 תיבה מחכה — הקש עליה', chestLockedT: '🔒 התיבה נפתחת ברמה {n}',
@@ -2786,6 +2812,8 @@
             recBestT: 'Best time', recNone: '—',
             journey: '🗺️ Journey', journeyT: 'Journey map', toMap: '🗺️ To the map', mapPlay: '▶ Play level {n}',
             ch0: 'Meadow', ch1: 'Garden', ch2: 'Village', ch3: 'City', ch4: 'Mountain', ch5: 'Summit',
+            w0: 'The Sea', w1: 'The Desert', w2: 'Japan', w3: 'America', w4: 'The Jungle', w5: 'The Arctic', w6: 'Paris', w7: 'India', w8: 'The Safari', w9: 'Space',
+            worldGate: 'World {n} · levels {a}–{b}', roundWorld: '✈️ Next stop: {w}!',
             chRange: '{n}×{n} board · levels {a}–{b}', chEndless: '{n}×{n} board · level {a} on, endless',
             mapYou: 'You are here', mapArrive: 'Level {n}! 🎉', mapYouBoss: '👑 Boss level', mapCap: 'The path goes on…', mapBossTap: '👑 Boss board at level {n}',
             chestT: '🎁 {c} chest', chestTap: '🎁 A chest is waiting — tap it', chestLockedT: '🔒 This chest opens at level {n}',
@@ -4220,6 +4248,66 @@
     function chestsWaiting() { return CHAPTERS.map((_, c) => c).filter(chestReady); }
 
     /* ============================
+       Themed worlds (Ortal)
+
+       Every ten levels the journey travels somewhere new: 🌊 the Sea,
+       🏜️ the Desert, 🗾 Japan, 🗽 America, 🌴 the Jungle, 🐧 the Arctic,
+       🗼 Paris, 🐘 India, 🦁 the Safari and 🚀 Space, then round again
+       ("the Sea II"). World w holds levels 10w to 10w+9 (the first, 1–9),
+       so the round-level party at 10, 20, 30... (see "Round-level party")
+       is also the welcome to the next world. Looks only; the chapters
+       (board sizes, blockers and chests) go on as they are, alongside.
+
+       On the map each world colours its stretch of the path, has a sign at
+       its gate and its own scenery. On the board it is kept faint (see the
+       CSS): a tint on the frame and page and a few pale pictures behind.
+       ============================ */
+    const WORLD_EVERY = 10;
+    const WORLDS = [
+        { key: 'w0', emoji: '🌊', hue: '#0ea5e9', hue2: '#14b8a6', deco: ['🐠', '🐚', '🐙', '⛵', '🦀', '🐬'] },
+        { key: 'w1', emoji: '🏜️', hue: '#f59e0b', hue2: '#ea580c', deco: ['🌵', '🐪', '☀️', '🦂', '🏺', '🌵'] },
+        { key: 'w2', emoji: '🗾', hue: '#e11d48', hue2: '#f472b6', deco: ['⛩️', '🌸', '🗻', '🍣', '🏯', '🎏'] },
+        { key: 'w3', emoji: '🗽', hue: '#2563eb', hue2: '#dc2626', deco: ['🗽', '🦅', '🏈', '🌭', '🤠', '🎸'] },
+        { key: 'w4', emoji: '🌴', hue: '#16a34a', hue2: '#65a30d', deco: ['🌴', '🦜', '🐒', '🐯', '🍌', '🦋'] },
+        { key: 'w5', emoji: '🐧', hue: '#06b6d4', hue2: '#818cf8', deco: ['🐧', '❄️', '🏔️', '⛄', '🐋', '🧊'] },
+        { key: 'w6', emoji: '🗼', hue: '#c026d3', hue2: '#6366f1', deco: ['🗼', '🥐', '🎨', '🧀', '🥖', '🚲'] },
+        { key: 'w7', emoji: '🐘', hue: '#ea580c', hue2: '#db2777', deco: ['🐘', '🛕', '🌶️', '🐅', '🥭', '🐘'] },
+        { key: 'w8', emoji: '🦁', hue: '#ca8a04', hue2: '#65a30d', deco: ['🦁', '🦒', '🦓', '🌳', '🦏', '🐘'] },
+        { key: 'w9', emoji: '🚀', hue: '#7c3aed', hue2: '#1d4ed8', deco: ['🪐', '🚀', '⭐', '🌙', '👽', '☄️'] },
+    ];
+    function worldIndex(L) { return Math.floor(L / WORLD_EVERY); }
+    function worldOf(L) { return WORLDS[worldIndex(L) % WORLDS.length]; }
+    function isWorldStart(L) { return L === 1 || (L >= WORLD_EVERY && L % WORLD_EVERY === 0); }
+    function worldName(L) {
+        const lap = Math.floor(worldIndex(L) / WORLDS.length);
+        return worldOf(L).emoji + ' ' + t(worldOf(L).key) + (lap ? ' ' + (['II', 'III', 'IV', 'V'][lap - 1] || lap + 1) : '');
+    }
+    // Paint the board's surroundings for level L's world (the same world draws nothing new)
+    let worldShown = -1;
+    function applyWorld(L) {
+        const wi = worldIndex(L), w = worldOf(L), root = document.documentElement;
+        root.classList.add('in-world');
+        root.style.setProperty('--world', w.hue);
+        root.style.setProperty('--world2', w.hue2);
+        if (wi === worldShown) return;
+        worldShown = wi;
+        let bg = $id('worldBg');
+        if (!bg) {
+            bg = document.createElement('div');
+            bg.className = 'world-bg';
+            bg.id = 'worldBg';
+            bg.setAttribute('aria-hidden', 'true');
+            document.body.prepend(bg);
+        }
+        // around the edges, where the board does not cover them; placed the same every time
+        const spots = [[10, 9], [88, 13], [6, 34], [94, 42], [8, 66], [91, 72], [16, 91], [80, 93], [50, 4], [48, 97]];
+        bg.innerHTML = spots.map(([x, y], i) => {
+            const r = Math.abs(Math.sin((wi + 1) * 7.13 + i * 3.7) * 1e4) % 1;
+            return `<span style="left:${x}%;top:${y}%;font-size:${44 + Math.round(r * 30)}px;--r:${Math.round(r * 40 - 20)}deg">${w.deco[(i + wi) % w.deco.length]}</span>`;
+        }).join('');
+    }
+
+    /* ============================
        Collection: tile sets and board themes
 
        Looks only; the rules never change. Tile sets: shapes and the first
@@ -4339,33 +4427,30 @@
         <path d="M44 59 Q50 63 56 59" stroke="#1e293b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
         <circle cx="31" cy="54" r="4" fill="#fb7185" opacity=".55"/><circle cx="69" cy="54" r="4" fill="#fb7185" opacity=".55"/>
     </g></svg>`;
-    // each chapter's scenery, from the game's own pictures
-    const MAP_DECO = [
-        ['flower', 'butterfly', 'mushroom', 'leaf'],
-        ['flower', 'tree', 'butterfly', 'apple'],
-        ['house', 'tree', 'cat', 'flower'],
-        ['house', 'car', 'umbrella', 'cloud'],
-        ['tree', 'snowflake', 'cloud', 'mushroom'],
-        ['moon', 'snowflake', 'cloud', 'leaf'],
-    ];
-    const DECO_HUE = ['#16a34a', '#ec4899', '#f97316', '#3b82f6', '#8b5cf6', '#eab308', '#ef4444', '#0ea5e9'];
+    const MAP_GATE = 64; // the room a world's sign takes on the path
 
     // walkFrom: the level Kloxy is about to walk from (the road from there and
     // the level he walks to are drawn waiting for him)
     function renderMap(walkFrom = null) {
         const L = levelInfo(progress.points).L;
         const last = Math.max(L + 7, CHAPTER_START[CHAPTER_START.length - 1] + 7);
-        const nodes = [], bands = [];
+        const nodes = [], bands = [], gates = [];
         let y = MAP_PAD;
+        // a world's sign, where its levels begin (before the chapter's banner when both start there)
+        const gate = L => { gates.push({ L, y0: gates.length ? y : 0, y: y + MAP_GATE / 2 }); y += MAP_GATE; };
         CHAPTERS.forEach((ch, c) => {
             const from = CHAPTER_START[c];
             const to = c + 1 < CHAPTERS.length ? CHAPTER_START[c + 1] - 1 : last;
-            const y0 = c ? y : 0; // the first band runs to the very bottom
+            if (isWorldStart(from)) gate(from);
             y += MAP_BANNER;
             const bannerY = y - MAP_BANNER / 2 + 4;
-            for (let k = from; k <= to; k++) { y += k === from ? MAP_STEP * 0.55 : MAP_STEP; nodes.push({ L: k, c, y }); }
+            for (let k = from; k <= to; k++) {
+                if (k !== from && isWorldStart(k)) { y += 24; gate(k); }
+                y += k === from ? MAP_STEP * 0.55 : MAP_STEP;
+                nodes.push({ L: k, c, y });
+            }
             y += 46;
-            bands.push({ c, y0, y1: y, bannerY, from, to });
+            bands.push({ c, bannerY, from, to });
         });
         const capY = y + 40;
         const H = capY + 60;
@@ -4391,11 +4476,18 @@
         </svg>`;
 
         let html = '';
+        // each world's stretch of the map in its colours, with its sign at the gate
+        gates.forEach((g, i) => {
+            const w = worldOf(g.L), y1 = i + 1 < gates.length ? gates[i + 1].y0 : H;
+            const a = g.L, b = Math.min(worldIndex(g.L) * WORLD_EVERY + WORLD_EVERY - 1, last);
+            html += `<div class="map-band" style="--ch:${w.hue};top:${top(y1)}px;height:${y1 - g.y0}px"></div>`;
+            html += `<div class="map-world" style="--ch:${w.hue};--ch2:${w.hue2};top:${top(g.y)}px"><b>${escHtml(worldName(g.L))}</b>`
+                + `<small>${escHtml(t('worldGate', { n: worldIndex(g.L) + 1, a, b }))}</small></div>`;
+        });
         bands.forEach(b => {
             const ch = CHAPTERS[b.c];
             const n = levelParams(difficultyFor(b.from)).N;
             const range = b.c + 1 < CHAPTERS.length ? t('chRange', { n, a: b.from, b: b.to }) : t('chEndless', { n, a: b.from });
-            html += `<div class="map-band" style="--ch:${ch.hue};top:${top(b.y1)}px;height:${b.y1 - b.y0}px"></div>`;
             // what the chapter brings: its blocker, or (the Summit) this week's season
             const s = seasonNow();
             const twist = ch.blocker ? t('mapBlk', { b: BLOCKERS[ch.blocker].icon + ' ' + t('blk_' + ch.blocker) })
@@ -4406,15 +4498,14 @@
         html += svg;
         // scenery: two little pictures per level, away from the path, placed the same every time
         nodes.forEach(nd => {
-            const x = mapX(nd.L), set = MAP_DECO[nd.c] || MAP_DECO[0];
+            const x = mapX(nd.L), set = worldOf(nd.L).deco;
             [0, 1].forEach(k => {
                 const r = Math.abs(Math.sin(nd.L * 12.9898 + k * 78.233) * 43758.5453) % 1;
                 const out = x < 50 ? -1 : 1; // the outer side of the swing (Kloxy stands at ±13)
                 const dx = k ? -out * (34 + r * 10) : out * (28 + r * 8);
                 const left = Math.max(6, Math.min(94, x + dx));
                 const pic = set[Math.floor(r * set.length + k) % set.length];
-                html += `<div class="map-deco" style="left:${left}%;top:${top(nd.y) + (k ? 30 : -24) * (0.6 + r * 0.5)}px;color:${DECO_HUE[(nd.L + k * 3) % DECO_HUE.length]}">`
-                    + `<svg viewBox="0 0 100 100"><use href="#p-${pic}"/></svg></div>`;
+                html += `<div class="map-deco" style="left:${left}%;top:${top(nd.y) + (k ? 30 : -24) * (0.6 + r * 0.5)}px">${pic}</div>`;
             });
         });
         nodes.forEach(nd => {
@@ -4426,7 +4517,7 @@
                 fresh && state === 'current' ? 'pending' : ''].join(' ');
             const st = progress.bestStars[nd.L] || 0;
             const stars = state === 'done' && st ? `<span class="nstars">${'⭐'.repeat(st)}</span>` : '';
-            html += `<button class="${cls}" data-level="${nd.L}" style="--ch:${ch.hue};left:${mapX(nd.L)}%;top:${top(nd.y)}px">`
+            html += `<button class="${cls}" data-level="${nd.L}" style="--ch:${worldOf(nd.L).hue};left:${mapX(nd.L)}%;top:${top(nd.y)}px">`
                 + (isBoss ? `<span class="crown">👑</span>` : '') + `${nd.L}${stars}</button>`;
             if (state === 'current') {
                 const hl = fresh ? walkFrom : nd.L, hn = nodes.find(n => n.L === hl) || nd;
@@ -5355,6 +5446,7 @@
         scoreAnimId++; // stop any score count still running from the last board
         document.querySelectorAll('.lvlfx').forEach(el => el.remove());
         level = levelInfo(progress.points).L;
+        applyWorld(level);
         params = tutorial ? TUT_PARAMS
             : daily ? dailyParams(daily.date)
             : zen ? zenParams()
@@ -8101,6 +8193,7 @@
                 <div class="rp-kicker">${escHtml(t('roundKicker'))}</div>
                 <div class="rp-num num">${L}</div>
                 <div class="rp-title">${escHtml(t('roundTitle', { n: L }))}</div>
+                <div class="rp-world" style="--w1:${worldOf(L).hue};--w2:${worldOf(L).hue2}">${escHtml(t('roundWorld', { w: worldName(L) }))}</div>
                 <div class="rp-gifts">${gifts.map((g, i) => `<div class="rp-gift" style="--d:${0.9 + i * 0.28}s"><span>${g.ico}</span><b class="num">${g.k === 'gems' ? '+' + g.n.toLocaleString() : '×' + g.n}</b></div>`).join('')}</div>
                 <button class="btn btn-primary rp-go" style="--d:${1.2 + gifts.length * 0.28}s">${escHtml(t('roundCollect'))}</button>
             </div>`;

@@ -1893,6 +1893,7 @@
             animation: boomFlash 0.7s ease-out forwards;
         }
         @keyframes boomFlash { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.2); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); } }
+        .blast-fly { position: fixed; z-index: 60; pointer-events: none; margin: 0; }
         .shout.boom { --shout-dark: #7c2d12; --shout-glow: rgba(249, 115, 22, 0.95); }
         .shout.boom b { color: #fed7aa; }
         .spark.shard { background: #e0f2fe; border: 1px solid #38bdf8; border-radius: 1px; }
@@ -2668,7 +2669,7 @@
             pickNoneT: '⛏️ אין לך מכוש', pickNoneS: 'השלם שורה וטור באריח אחד כדי להרוויח מכוש',
             meltT: '💧 הקרח נמס!', meltS: 'כל המשבצות סביבו מלאות',
             mistakeT: '😬 שלוש טעויות ברצף', mistakeS: '−10 שניות, וזה מעיר צרות…',
-            blkIntro_bomb: 'פצצה על משבצת ריקה סופרת לאחור את המהלכים שלך.\nהנח שם את האריח הנכון בזמן — היא מנוטרלת: ⁦+5⁩ שניות.\nאם היא מגיעה ל־0 — בום: ⁦−15⁩ שניות, והפצצה נעלמת.',
+            blkIntro_bomb: 'פצצה על משבצת ריקה סופרת לאחור את המהלכים שלך.\nהנח שם את האריח הנכון בזמן — היא מנוטרלת: ⁦+5⁩ שניות.\nאם היא מגיעה ל־0 — בום: כל האריחים סביבה עפים בחזרה לגלגל, והפצצה נעלמת.',
             bossBlk: '{i} {b} ⁦×{n}⁩ על הלוח.', chainBounceT: '⛓️ נעול בשרשרת', chainBounceS: 'מלא קודם את שאר המשבצות בשורה שלו',
             defuseShout: 'נוטרלה!', boomShout: 'בום!', mapBlk: 'חדש: {b}', mapSeason: 'השבוע: {s} · {n}/{g}',
             ev_goldenT: '✨ סוף שבוע זהוב!', ev_goldenS: 'כל הסופ״ש: לוח אחד מכל שלושה הוא לוח זהב (⁦×2⁩)',
@@ -2811,7 +2812,7 @@
             pickNoneT: '⛏️ No ice pick yet', pickNoneS: 'Finish a row and a column with one tile to earn one',
             meltT: '💧 The ice melted!', meltS: 'Every slot around it is filled',
             mistakeT: '😬 Three mistakes in a row', mistakeS: '−10 seconds, and it wakes up trouble…',
-            blkIntro_bomb: 'A bomb on an empty slot counts down your moves.\nPut the right tile there in time to defuse it: +5 seconds.\nIf it reaches 0 — boom: −15 seconds, and the bomb is gone.',
+            blkIntro_bomb: 'A bomb on an empty slot counts down your moves.\nPut the right tile there in time to defuse it: +5 seconds.\nIf it reaches 0 — boom: every tile around it flies back to the wheel, and the bomb is gone.',
             bossBlk: '{i} {b} ×{n} on the board.', chainBounceT: '⛓️ Chained', chainBounceS: 'Fill the rest of its row first',
             defuseShout: 'DEFUSED!', boomShout: 'BOOM!', mapBlk: 'New: {b}', mapSeason: 'This week: {s} · {n}/{g}',
             ev_goldenT: '✨ Golden Weekend!', ev_goldenS: 'All weekend: one board in three is golden (×2)',
@@ -5594,8 +5595,9 @@
             the moves down (every move that counts on the board: a tile
             placed, a wrong one, a crack, an undo), 8 for the first bomb on
             a board and 4 more for each one after. The right tile there in
-            time defuses it: +5 seconds and a party. At 0 it goes off: −15
-            seconds, and the bomb is gone (one blast each, fair and done).
+            time defuses it: +5 seconds and a party. At 0 it goes off: every
+            tile around it (up to 8, not the given ones) flies back to the
+            wheel, and the bomb is gone (one blast each, fair and done).
        What is broken stays broken: undo and reset never bring back fog,
        ice, a chain whose slot was filled, or a bomb.
        The helpers respect them: the 🪄 wand never throws into a slot
@@ -5620,7 +5622,7 @@
     const BLOCK_CHANCE = 0.45;  // boards with some of the chapter's own blocker
     const MIX_CHANCE = 0.2;     // ...and with one of an earlier chapter's
     const BOMB_MOVES = 8, BOMB_MORE = 4;
-    const BOMB_PENALTY = 15, BOMB_BONUS = 5;
+    const BOMB_BONUS = 5;
     let blockers = [];          // per slot: null or { kind, free (chain), cracked (ice), left (bomb) }
     let bombSteps = 0;          // moves already counted down on the bombs
     let blockFx = [];           // [what, index]: effects to play once the board is drawn
@@ -5918,9 +5920,39 @@
                 shout(t('boomShout'), 'boom');
                 Sound.boom();
                 buzz([60, 40, 90]);
-                if (!quietBoard() && !gameOver) loseTime(BOMB_PENALTY);
+                if (!gameOver) bombBlast(i);
             }
         });
+    }
+
+    // 💣 A bomb that goes off throws every tile around it back onto the wheel
+    function bombBlast(i) {
+        const hit = around(i).filter(j => boardState[j] && !boardState[j].locked);
+        if (!hit.length) return;
+        const disc = document.getElementById('wheelDisc');
+        const to = disc ? centreOf(disc) : { x: innerWidth / 2, y: innerHeight - 120 };
+        const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        hit.forEach((j, k) => {
+            const tile = document.querySelector(`.slot[data-index="${j}"] .tile`);
+            if (tile && !calm) {
+                const r = tile.getBoundingClientRect();
+                const ghost = tile.cloneNode(true);
+                ghost.className += ' blast-fly';
+                Object.assign(ghost.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+                document.body.appendChild(ghost);
+                const dx = to.x - (r.left + r.width / 2), dy = to.y - (r.top + r.height / 2);
+                const spin = (Math.random() < 0.5 ? -1 : 1) * (200 + Math.random() * 300);
+                ghost.animate([
+                    { transform: 'translate(0,0) rotate(0) scale(1)', opacity: 1 },
+                    { transform: `translate(${dx * 0.2 + (Math.random() - 0.5) * 80}px, ${dy * 0.2 - 70}px) rotate(${spin / 2}deg) scale(1.15)`, opacity: 1, offset: 0.35 },
+                    { transform: `translate(${dx}px, ${dy}px) rotate(${spin}deg) scale(0.4)`, opacity: 0 },
+                ], { duration: 650 + k * 40, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' }).onfinish = () => ghost.remove();
+            }
+            trayState.push(boardState[j]);
+            boardState[j] = null;
+        });
+        if (selectedSource === 'board' && hit.includes(selectedIndex)) clearSelection();
+        render(true);
     }
 
     // Little ice splinters flying off a slot

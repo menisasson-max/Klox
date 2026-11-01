@@ -916,6 +916,31 @@
         .wheel-play svg { width: 30px; height: 30px; fill: #fff; margin-inline-start: 4px; }
         [dir="rtl"] .wheel-play svg { margin-inline-start: 0; margin-inline-end: 4px; }
         .tray-container.paused .wheel-play { display: flex; }
+        /* 🎉 the round-level party (#48) */
+        .round-party { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle at 50% 40%, #2a1b5e, #0b0820 75%); overflow: hidden; animation: rpIn 0.4s ease-out; }
+        .round-party.out { animation: rpOut 0.35s ease-in forwards; }
+        .rp-rays { position: absolute; left: 50%; top: 38%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax;
+            background: repeating-conic-gradient(rgba(253, 224, 71, 0.18) 0 10deg, transparent 10deg 20deg); animation: rpSpin 14s linear infinite; }
+        .rp-box { position: relative; text-align: center; color: #fff; padding: 0 16px; max-width: 420px; }
+        .rp-kicker { font-weight: 800; letter-spacing: 0.08em; color: #fde047; font-size: 0.95rem; animation: rpDrop 0.5s 0.15s both; }
+        .rp-num { font-size: 7.5rem; font-weight: 900; line-height: 1; margin: 4px 0;
+            background: linear-gradient(180deg, #fff7ae, #fbbf24 55%, #f97316); -webkit-background-clip: text; background-clip: text; color: transparent;
+            filter: drop-shadow(0 6px 18px rgba(251, 191, 36, 0.55)); animation: rpBoom 0.8s 0.25s cubic-bezier(.2, 1.6, .4, 1) both; }
+        .rp-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 18px; animation: rpDrop 0.5s 0.6s both; }
+        .rp-gifts { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 22px; }
+        .rp-gift { width: 76px; padding: 10px 4px 8px; border-radius: 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(253, 224, 71, 0.5);
+            display: flex; flex-direction: column; align-items: center; gap: 4px; animation: rpGift 0.5s var(--d) cubic-bezier(.2, 1.5, .4, 1) both; }
+        .rp-gift span { font-size: 1.9rem; }
+        .rp-gift b { font-size: 0.85rem; color: #fde047; direction: ltr; }
+        .rp-go { min-width: 180px; animation: rpDrop 0.4s var(--d) both; }
+        @keyframes rpIn { from { opacity: 0; } }
+        @keyframes rpOut { to { opacity: 0; transform: scale(1.05); } }
+        @keyframes rpSpin { to { transform: rotate(360deg); } }
+        @keyframes rpBoom { 0% { opacity: 0; transform: scale(0.2) rotate(-12deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+        @keyframes rpDrop { 0% { opacity: 0; transform: translateY(-18px); } 100% { opacity: 1; transform: none; } }
+        @keyframes rpGift { 0% { opacity: 0; transform: translateY(40px) scale(0.4); } 100% { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .rp-rays { animation: none; } }
         /* 🔒 the locked wheel (#44) */
         .wheel-lock {
             position: absolute; z-index: 30; display: none; pointer-events: none;
@@ -2599,6 +2624,8 @@
             practiceS: 'החידה של היום שוב — הפעם זה לא נחשב', dailyBusy: '📅 אתה כבר בחידה של היום',
             dailyNotYet: 'עוד לא שיחקת היום', dailyPlayedToday: '✓ שוחקה היום', dailyToday: '📅 החידה של היום',
             b_hint: 'רמז: צבע או צורה של משבצת ריקה', b_freeze: 'הקפאה: השעון עוצר ל־10 שניות', b_shield: 'מגן: אין שדון כל השלב. בוחרים רק לפני שמתחילים', b_wand: 'מטה קסם: אריח עף למקומו', b_sun: 'מגן שמש: מזג אוויר נעים, בלי אובך ובלי קרח בשלב. בוחרים לפני שמתחילים',
+            flawlessRow: '✨ שלב בלי טעויות + {b} במתנה', flawlessShout: 'בלי אף טעות!',
+            roundKicker: 'שלב עגול!', roundTitle: 'הגעת לשלב {n}! הנה המתנות שלך', roundCollect: 'אסוף הכול',
             sunShout: 'מזג אוויר נעים!', sunT: '☀️ השמש יצאה', sunS: 'האובך התפזר והקרח נמס בכל השלב',
             hintT: '💡 רמז', hintS: 'המשבצת המהבהבת מראה את הצבע או את הצורה שלה — לא את שניהם',
             freezeT: '❄️ השעון קפוא!', freezeS: 'ל־{s} שניות השעון לא זז — ממשיכים לשחק',
@@ -2740,6 +2767,8 @@
             practiceS: 'Today’s puzzle again — this one doesn’t count', dailyBusy: '📅 You’re on today’s puzzle',
             dailyNotYet: 'Not played yet today', dailyPlayedToday: '✓ Played today', dailyToday: '📅 Today’s puzzle',
             b_hint: 'Hint: the colour or shape of an empty slot', b_freeze: 'Freeze: the clock stops for 10 seconds', b_shield: 'Shield: no goblin all stage. Pick it before you start', b_wand: 'Wand: a tile flies to its place', b_sun: 'Sun shield: fine weather, no haze or ice this stage. Pick it before you start',
+            flawlessRow: '✨ No mistakes + a free {b}', flawlessShout: 'FLAWLESS!',
+            roundKicker: 'ROUND LEVEL!', roundTitle: 'You reached level {n}! Your gifts', roundCollect: 'Collect it all',
             sunShout: 'LOVELY WEATHER!', sunT: '☀️ The sun is out', sunS: 'The haze lifted and the ice melted all over the stage',
             hintT: '💡 Hint', hintS: 'The glowing slot now shows its colour or its shape — never both',
             freezeT: '❄️ Clock frozen!', freezeS: 'For {s} seconds the clock stands still — keep playing',
@@ -3184,6 +3213,8 @@
             freeBoosts: {},  // boosters given by chests, used before any 💎 is paid: { hint: 1, ... }
             icePicks: 0,     // ⛏️ ice picks earned (a row and a column finished by one tile), kept between boards
             chests: [],      // chapters (by index) whose chest has been opened
+            roundParties: [], // round levels (10, 20, ...) whose party and gifts were given
+            flawless: 0,     // stages finished without one mistake
             bosses: [],      // boss levels (5, 10, ...) whose boss board was beaten
             unlocked: [],    // collection items given some other way than a chest: weekend event prizes
             blockSeen: {},   // blockers (fog, chain, ice, bomb) whose card has been shown: { fog: true, ... }
@@ -3213,6 +3244,7 @@
         // the old shield waited across boards for one hit; it becomes a free whole-stage shield (#43)
         if (base.shieldOn === true) { base.freeBoosts = base.freeBoosts && typeof base.freeBoosts === 'object' ? base.freeBoosts : {}; base.freeBoosts.shield = (base.freeBoosts.shield || 0) + 1; }
         base.shieldOn = false;
+        if (!Array.isArray(base.roundParties)) base.roundParties = [];
         ['starsBySize', 'bestTime', 'dailyHistory', 'freeBoosts'].forEach(k => {
             if (!base[k] || typeof base[k] !== 'object' || Array.isArray(base[k])) base[k] = {};
         });
@@ -3289,6 +3321,7 @@
     }
 
     // Called once per won board. Adds the board's points and returns the breakdown.
+    const FLAWLESS_MULT = 1.5;
     function grantRewards(stars, stats, overflow, extendedSolve) {
         const newAch = [];
         progress.failStreak = 0;
@@ -3333,6 +3366,18 @@
         const newSize = !daily && progress.newSizeLeft > 0 && N === progress.maxN; // not on today's puzzle
         if (newSize) progress.newSizeLeft--;
         const newSizePts = newSize ? step(NEW_SIZE_MULT) : 0;
+        // ✨ Not one mistake on the stage (Meni, #49): ×1.5 and a free booster
+        const flawless = mistakes === 0 && !extendedSolve;
+        const flawlessPts = flawless ? step(FLAWLESS_MULT) : 0;
+        let flawlessGift = null;
+        if (flawless) {
+            const pool = ['hint', 'freeze', 'wand'];
+            if (level >= 10) pool.push('shield');
+            if (level >= 20) pool.push('sun');
+            flawlessGift = pool[Math.floor(Math.random() * pool.length)];
+            progress.freeBoosts[flawlessGift] = (progress.freeBoosts[flawlessGift] || 0) + 1;
+            progress.flawless = (progress.flawless || 0) + 1;
+        }
         const dailyBonus = dailyJustDone ? DAILY_BONUS : 0;
         const total = run + overflow + dailyBonus;
         progress.points += total;
@@ -3352,7 +3397,7 @@
 
         return {
             tiles, perTile, tilePts, stars, starX, starPts, goldPts, hardPts, bossPts, newBest,
-            winStreak: progress.winStreak, streakX, streakPts, newSize, newSizePts,
+            winStreak: progress.winStreak, streakX, streakPts, newSize, newSizePts, flawlessPts, flawlessGift,
             overflow, dailyBonus, total, dailyJustDone, newAch, extendedSolve, season,
         };
     }
@@ -7770,6 +7815,7 @@
             if (r.bossPts) html += row('scBoss', t('bossRow') + x(BOSS_MULT), 0);
             if (r.streakPts) html += row('scStreak', t('streakRow', { n: r.winStreak }) + x(r.streakX), 0);
             if (r.newSizePts) html += row('scNewSize', t('newSizeRow') + x(NEW_SIZE_MULT), 0);
+            if (r.flawlessPts) html += row('scFlawless', t('flawlessRow', { b: BOOST_ICON[r.flawlessGift] }) + x(FLAWLESS_MULT), 0);
             if (r.overflow) html += row('scOver', t('overflowRow'), 0);
             if (r.dailyBonus) html += row('scDaily', t('dailyRow'), 0);
             html += `<div class="score-total"><span>${t('total')}</span><b class="num"><bdi dir="ltr" id="scTotal">+0</bdi></b></div>`;
@@ -7895,7 +7941,7 @@
     // The rows after the tiles, in the order they count up
     function scoreSteps(r) {
         return [['scStars', r.starPts], ['scGold', r.goldPts], ['scHard', r.hardPts], ['scBoss', r.bossPts], ['scStreak', r.streakPts],
-            ['scNewSize', r.newSizePts], ['scOver', r.overflow], ['scDaily', r.dailyBonus]]
+            ['scNewSize', r.newSizePts], ['scFlawless', r.flawlessPts], ['scOver', r.overflow], ['scDaily', r.dailyBonus]]
             .filter(([id, n]) => n || id === 'scStars');
     }
 
@@ -7982,6 +8028,73 @@
             });
             at(3050, () => { land(); Sound.click(); finish(false); });
         });
+    }
+
+
+    /* ============================
+       Round-level party (Meni, #48)
+
+       Reaching level 10, 20, 30... throws a party once: the screen goes
+       dark, light rays turn behind a giant level number, fireworks burst,
+       and the gifts drop in one by one: 💎 (100 per level), boosters, ice
+       picks, and from level 20 a ☀️ sun shield. A tap on Collect (or
+       anywhere once all are in) goes on to the next board.
+       ============================ */
+    const ROUND_EVERY = 10;
+    function roundGifts(L) {
+        const g = [{ k: 'gems', n: L * 100, ico: '💎' },
+            { k: 'hint', n: 2, ico: '💡' }, { k: 'freeze', n: 2, ico: '❄️' }, { k: 'wand', n: 1 + Math.floor(L / 20), ico: '🪄' },
+            { k: 'shield', n: 1, ico: '🛡️' }, { k: 'picks', n: 2, ico: '⛏️' }];
+        if (L >= 20) g.push({ k: 'sun', n: 1, ico: '☀️' });
+        return g;
+    }
+    function roundParty(L, onDone) {
+        if (progress.roundParties.includes(L)) { onDone(); return; }
+        const gifts = roundGifts(L);
+        // saved first, so closing the page mid-party loses nothing
+        progress.roundParties.push(L);
+        gifts.forEach(g => {
+            if (g.k === 'gems') progress.gifts += g.n;
+            else if (g.k === 'picks') progress.icePicks = (progress.icePicks || 0) + g.n;
+            else progress.freeBoosts[g.k] = (progress.freeBoosts[g.k] || 0) + g.n;
+        });
+        saveProgress();
+        updateHud();
+
+        const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const el = document.createElement('div');
+        el.className = 'round-party';
+        el.innerHTML = `<div class="rp-rays"></div>
+            <div class="rp-box">
+                <div class="rp-kicker">${escHtml(t('roundKicker'))}</div>
+                <div class="rp-num num">${L}</div>
+                <div class="rp-title">${escHtml(t('roundTitle', { n: L }))}</div>
+                <div class="rp-gifts">${gifts.map((g, i) => `<div class="rp-gift" style="--d:${0.9 + i * 0.28}s"><span>${g.ico}</span><b class="num">${g.k === 'gems' ? '+' + g.n.toLocaleString() : '×' + g.n}</b></div>`).join('')}</div>
+                <button class="btn btn-primary rp-go" style="--d:${1.2 + gifts.length * 0.28}s">${escHtml(t('roundCollect'))}</button>
+            </div>`;
+        document.body.appendChild(el);
+        Sound.levelUp();
+        buzz([40, 60, 40, 60, 120]);
+        const timers = [];
+        if (!calm) {
+            for (let k = 0; k < 7; k++) timers.push(setTimeout(() => {
+                const x = innerWidth * (0.15 + Math.random() * 0.7), y = innerHeight * (0.12 + Math.random() * 0.35);
+                confettiAt(x, y, 34);
+                sparkle(x, y, 14, 90);
+                Sound.coin();
+            }, 300 + k * 420));
+        }
+        gifts.forEach((g, i) => timers.push(setTimeout(() => { Sound.pop(i, gifts.length); buzz(8); }, (0.9 + i * 0.28) * 1000)));
+        timers.push(setTimeout(() => Sound.jackpot(), (1.2 + gifts.length * 0.28) * 1000));
+        let closed = false;
+        const close = () => {
+            if (closed) return;
+            closed = true;
+            timers.forEach(clearTimeout);
+            el.classList.add('out');
+            setTimeout(() => { el.remove(); onDone(); }, 350);
+        };
+        el.querySelector('.rp-go').addEventListener('click', (e) => { e.stopPropagation(); Sound.select(); close(); });
     }
 
     // won: solved the board. skipped: gave up from settings.
@@ -8085,6 +8198,7 @@
                 Sound.win();
                 confetti(golden ? 60 : 36);
                 buzz([30, 50, 30]);
+                if (reward && reward.flawlessPts) shout(t('flawlessShout'), 'zen');
             } else {
                 Sound.lose();
             }
@@ -8135,8 +8249,12 @@
             // ...and after every level-up too, so the journey is seen as it grows (Meni, #27)
             const chapterHit = !daily && !zen && (endInfo.L > startInfo.L
                 || (chapterOf(endInfo.L) > chapterOf(startInfo.L) && chestReady(chapterOf(endInfo.L))));
+            // A round level reached (10, 20, 30...): a party and a pile of gifts after the map (Meni, #48)
+            const roundL = Math.floor(endInfo.L / ROUND_EVERY) * ROUND_EVERY;
+            const party = !daily && !zen && roundL > startInfo.L && roundL >= ROUND_EVERY && !progress.roundParties.includes(roundL);
+            const next = party ? () => roundParty(roundL, initLevel) : initLevel;
             const buttons = [chapterHit
-                ? { label: t('nextBoard'), cls: 'btn-primary', action: () => openMap({ milestone: true, onDone: initLevel, fromL: startInfo.L, auto: true }) }
+                ? { label: t('nextBoard'), cls: 'btn-primary', action: () => openMap({ milestone: true, onDone: next, fromL: startInfo.L, auto: true }) }
                 : { label: unlockedN ? t('toBoard', { n: unlockedN }) : t('nextBoard'), cls: 'btn-primary', action: initLevel }];
             const dailyDate = daily && daily.date;
             if (dailyDate) buttons.push({ label: t('share'), cls: 'btn-secondary', stay: true, action: () => shareDaily(dailyDate) });

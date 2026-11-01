@@ -1538,6 +1538,13 @@
         .boost-btn .price { margin-top: 2px; font-size: 0.6rem; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; direction: ltr; }
         .boost-btn:active:not(:disabled) { transform: scale(0.9); }
         .boost-btn:disabled { opacity: 0.38; filter: grayscale(1); cursor: default; }
+        .boost-btn[hidden] { display: none !important; }
+        .boosters.tight { gap: 4px; }
+        .boosters.tight .boost-btn { width: 44px; }
+        body.sunny::after { content: ''; position: fixed; inset: 0; z-index: 180; pointer-events: none;
+            background: radial-gradient(circle at 50% 20%, rgba(253, 224, 71, 0.55), rgba(253, 186, 116, 0.15) 45%, transparent 70%);
+            animation: sunGlow 1.6s ease-out forwards; }
+        @keyframes sunGlow { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
         .boost-btn.offer:not(:disabled) { animation: offerPulse 1.4s ease-in-out infinite; }
         @keyframes offerPulse { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); } }
         .boost-btn.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); opacity: 1; filter: none; }
@@ -2213,6 +2220,7 @@
             <button class="boost-btn" data-boost="hint" title="רמז" data-i18n-title="b_hint"><span class="ico">💡</span><span class="price"></span></button>
             <button class="boost-btn" data-boost="freeze" title="הקפאה" data-i18n-title="b_freeze"><span class="ico">❄️</span><span class="price"></span></button>
             <button class="boost-btn" data-boost="shield" title="מגן" data-i18n-title="b_shield"><span class="ico">🛡️</span><span class="price"></span></button>
+            <button class="boost-btn" data-boost="sun" title="מגן שמש" data-i18n-title="b_sun"><span class="ico">☀️</span><span class="price"></span></button>
             <button class="boost-btn" data-boost="wand" title="מטה קסם" data-i18n-title="b_wand"><span class="ico">🪄</span><span class="price"></span></button>
             <button class="boost-btn pick-btn" data-boost="pick" title="מכוש קרח" data-i18n-title="b_pick"><span class="ico">⛏️</span><span class="price"></span></button>
         </div>
@@ -2590,7 +2598,8 @@
             dailyUnfinished: 'לא הסתיים', practiceT: '🔁 אימון', practiceM: 'אימון — לא נחשב ולא מזכה בנקודות.',
             practiceS: 'החידה של היום שוב — הפעם זה לא נחשב', dailyBusy: '📅 אתה כבר בחידה של היום',
             dailyNotYet: 'עוד לא שיחקת היום', dailyPlayedToday: '✓ שוחקה היום', dailyToday: '📅 החידה של היום',
-            b_hint: 'רמז: צבע או צורה של משבצת ריקה', b_freeze: 'הקפאה: השעון עוצר ל־10 שניות', b_shield: 'מגן: אין שדון כל השלב. בוחרים רק לפני שמתחילים', b_wand: 'מטה קסם: אריח עף למקומו',
+            b_hint: 'רמז: צבע או צורה של משבצת ריקה', b_freeze: 'הקפאה: השעון עוצר ל־10 שניות', b_shield: 'מגן: אין שדון כל השלב. בוחרים רק לפני שמתחילים', b_wand: 'מטה קסם: אריח עף למקומו', b_sun: 'מגן שמש: מזג אוויר נעים, בלי אובך ובלי קרח בשלב. בוחרים לפני שמתחילים',
+            sunShout: 'מזג אוויר נעים!', sunT: '☀️ השמש יצאה', sunS: 'האובך התפזר והקרח נמס בכל השלב',
             hintT: '💡 רמז', hintS: 'המשבצת המהבהבת מראה את הצבע או את הצורה שלה — לא את שניהם',
             freezeT: '❄️ השעון קפוא!', freezeS: 'ל־{s} שניות השעון לא זז — ממשיכים לשחק',
             lockShout: 'הגלגל ננעל!', lockT: '🔒 הגלגל נעול', lockS: 'שים את האריח הזה על הלוח, ואז הגלגל ייפתח',
@@ -2730,7 +2739,8 @@
             dailyUnfinished: 'not finished', practiceT: '🔁 Practice', practiceM: 'Practice — it doesn’t count and scores no points.',
             practiceS: 'Today’s puzzle again — this one doesn’t count', dailyBusy: '📅 You’re on today’s puzzle',
             dailyNotYet: 'Not played yet today', dailyPlayedToday: '✓ Played today', dailyToday: '📅 Today’s puzzle',
-            b_hint: 'Hint: the colour or shape of an empty slot', b_freeze: 'Freeze: the clock stops for 10 seconds', b_shield: 'Shield: no goblin all stage. Pick it before you start', b_wand: 'Wand: a tile flies to its place',
+            b_hint: 'Hint: the colour or shape of an empty slot', b_freeze: 'Freeze: the clock stops for 10 seconds', b_shield: 'Shield: no goblin all stage. Pick it before you start', b_wand: 'Wand: a tile flies to its place', b_sun: 'Sun shield: fine weather, no haze or ice this stage. Pick it before you start',
+            sunShout: 'LOVELY WEATHER!', sunT: '☀️ The sun is out', sunS: 'The haze lifted and the ice melted all over the stage',
             hintT: '💡 Hint', hintS: 'The glowing slot now shows its colour or its shape — never both',
             freezeT: '❄️ Clock frozen!', freezeS: 'For {s} seconds the clock stands still — keep playing',
             lockShout: 'WHEEL LOCKED!', lockT: '🔒 The wheel is locked', lockS: 'Try this tile on the board and the wheel opens again',
@@ -4148,7 +4158,7 @@
         { key: 'ch4', emoji: '⛰️', hue: '#8b5cf6', chest: { gems: 1500, boosts: { shield: 1, wand: 1 }, unlock: 'ocean' }, blocker: 'bomb' },
         { key: 'ch5', emoji: '🏔️', hue: '#eab308', chest: { gems: 2500, boosts: { wand: 2 }, unlock: 'sunset' } },
     ];
-    const BOOST_ICON = { hint: '💡', freeze: '❄️', shield: '🛡️', wand: '🪄' };
+    const BOOST_ICON = { hint: '💡', freeze: '❄️', shield: '🛡️', wand: '🪄', sun: '☀️' };
     // The first level whose difficulty reaches d
     function firstLevelAt(d) { let L = 1; while (difficultyFor(L) < d) L++; return L; }
     // Each chapter's first level: one per board size, then the summit
@@ -4631,7 +4641,15 @@
        tutorial or today's puzzle, nor before the third board (with the
        other helpers).
        ============================ */
-    const BOOSTERS = { hint: 300, freeze: 400, shield: 400, wand: 500 };
+    const BOOSTERS = { hint: 300, freeze: 400, shield: 400, wand: 500, sun: 450 };
+    /* Stage-start boosters open with the levels (Meni, #43, #46): 🛡️ from
+       level 10, when goblins start (before it they roam free), and ☀️ the
+       sun shield from level 20: fine weather that clears every 🌫️ haze and
+       🧊 ice off the stage. Both are picked only before the first move;
+       below their level the button is not shown at all. */
+    const BOOST_FROM = { shield: 10, sun: 20 };
+    function boostOpen(k) { return !BOOST_FROM[k] || level >= BOOST_FROM[k]; }
+    function weatherLeft() { return blockers.some(b => b && (b.kind === 'fog' || (b.kind === 'ice' && !b.cracked))); }
     const FREEZE_SECONDS = 10;
     let shieldStage = false; // 🛡️ bought for this stage: no goblin all stage
 
@@ -4670,7 +4688,8 @@
         if (!boostersOn() || gameOver || isPaused || turnStage === 'turning' || !boardState.length) return false;
         if (kind === 'hint') return hintSlots().length > 0;
         if (kind === 'freeze') return freezeLeft === 0;
-        if (kind === 'shield') return !shieldStage && level >= WRECK_FROM_LEVEL && steps === 0; // only before the stage starts
+        if (kind === 'shield') return !shieldStage && boostOpen('shield') && steps === 0; // only before the stage starts
+        if (kind === 'sun') return boostOpen('sun') && steps === 0 && weatherLeft();
         if (kind === 'wand') return !wandBusy && !!wandPick(true);
         return false;
     }
@@ -4683,12 +4702,19 @@
         pick.disabled = gameOver || isPaused || turnStage === 'turning' || !iceLeft();
         if (!boostersOn()) return;
         const cash = balance();
+        let shown = 0;
+        document.querySelectorAll('.boost-btn').forEach(b => {
+            const open = b.classList.contains('pick-btn') ? document.body.classList.contains('has-ice') : boostOpen(b.dataset.boost);
+            b.hidden = !open;
+            if (open) shown++;
+        });
+        document.getElementById('boosters').classList.toggle('tight', shown >= 6);
         document.querySelectorAll('.boost-btn:not(.pick-btn)').forEach(b => {
             const k = b.dataset.boost, price = BOOSTERS[k], free = progress.freeBoosts[k] || 0;
             b.querySelector('.price').textContent = free > 0 ? '🎁' + free : '💎' + price;
             b.disabled = (free <= 0 && cash < price) || !boosterReady(k);
             b.classList.toggle('on', (k === 'shield' && shieldStage) || (k === 'freeze' && freezeLeft > 0));
-            b.classList.toggle('offer', k === 'shield' && !shieldStage && boosterReady('shield'));
+            b.classList.toggle('offer', (k === 'shield' || k === 'sun') && boosterReady(k));
         });
     }
 
@@ -4731,6 +4757,8 @@
             freezeLeft = FREEZE_SECONDS;
             Sound.wand();
             toast(t('freezeT'), t('freezeS', { s: FREEZE_SECONDS }));
+        } else if (kind === 'sun') {
+            clearWeather();
         } else if (kind === 'shield') {
             shieldStage = true;
             Sound.unlock();
@@ -4753,6 +4781,21 @@
         if (b.dataset.boost === 'pick') return usePick();
         buyBooster(b.dataset.boost, b);
     });
+
+    // ☀️ Fine weather: haze lifts and ice melts all over the stage
+    function clearWeather() {
+        blockers.forEach((b, i) => {
+            if (!b) return;
+            if (b.kind === 'fog') { blockers[i] = null; blockFx.push(['fog', i]); }
+            else if (b.kind === 'ice' && !b.cracked) { blockers[i] = null; blockFx.push(['melt', i]); }
+        });
+        document.body.classList.add('sunny');
+        setTimeout(() => document.body.classList.remove('sunny'), 1600);
+        shout(t('sunShout'), 'zen');
+        Sound.jackpot();
+        toast(t('sunT'), t('sunS'));
+        render();
+    }
 
     // The shield takes the hit: the wrecker never comes
     function shieldBlock(kind) {

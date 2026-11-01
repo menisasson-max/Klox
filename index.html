@@ -399,6 +399,24 @@
             white-space: nowrap;
         }
         .time-bonus.big { color: var(--gold); font-size: 1.25rem; }
+        /* time added (#42): a green pill that grows out of the bar, and the bar glows */
+        .time-bonus.plus {
+            color: #fff; background: var(--success); border: 2px solid #fff;
+            border-radius: 999px; padding: 2px 11px; font-size: 1.2rem; text-shadow: none;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3); animation-name: bonusPop; animation-duration: 1.3s;
+        }
+        .time-bonus.plus.big { background: var(--gold); color: #3b2a00; font-size: 1.45rem; }
+        .time-bonus.plus.line { background: linear-gradient(135deg, #16a34a, #f59e0b); font-size: 1.6rem; }
+        .time-bonus.plus small { font-size: 0.7em; margin-inline-start: 4px; opacity: 0.9; }
+        @keyframes bonusPop {
+            0% { opacity: 0; transform: translate(-50%, -20%) scale(0.5); }
+            18% { opacity: 1; transform: translate(-50%, -90%) scale(1.25); }
+            35% { transform: translate(-50%, -110%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -230%) scale(0.95); }
+        }
+        .clock.gain { animation: clockGain 0.7s ease-out; }
+        .clock.gain .clock-fill { filter: brightness(1.35) saturate(1.3); }
+        @keyframes clockGain { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.9); transform: scaleY(1.25); } 100% { box-shadow: 0 0 0 12px rgba(34, 197, 94, 0); transform: scaleY(1); } }
         /* a white pill with a dark edge: "−5s" has to read on the red bar it drops over */
         .time-bonus.minus {
             color: #b3261e; background: #fff; border: 2px solid #1d1b20;
@@ -898,6 +916,19 @@
         .wheel-play svg { width: 30px; height: 30px; fill: #fff; margin-inline-start: 4px; }
         [dir="rtl"] .wheel-play svg { margin-inline-start: 0; margin-inline-end: 4px; }
         .tray-container.paused .wheel-play { display: flex; }
+        /* 🔒 the locked wheel (#44) */
+        .wheel-lock {
+            position: absolute; z-index: 30; display: none; pointer-events: none;
+            width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%;
+            background: #1d1b20; border: 2px solid var(--gold); font-size: 18px;
+            align-items: center; justify-content: center; box-shadow: 0 3px 8px var(--shadow);
+        }
+        .tray-container.wheel-locked:not(.whirl) .wheel-lock { display: flex; animation: lockIn 0.35s ease-out; }
+        .tray-container.wheel-locked:not(.whirl) .tray-slot.center .tile { box-shadow: 0 0 0 3px var(--gold), 0 6px 16px var(--shadow); }
+        .tray-container.wheel-locked:not(.whirl) .tray-slot.off { opacity: 0.45; }
+        .wheel-lock.rattle { animation: lockRattle 0.4s ease; }
+        @keyframes lockIn { 0% { transform: scale(2.2); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes lockRattle { 20%, 60% { transform: rotate(-18deg); } 40%, 80% { transform: rotate(18deg); } }
         .tray-container.paused .tray-slot.center { visibility: hidden; }
         @keyframes playPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
 
@@ -1507,6 +1538,8 @@
         .boost-btn .price { margin-top: 2px; font-size: 0.6rem; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; direction: ltr; }
         .boost-btn:active:not(:disabled) { transform: scale(0.9); }
         .boost-btn:disabled { opacity: 0.38; filter: grayscale(1); cursor: default; }
+        .boost-btn.offer:not(:disabled) { animation: offerPulse 1.4s ease-in-out infinite; }
+        @keyframes offerPulse { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); } }
         .boost-btn.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); opacity: 1; filter: none; }
         body.no-boost .boosters .boost-btn:not(.pick-btn) { display: none; }
         /* ⛏️ the ice pick: earned, never bought; only shown on a board with ice */
@@ -2188,6 +2221,7 @@
     <!-- Tray wheel -->
     <div class="tray-container" id="trayContainer" data-drop="tray">
         <div class="wheel-disc" id="wheelDisc"></div>
+        <div class="wheel-lock" id="wheelLock" aria-hidden="true">🔒</div>
         <div class="tray-header">
             <span class="tray-count" id="trayCountDisplay">0 נותרו</span>
             <span id="trayHint" data-i18n="spinWheel">↔ סובב את הגלגל</span>
@@ -2556,10 +2590,11 @@
             dailyUnfinished: 'לא הסתיים', practiceT: '🔁 אימון', practiceM: 'אימון — לא נחשב ולא מזכה בנקודות.',
             practiceS: 'החידה של היום שוב — הפעם זה לא נחשב', dailyBusy: '📅 אתה כבר בחידה של היום',
             dailyNotYet: 'עוד לא שיחקת היום', dailyPlayedToday: '✓ שוחקה היום', dailyToday: '📅 החידה של היום',
-            b_hint: 'רמז: צבע או צורה של משבצת ריקה', b_freeze: 'הקפאה: השעון עוצר ל־10 שניות', b_shield: 'מגן: עוצר את השדון או הסיבוב הבא', b_wand: 'מטה קסם: אריח עף למקומו',
+            b_hint: 'רמז: צבע או צורה של משבצת ריקה', b_freeze: 'הקפאה: השעון עוצר ל־10 שניות', b_shield: 'מגן: אין שדון כל השלב. בוחרים רק לפני שמתחילים', b_wand: 'מטה קסם: אריח עף למקומו',
             hintT: '💡 רמז', hintS: 'המשבצת המהבהבת מראה את הצבע או את הצורה שלה — לא את שניהם',
             freezeT: '❄️ השעון קפוא!', freezeS: 'ל־{s} שניות השעון לא זז — ממשיכים לשחק',
-            shieldT: '🛡️ מגן פעיל', shieldS: 'השדון או הסיבוב הבא ייעצרו (המגן נשמר גם ללוחות הבאים)',
+            lockShout: 'הגלגל ננעל!', lockT: '🔒 הגלגל נעול', lockS: 'שים את האריח הזה על הלוח, ואז הגלגל ייפתח',
+            shieldT: '🛡️ מגן פעיל לכל השלב', shieldS: 'שום שדון לא יבעט באריחים שלך בשלב הזה',
             shieldGob: '🛡️ המגן עצר שדון!', shieldTurn: '🛡️ המגן עצר את הסיבוב!', shieldShout: 'נחסם!',
             bonkShout: 'השדון גורש!', bonkT: '👊 גירשת שדון!', bonkS: 'הוא לא בעט באף אריח — ועוד {s} שניות על השעון',
             wizFullT: '🧙 השעון מלא', wizFullS: 'שמור את הגמדון לרגע שהזמן אוזל',
@@ -2695,10 +2730,11 @@
             dailyUnfinished: 'not finished', practiceT: '🔁 Practice', practiceM: 'Practice — it doesn’t count and scores no points.',
             practiceS: 'Today’s puzzle again — this one doesn’t count', dailyBusy: '📅 You’re on today’s puzzle',
             dailyNotYet: 'Not played yet today', dailyPlayedToday: '✓ Played today', dailyToday: '📅 Today’s puzzle',
-            b_hint: 'Hint: the colour or shape of an empty slot', b_freeze: 'Freeze: the clock stops for 10 seconds', b_shield: 'Shield: blocks the next goblin or turn', b_wand: 'Wand: a tile flies to its place',
+            b_hint: 'Hint: the colour or shape of an empty slot', b_freeze: 'Freeze: the clock stops for 10 seconds', b_shield: 'Shield: no goblin all stage. Pick it before you start', b_wand: 'Wand: a tile flies to its place',
             hintT: '💡 Hint', hintS: 'The glowing slot now shows its colour or its shape — never both',
             freezeT: '❄️ Clock frozen!', freezeS: 'For {s} seconds the clock stands still — keep playing',
-            shieldT: '🛡️ Shield on', shieldS: 'The next goblin or board turn is stopped (it keeps to later boards too)',
+            lockShout: 'WHEEL LOCKED!', lockT: '🔒 The wheel is locked', lockS: 'Try this tile on the board and the wheel opens again',
+            shieldT: '🛡️ Shield on for this stage', shieldS: 'No goblin will kick your tiles on this stage',
             shieldGob: '🛡️ Your shield stopped a goblin!', shieldTurn: '🛡️ Your shield stopped the turn!', shieldShout: 'BLOCKED!',
             bonkShout: 'Goblin bonked!', bonkT: '👊 Goblin bonked!', bonkS: 'He kicked nothing — and {s} more seconds on the clock',
             wizFullT: '🧙 The clock is full', wizFullS: 'Save the wizard for when time runs low',
@@ -3164,7 +3200,9 @@
         if (!Number.isFinite(base.newSizeLeft)) base.newSizeLeft = 0;
         // ...and saves from before boosters, records and the daily puzzle lack these
         if (!Number.isFinite(base.spent) || base.spent < 0) base.spent = 0;
-        base.shieldOn = base.shieldOn === true;
+        // the old shield waited across boards for one hit; it becomes a free whole-stage shield (#43)
+        if (base.shieldOn === true) { base.freeBoosts = base.freeBoosts && typeof base.freeBoosts === 'object' ? base.freeBoosts : {}; base.freeBoosts.shield = (base.freeBoosts.shield || 0) + 1; }
+        base.shieldOn = false;
         ['starsBySize', 'bestTime', 'dailyHistory', 'freeBoosts'].forEach(k => {
             if (!base[k] || typeof base[k] !== 'object' || Array.isArray(base[k])) base[k] = {};
         });
@@ -3417,13 +3455,13 @@
     }
 
     // Add bonus seconds up to the cap; what does not fit turns into points
-    function addBonusTime(secs) {
+    function addBonusTime(secs, note, alsoShown = 0) {
         if (quietBoard()) return;
         const fit = Math.max(0, Math.min(secs, clockCap() - timeLeft));
         const over = secs - fit;
         timeLeft += fit;
         updateTimerUI();
-        if (fit > 0) floatBonus(fit);
+        if (fit > 0) floatBonus(fit + alsoShown, note);
         if (over > 0) {
             overflowPts += over * OVERFLOW_PTS;
             floatGems(over * OVERFLOW_PTS, fit > 0);
@@ -3458,19 +3496,22 @@
     }
 
     // "+4s" rises from the clock bar ("−5s" drops, a white pill that reads on the red bar)
-    function floatBonus(secs) {
+    function floatBonus(secs, note) {
         const bar = document.getElementById('clockBar');
         const r = bar.getBoundingClientRect();
         const el = document.createElement('div');
-        el.className = 'time-bonus' + (secs < 0 ? ' minus' : secs >= RUSH_BONUS ? ' big' : '');
-        el.innerHTML = (secs < 0 ? '−' + -secs : '+' + secs) + '<bdi>' + t('secShort') + '</bdi>';
+        el.className = 'time-bonus' + (secs < 0 ? ' minus' : ' plus' + (note ? ' line' : secs >= RUSH_BONUS ? ' big' : ''));
+        el.innerHTML = (secs < 0 ? '−' + -secs : '+' + secs) + '<bdi>' + t('secShort') + '</bdi>' + (note ? '<small>' + note + '</small>' : '');
+        el.dataset.secs = secs;
         el.style.left = (r.left + r.width / 2) + 'px';
         el.style.top = r.top + 'px';
         document.body.appendChild(el);
-        setTimeout(() => el.remove(), 1100);
+        setTimeout(() => el.remove(), 1300);
         const tm = document.getElementById('timerDisplay');
         tm.classList.remove('bump'); void tm.offsetWidth; tm.classList.add('bump');
+        if (secs > 0) { bar.classList.remove('gain'); void bar.offsetWidth; bar.classList.add('gain'); }
     }
+
 
     // Seconds past the cap, turned into points: a gold "+N 💎" over the bar
     // (a little to one side when a "+Ns" rises at the same moment)
@@ -4592,6 +4633,7 @@
        ============================ */
     const BOOSTERS = { hint: 300, freeze: 400, shield: 400, wand: 500 };
     const FREEZE_SECONDS = 10;
+    let shieldStage = false; // 🛡️ bought for this stage: no goblin all stage
 
     function boostersOn() { return !noSurprises() && helpersOn(); }
 
@@ -4628,7 +4670,7 @@
         if (!boostersOn() || gameOver || isPaused || turnStage === 'turning' || !boardState.length) return false;
         if (kind === 'hint') return hintSlots().length > 0;
         if (kind === 'freeze') return freezeLeft === 0;
-        if (kind === 'shield') return !progress.shieldOn && level >= WRECK_FROM_LEVEL;
+        if (kind === 'shield') return !shieldStage && level >= WRECK_FROM_LEVEL && steps === 0; // only before the stage starts
         if (kind === 'wand') return !wandBusy && !!wandPick(true);
         return false;
     }
@@ -4645,14 +4687,15 @@
             const k = b.dataset.boost, price = BOOSTERS[k], free = progress.freeBoosts[k] || 0;
             b.querySelector('.price').textContent = free > 0 ? '🎁' + free : '💎' + price;
             b.disabled = (free <= 0 && cash < price) || !boosterReady(k);
-            b.classList.toggle('on', (k === 'shield' && progress.shieldOn) || (k === 'freeze' && freezeLeft > 0));
+            b.classList.toggle('on', (k === 'shield' && shieldStage) || (k === 'freeze' && freezeLeft > 0));
+            b.classList.toggle('offer', k === 'shield' && !shieldStage && boosterReady('shield'));
         });
     }
 
     // 🛡️ and ❄️ above the clock's right end while they are on
     function renderBuffs() {
         const box = document.getElementById('buffs');
-        const shield = progress.shieldOn && !noSurprises();
+        const shield = shieldStage && !noSurprises();
         const key = (shield ? 's' : '') + (freezeLeft > 0 ? 'f' : '');
         if (box.dataset.k === key) return;
         box.dataset.k = key;
@@ -4689,7 +4732,7 @@
             Sound.wand();
             toast(t('freezeT'), t('freezeS', { s: FREEZE_SECONDS }));
         } else if (kind === 'shield') {
-            progress.shieldOn = true;
+            shieldStage = true;
             Sound.unlock();
             toast(t('shieldT'), t('shieldS'));
         } else if (kind === 'wand') {
@@ -4713,8 +4756,6 @@
 
     // The shield takes the hit: the wrecker never comes
     function shieldBlock(kind) {
-        progress.shieldOn = false;
-        saveProgress();
         shout(t('shieldShout'), 'roll');
         toast(kind === 'goblin' ? t('shieldGob') : t('shieldTurn'));
         Sound.unlock();
@@ -5214,6 +5255,8 @@
         endTurn();
         clearSelection();
         steps = 0;
+        shieldStage = false; // 🛡️ is bought for one stage, before it starts (#43)
+        unlockWheel();
         gameOver = false;
         toastQueue.length = 0; // news still waiting from the last board is no news on this one
         toastHold = false;
@@ -5633,20 +5676,32 @@
     }
     function filledSnap() { return boardState.map(Boolean); }
     function lineFull(cells) { return cells.every(i => boardState[i]); }
-    // After each move: a slot newly filled whose row and column both just got full earns a pick
+    /* After each move, the slots just filled by hand that finished lines (#42):
+       a row or a column finished pays 2× a normal tile's seconds, a row and a
+       column finished together 3× (the tile's own 4 s is part of that), and
+       that one also earns a ⛏️ ice pick. Each slot pays once per board. */
     function checkPickEarned() {
         const before = lineSnap;
         lineSnap = filledSnap();
         if (!before || before.length !== lineSnap.length || tutorial || zen) return;
-        let won = 0;
+        let won = 0, extra = 0, best = 1;
         lineSnap.forEach((f, i) => {
             if (!f || before[i] || pickEarned.has(i) || boardState[i]?.locked) return;
             const r = rowOf(i), c = colOf(i);
             const row = [...Array(N).keys()].map(k => r * N + k), col = [...Array(N).keys()].map(k => k * N + c);
-            if (!lineFull(row) || !lineFull(col)) return;
+            const lines = (lineFull(row) ? 1 : 0) + (lineFull(col) ? 1 : 0);
+            if (!lines) return;
             pickEarned.add(i);
-            won++;
+            extra += RIGHT_BONUS * lines; // ×2 in all for one line, ×3 for both
+            best = Math.max(best, lines + 1);
+            if (lines === 2) won++;
         });
+        if (extra && !boardState.every(Boolean)) {
+            // one pill for the finishing tile: its own "+4s" just shown becomes "+8s ×2"
+            const own = [...document.querySelectorAll('.time-bonus.plus:not(.line)')].pop();
+            if (own) own.remove();
+            addBonusTime(extra, '×' + best, own ? +own.dataset.secs || 0 : 0);
+        }
         if (!won) return;
         progress.icePicks = (progress.icePicks || 0) + won;
         saveProgress();
@@ -6192,6 +6247,14 @@
         play.style.top = apexY + 'px';
 
         if (wheelAngle === null) wheelAngle = -Math.floor((trayState.length - 1) / 2) * wheel.step;
+        if (wheelLocked && !wheelAnim) {
+            const at = trayState.findIndex(x => x.id === lockedId);
+            if (at < 0) unlockWheel(); // the locked tile left the wheel some other way
+            else wheelAngle = -at * wheel.step;
+        }
+        const lk = document.getElementById('wheelLock');
+        lk.style.left = (wheel.cx + 30) + 'px';
+        lk.style.top = (apexY - 44) + 'px';
         wheelNearest = -1;
         setWheelAngle(wheelAngle);
     }
@@ -6220,10 +6283,66 @@
         wheelAnim = null;
     }
 
+    /* 🔒 Wheel lock (Meni, #44): one of the troubles three mistakes in a row
+       can bring. The wheel whirls back and forth fast and stops on a random
+       tile (never the one that just failed); a padlock sits on it and the
+       wheel will not turn until that tile has been tried on the board, right
+       or wrong. */
+    let wheelLocked = false, lockedId = null, lastTryId = null;
+    function lockWheel(failedId) {
+        if (gameOver || isPaused || turnStage || wheelLocked) return;
+        const pool = trayState.filter(x => x.id !== failedId);
+        if (!pool.length) return;
+        const target = trayState.indexOf(pool[Math.floor(Math.random() * pool.length)]);
+        cancelDrag();
+        stopWheelMotion();
+        wheelLocked = true;
+        lockedId = trayState[target].id;
+        const box = document.getElementById('trayContainer');
+        box.classList.add('wheel-locked', 'whirl');
+        shout(t('lockShout'), 'spin');
+        Sound.rumble(0.9);
+        buzz([20, 20, 20, 20, 20, 20, 60]);
+        const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const lo = wheelMinAngle(), end = -target * wheel.step;
+        const path = calm ? [wheelAngle, end] : [wheelAngle, lo, 0, lo, 0, lo * 0.5, end];
+        const seg = calm ? 300 : 210;
+        const t0 = performance.now();
+        const frame = (now) => {
+            const k = (now - t0) / seg;
+            const i = Math.floor(k);
+            if (i >= path.length - 1 || !wheelLocked) {
+                setWheelAngle(wheelLocked ? end : wheelAngle);
+                wheelAnim = null;
+                box.classList.remove('whirl');
+                if (wheelLocked) { Sound.clink(); toast(t('lockT'), t('lockS')); }
+                return;
+            }
+            let f = k - i;
+            if (i === path.length - 2) f = 1 - Math.pow(1 - f, 3); // the last leg slows into place
+            setWheelAngle(path[i] + (path[i + 1] - path[i]) * f);
+            wheelAnim = requestAnimationFrame(frame);
+        };
+        wheelAnim = requestAnimationFrame(frame);
+    }
+    function unlockWheel() {
+        if (!wheelLocked) return;
+        wheelLocked = false;
+        lockedId = null;
+        document.getElementById('trayContainer').classList.remove('wheel-locked', 'whirl');
+    }
+    // A try to turn the locked wheel: the padlock rattles
+    function lockNudge() {
+        const el = document.getElementById('wheelLock');
+        el.classList.remove('rattle'); void el.offsetWidth; el.classList.add('rattle');
+        buzz(15);
+    }
+
     // Release: pick the tile the fling is heading for - at most three tiles
     // away - and glide straight into it, so the wheel always locks on a tile
     // instead of coasting and then hunting for one.
     function spinWheel(v) {
+        if (wheelLocked) { const at = trayState.findIndex(x => x.id === lockedId); if (at >= 0) glideTo(-at * wheel.step); return; }
         const coast = Math.max(-3 * wheel.step, Math.min(3 * wheel.step, v * 100));
         glideTo(Math.round((wheelAngle + coast) / wheel.step) * wheel.step);
     }
@@ -6231,6 +6350,7 @@
     // Turn the wheel so tray tile i is on top
     function spinTo(i) {
         if (i < 0) return;
+        if (wheelLocked) { lockNudge(); return; }
         Sound.select();
         glideTo(-i * wheel.step);
     }
@@ -6256,6 +6376,7 @@
     // A mouse wheel turns the tray wheel
     document.getElementById('trayContainer').addEventListener('wheel', (e) => {
         e.preventDefault();
+        if (wheelLocked) return;
         stopWheelMotion();
         setWheelAngle(wheelAngle - (e.deltaY || e.deltaX) / wheel.R * 0.6);
         clearTimeout(e.currentTarget._settle);
@@ -6376,13 +6497,12 @@
         if (w.kind === 'goblin') {
             // Nothing placed to kick yet: he comes back a little later
             if (!goblinChoices().length) { wrecks.unshift({ at: boardSecs + GOBLIN_RETRY_S, kind: 'goblin' }); return; }
-            if (progress.shieldOn) { shieldBlock('goblin'); return; }
+            if (shieldStage) { shieldBlock('goblin'); return; } // 🛡️ holds for the whole stage
             if (!goblinKick()) wrecks.unshift({ at: boardSecs + GOBLIN_RETRY_S, kind: 'goblin' });
             return;
         }
         if (N === 6 && turnsThisBoard >= SIX_TURNS_MAX) return; // calmer 6×6: this one never comes
         turnsThisBoard++;
-        if (progress.shieldOn) { shieldBlock('turn'); return; }
         const token = turnToken;
         turnStage = 'rumble';
         if (w.kind === 'spin') shout(t('spinShout'), 'spin'); else shout(t('rollShout'), 'roll');
@@ -6612,8 +6732,8 @@
        into points, like every time bonus). He walks in slowly enough, and
        grins long enough, to give a fair chance: about two seconds.
        ============================ */
-    const GOBLIN_WALK_MS = 1300; // he walks in a little slower...
-    const GOBLIN_GRIN_MS = 1700; // ...and grins longer: about 3 s to tap him away (was 1.6 s)
+    const GOBLIN_WALK_MS = 750;  // he dashes in (Meni, #33: "faster")...
+    const GOBLIN_GRIN_MS = 1150; // ...and grins briefly: about 2 s to tap him away
     const BONK_BONUS = 5;
 
     // Tiles a goblin could kick: placed by the player, not in hand
@@ -6985,6 +7105,8 @@
     function placeFromTray(id, index) {
         const tIdx = trayState.findIndex(t => t.id === id);
         if (tIdx < 0 || boardState[index]?.locked) return false;
+        lastTryId = id;
+        if (wheelLocked) unlockWheel(); // 🔒 lasts until the next try, right or wrong
         const item = trayState[tIdx];
         if (chainLocked(index)) return chainBounce(index); // right or wrong alike (see "Blockers")
 
@@ -7159,7 +7281,9 @@
             if (level >= WRECK_FROM_LEVEL && !gameOver) {
                 const kinds = ['goblin'];
                 if (!(N === 6 && turnsThisBoard >= SIX_TURNS_MAX)) kinds.push('turn', 'spin');
+                if (trayState.length >= 2 && !wheelLocked) kinds.push('lock');
                 const kind = kinds[Math.floor(Math.random() * kinds.length)];
+                if (kind === 'lock') { const failed = lastTryId; setTimeout(() => lockWheel(failed), 500); return false; }
                 wrecks.unshift({ at: boardSecs, kind });
                 setTimeout(maybeWreck, 600);
             }
@@ -7342,6 +7466,7 @@
         e.preventDefault();
 
         if (drag.mode === 'spin') {
+            if (wheelLocked) { if (!drag.nudged) { drag.nudged = true; lockNudge(); } return; }
             const now = performance.now();
             setWheelAngle(drag.startAngle - dirSign() * dx / wheel.R);
             const inst = -dirSign() * (e.clientX - drag.lastX) / wheel.R / Math.max(1, now - drag.lastT);
